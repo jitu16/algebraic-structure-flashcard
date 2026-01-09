@@ -1,0 +1,31 @@
+graph TD
+    App["App Container"] --> MainCanvas["Main Canvas"]
+    
+    MainCanvas --> ReactFlow["React Flow Tree (Zoomable)"]
+    MainCanvas --> Overlay["Flashcard Overlay (Modal/Sidepanel)"]
+    
+    subgraph Flashcard ["Flashcard Component Layout"]
+        Overlay --> Header["Sticky Header<br/>(Node Name & New Axiom)"]
+        Overlay --> Body["Scrollable Body Area"]
+        
+        Body --> Inherited["Inherited Axioms<br/>(Collapsible Accordion)"]
+        Body --> ThmList["Theorem List"]
+        
+        ThmList --> ThmItem["Theorem Item"]
+        ThmItem --> Statement["LaTeX Statement"]
+        
+        %% The Fix: Explicitly stating it is conditional
+        ThmItem --> Controls["1. Proof Toggle (Always)<br/>2. Edit Button (Conditional)"]
+        
+        ThmItem --> Proof["Proof Body<br/>(Expands Inline)"]
+    end
+    
+    %% UX Rules
+    Note_UX[/"UX RULE 1: Context Preservation<br/>Opening a proof must push content down."/]
+    style Note_UX fill:#fff,stroke:#333,stroke-dasharray: 5 5
+    
+    Note_Auth[/"UX RULE 2: Conditional Rendering<br/>Edit/Flag buttons only appear<br/>if User has correct Role."/]
+    style Note_Auth fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
+    
+    Proof -.-> Note_UX
+    Controls -.-> Note_Auth

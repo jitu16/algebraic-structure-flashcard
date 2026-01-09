@@ -1,0 +1,47 @@
+classDiagram
+    note "WARNING: Do NOT store full Theorem lists inside Nodes.\nFetch them lazily to prevent database bloat."
+    
+    class Universe {
+        +String id PK
+        +String name
+        +String description
+        +Array~String~ root_axioms
+        +String creator_id
+        +Timestamp created_at
+    }
+
+    class Node {
+        +String id PK
+        +String universe_id FK
+        +String parent_id FK
+        +String name
+        +String new_axiom_latex
+        +Array~String~ path "Optimization: stores [root, parent, self] IDs"
+        +String author_id
+        +String status "Values: draft, verified, flagged, dead_end"
+    }
+    
+    note for Node "CONSTRAINT: 'new_axiom_latex' must contain\nEXACTLY ONE axiom. No multiple entries."
+
+    class Theorem {
+        +String id PK
+        +String node_id FK
+        +Int index
+        +String statement_latex
+        +String proof_latex
+        +String contributor_id
+        +String status
+    }
+
+    class Flag {
+        +String id PK
+        +String target_node_id FK
+        +String reporter_id
+        +String reason
+        +String status "Values: open, resolved, dismissed"
+    }
+
+    Universe "1" -- "*" Node : contains
+    Node "1" -- "*" Node : children (Adjacency List)
+    Node "1" -- "*" Theorem : proves
+    Node "1" -- "*" Flag : has reports

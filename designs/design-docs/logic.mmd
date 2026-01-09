@@ -1,0 +1,54 @@
+graph TD
+    %% 1. The Entry Point
+    Start((Start)) -->|"Contributor Adds Axiom"| Unverified
+    
+    %% 2. The Live Tree States
+    subgraph Live_Tree ["The Visible Tree"]
+        Unverified[/"Live Node (Unverified)<br/>Color: RED<br/>(Stats: Green Votes vs Black Votes)"/]
+        Verified[/"Live Node (Verified)<br/>Color: GREEN"/]
+        Contested[/"Flagged Node<br/>Color: YELLOW"/]
+        DeadEnd[/"Dead End (Inconsistent)<br/>Color: GRAY"/]
+    end
+
+    %% 3. The Red Workflow (Voting Logic)
+    %% Note: Red stays Red while voting happens. Admin takes action based on votes.
+    Unverified -->|"Admin Approves (Valid)"| Verified
+    Unverified -->|"Admin Confirms Inconsistency (Valid Dead End)"| DeadEnd
+    Unverified -->|"Admin Rejects (Spam/Typo)"| Delete((Deleted))
+    Unverified -->|"Contributor Deletes OWN Draft"| Delete
+    
+    %% 4. The Flagging Workflow (Green -> Yellow)
+    Verified -->|"Viewer/Contributor Flags Issue"| Contested
+    
+    %% 5. The Resolution Workflow (Yellow -> Green/Gray/Delete)
+    Contested -->|"Admin Dismisses (False Alarm)"| Verified
+    Contested -->|"Admin Applies Fix (Accepts Edit Proposal)"| Verified
+    Contested -->|"Admin Confirms Inconsistency"| DeadEnd
+    Contested -->|"Admin Deprecates (Unsalvageable)"| Delete
+    
+    %% 6. Maintenance Loop (Green -> Green)
+    Verified -->|"Admin Edits/Polishes (Direct Fix)"| Verified
+
+    %% 7. Clean Up (Green -> Delete)
+    Verified -->|"Admin Deprecates"| Delete
+
+    %% 8. System Rules & Roles
+    Note_Roles[/"ROLES:<br/>1. Viewer: Read Only (No Login)<br/>2. Voter: Vote & Flag (Login)<br/>3. Contributor: Create, Vote, Flag (Login)<br/>4. Admin: Verify, Edit, Delete ALL"/]
+    style Note_Roles fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
+    
+    Note_Inherit[/"RULE 1: Creation Inheritance<br/>If Parent is Red, Child starts Red."/]
+    style Note_Inherit fill:#fff,stroke:#333,stroke-dasharray: 5 5
+
+    Note_Cascade[/"RULE 2: Update Cascade<br/>If Parent is Edited/Fixed, ALL Children turn Red.<br/>(Forces Re-verification)"/]
+    style Note_Cascade fill:#ffeeee,stroke:#ff0000,stroke-dasharray: 5 5
+    
+    Note_Roles -.-> Start
+    Note_Inherit -.-> Unverified
+    Note_Cascade -.-> Verified
+
+    %% Styling
+    style Unverified fill:#ffcccc,stroke:#f00
+    style Verified fill:#ccffcc,stroke:#0f0
+    style Contested fill:#ffffcc,stroke:#fc0
+    style DeadEnd fill:#eee,stroke:#333
+    style Delete fill:#fff,stroke:#000,stroke-width:1px

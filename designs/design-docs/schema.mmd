@@ -1,0 +1,57 @@
+classDiagram
+    class User {
+        +String id PK
+        +String email
+        +String role "Values: admin, contributor, voter"
+        +Int creation_reputation "Score for owning successful nodes"
+        +Int contributor_reputation "Score for correct voting/flagging"
+    }
+
+    class Universe {
+        +String id PK
+        +String name
+        +Array~String~ root_axioms
+    }
+
+    class Node {
+        +String id PK
+        +String parent_id FK
+        +String author_id FK "Used to award Creation Score"
+        +String new_axiom_latex
+        +String status "Values: unverified(red), verified(green), contested(yellow), dead_end(gray)"
+        +Int vote_count_green "Cached sum (for fast display)"
+        +Int vote_count_black "Cached sum (for fast display)"
+        +Int flag_count_yellow "Cached sum (for fast display)"
+    }
+
+    class Vote {
+        +String id PK
+        +String node_id FK
+        +String user_id FK
+        +String type "Values: green, black"
+        +Timestamp timestamp
+    }
+    
+    note for Vote "CONSTRAINT: Unique compound key (user_id + node_id).\nA user can only have ONE vote per node."
+
+    class Flag {
+        +String id PK
+        +String target_node_id FK
+        +String reporter_id FK "The 'Yellow Voter'"
+        +String reason
+        +String suggested_fix_latex
+        +String status "Values: open, resolved_fixed, resolved_false_alarm"
+    }
+    
+    class Theorem {
+        +String id PK
+        +String node_id FK
+        +String statement_latex
+        +String proof_latex
+    }
+
+    User "1" -- "*" Node : creates
+    User "1" -- "*" Vote : casts (Green/Black)
+    User "1" -- "*" Flag : reports (Yellow)
+    Node "1" -- "*" Vote : has
+    Node "1" -- "*" Flag : has

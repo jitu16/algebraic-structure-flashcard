@@ -1,0 +1,29 @@
+graph TD
+    User((User))
+    
+    subgraph Client ["Client Side (Browser)"]
+        ReactApp["React App (TypeScript)"]
+        Tree["React Flow Tree"]
+        Card["Flashcard Component"]
+        Math["KaTeX Renderer"]
+    end
+
+    subgraph Backend ["Firebase Backend"]
+        Auth["Firebase Auth (Google)"]
+        DB[("Firestore Database")]
+    end
+
+    %% Flow connections
+    User -->|"Clicks"| ReactApp
+    ReactApp -->|"Renders"| Tree
+    Tree -->|"Selects"| Card
+    Card -->|"Uses"| Math
+    
+    ReactApp -->|"Read/Write JSON"| DB
+    ReactApp -->|"Verifies Login"| Auth
+    
+    %% The Warning Node (Fixed Syntax)
+    WarningNode[/"CRITICAL WARNING:<br/>Security Rules must prevent<br/>contributors from editing Verified nodes"/]
+    style WarningNode fill:#ffcccc,stroke:#ff0000,stroke-width:2px,stroke-dasharray: 5 5
+    
+    DB -.-> WarningNode

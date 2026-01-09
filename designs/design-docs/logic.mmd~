@@ -1,0 +1,34 @@
+stateDiagram-v2
+    direction LR
+    
+    [*] --> Draft : User submits new Node
+    
+    state Draft {
+        [*] --> CheckConstraint
+        CheckConstraint --> Valid : Only 1 Axiom?
+        CheckConstraint --> Invalid : >1 Axioms detected
+        Invalid --> [*] : Reject immediately
+    }
+
+    Draft --> Verified : Admin Approves
+    Draft --> Rejected : Admin Rejects (Inconsistent/Duplicate)
+    
+    state Verified {
+        note right of Verified : Visible to Public.\nConnection line is SOLID.
+        [*] --> Live
+        Live --> Flagged : User reports issue
+    }
+
+    state Flagged {
+        note right of Flagged : Marked with Badge.\nAdded to Admin Queue.
+        Analysis --> Dismissed : Flag was spam/wrong
+        Analysis --> Confirmed : Flag was correct
+    }
+    
+    Dismissed --> Live : Return to normal
+    Confirmed --> DeadEnd : Mark as Dead (Grayed out)
+    Confirmed --> Deprecated : Delete/Hide Node
+    
+    Rejected --> [*]
+    DeadEnd --> [*]
+    Deprecated --> [*]

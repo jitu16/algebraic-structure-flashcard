@@ -1,0 +1,36 @@
+graph TD
+    subgraph Client ["Client Side (Browser)"]
+        User((User))
+        
+        subgraph ReactApp ["React Application (TypeScript)"]
+            Router[React Router]
+            
+            subgraph Views
+                Home[Universe Selector]
+                Tree[Tree View <br/> (React Flow)]
+                Card[Flashcard Component]
+            end
+            
+            subgraph Engines
+                Math[KaTeX Renderer]
+                Logic[State Management]
+            end
+        end
+    end
+
+    subgraph Backend ["Serverless Backend (Google Firebase)"]
+        Auth[Firebase Auth <br/> (Google Sign-In)]
+        DB[(Firestore Database)]
+        Functions[Cloud Functions <br/> (Optional: Python Logic Check)]
+    end
+
+    User -->|Clicks| ReactApp
+    Router --> Home & Tree
+    Tree -->|Select Node| Card
+    
+    Card -->|Render LaTeX| Math
+    
+    ReactApp -->|Read/Write JSON| DB
+    ReactApp -->|Verify Creds| Auth
+    
+    note over DB : WARNING: Security Rules must prevent\nusers from editing 'verified' nodes.

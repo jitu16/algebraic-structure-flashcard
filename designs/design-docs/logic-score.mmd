@@ -1,0 +1,68 @@
+graph TD
+    subgraph Events ["System Events"]
+        %% Red Phase Events
+        Event_Green["Node Verified (Red to Green)"]
+        Event_Gray["Node Dead-Ended (Red to Gray)"]
+        Event_Delete["Node Deleted (Red to Deleted)"]
+        
+        %% Yellow Phase Events
+        Event_Fix["Flag Resolved: Fixed/Edited"]
+        Event_False["Flag Resolved: False Alarm"]
+        Event_FlagGray["Flag Resolved: Axiom Contradiction (to Gray)"]
+        Event_FlagDeprecate["Flag Resolved: Fatal Flaw (to Deleted)"]
+    end
+
+    subgraph Owner_Rewards ["Owner Rewards"]
+        %% The Owner gets TWO types of points, but we group them by the Person.
+        Owner_Creation[/"Owner: +1 Creation Score"/]
+        Owner_Contrib[/"Owner: +2 Contributor Score"/]
+    end
+
+    subgraph Public_Rewards ["Voter & Flagger Rewards (Contributor Score)"]
+        Vote_G_Success[/"Green Voter: +1"/]
+        Vote_G_Fail[/"Green Voter: -1"/]
+        
+        Vote_B_Success[/"Black Voter: +1"/]
+        Vote_B_Fail[/"Black Voter: -1"/]
+        
+        Flag_Success[/"Flagger (Yellow): +1 (Fix Accepted)"/]
+        Flag_Fail[/"Flagger (Yellow): -1 (False Alarm)"/]
+        Flag_BigWin[/"Flagger (Yellow): +2 (Node Killed/Grayed)"/]
+    end
+
+    %% -- Owner Rewards (Both Types) --
+    Event_Green --> Owner_Creation
+    Event_Gray --> Owner_Creation
+    Event_Green --> Owner_Contrib
+    Event_Gray --> Owner_Contrib
+
+    %% -- Voting Rewards (Red Phase) --
+    %% LOGIC CHECK: Gray nodes are Valid Math (just inconsistent), so Green Voters were RIGHT.
+    Event_Green -->|"Voted Green (Right)"| Vote_G_Success
+    Event_Green -->|"Voted Black (Wrong)"| Vote_B_Fail
+    
+    Event_Gray -->|"Voted Green (Right)"| Vote_G_Success
+    Event_Gray -->|"Voted Black (Wrong)"| Vote_B_Fail
+    
+    Event_Delete -->|"Voted Black (Right)"| Vote_B_Success
+    Event_Delete -->|"Voted Green (Wrong)"| Vote_G_Fail
+
+    %% -- Flagging Rewards (Yellow Phase) --
+    Event_Fix -->|"Flagged Issue (Helpful)"| Flag_Success
+    Event_False -->|"Flagged Issue (Wrong)"| Flag_Fail
+    
+    Event_FlagGray -->|"Found Contradiction"| Flag_BigWin
+    Event_FlagDeprecate -->|"Found Fatal Flaw"| Flag_BigWin
+    
+    %% Styling
+    style Owner_Creation fill:#ccffcc,stroke:#006400
+    style Owner_Contrib fill:#ccffcc,stroke:#006400
+    
+    style Vote_G_Success fill:#e1f5fe,stroke:#01579b
+    style Vote_B_Success fill:#e1f5fe,stroke:#01579b
+    style Flag_Success fill:#e1f5fe,stroke:#01579b
+    style Flag_BigWin fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    
+    style Vote_G_Fail fill:#ffcccc,stroke:#b71c1c
+    style Vote_B_Fail fill:#ffcccc,stroke:#b71c1c
+    style Flag_Fail fill:#ffcccc,stroke:#b71c1c

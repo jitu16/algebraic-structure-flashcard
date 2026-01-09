@@ -1,0 +1,23 @@
+graph TD
+    App[App Container] --> Navbar[Navigation Bar]
+    App --> MainCanvas[Main Canvas Area]
+    
+    MainCanvas --> ReactFlow[React Flow Tree]
+    MainCanvas --> FlashcardOverlay[Flashcard Overlay <br/> (Conditional Render)]
+    
+    subgraph Flashcard_Component
+        Header[Sticky Header <br/> (Node Name & New Axiom)]
+        
+        Body[Scrollable Body]
+        Body --> Inherited[Inherited Axioms <br/> (Collapsible List)]
+        Body --> ThmList[Theorem List]
+        
+        ThmList --> ThmItem[Theorem Item]
+        ThmItem --> Statement[LaTeX Statement]
+        ThmItem --> ToggleBtn[Show/Hide Proof Button]
+        ThmItem --> Proof[Proof Container <br/> (Accordion Style)]
+        
+        Proof --> ProofText[LaTeX Proof Body]
+    end
+    
+    note over Flashcard_Component : UX REQUIREMENT: \nScrollable body must allow viewing\nprevious theorems while reading a proof.
