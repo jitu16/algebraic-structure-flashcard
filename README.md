@@ -9,6 +9,13 @@ Most mathematics is taught linearly—chapter by chapter. This project aims to c
 
 If you take a specific path of axioms, what **mathematical structure** do you end up in? A Ring? A Lattice? A completely new algebra no one has named yet? This project allows us to find out.
 
+**The Purpose**
+We want to visualize the dramatic power of individual axioms. By studying this tree, we can witness how a single rule change—like a simple asymmetrical distributive law—can radically alter a system, giving rise to complex consequences like the headache of infinity.
+
+* **Insight:** Watching theorems grow step-by-step reveals the true significance of the axioms that birth them.
+* **Inspiration:** There is a unique beauty in discovering **Type 1 Isomorphisms**(detailed later)—seeing two entirely different sets of axioms converge into the exact same mathematical system.
+* **Rigor:** The systematic classification of these growing structures is the cherry on the cake, creating a living, rigorous encyclopedia of mathematical reality.
+
 ---
 
 ### How It Works: The Logic of the Mathverse
