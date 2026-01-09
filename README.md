@@ -40,7 +40,7 @@ Nodes are the building blocks of the tree, containing specific axioms and the th
 We track user contributions through a reputation system. This allows users to quantify their impact while incentivizing the growth of a library of consistent mathematical systems.
 * **Creation Score:** For building valid mathematical systems.
 * **Contributor Score:** For verifying others' work.
-* **The Librarian Bonus:** A special reward for users who find **Isomorphisms** (wormholes between branches) or **Duplicates**.
+* **The Librarian Bonus:** A special reward for users who find **Isomorphisms** or **Duplicates**.
 * **See:** `designs/pdfs/logic-score.pdf`
 
 #### 4. The "Zombie" Protocol (`logic-node-delete.mmd`)
@@ -114,3 +114,32 @@ If you are pulling this repo to look at the architecture:
 * **The Insight Alert:** If a user (or Admin) tries to flag Node A -> Node C, but Node A is already a duplicate of Node B:
     * The system blocks the action.
     * The system alerts the Admin/User: *"Potential Multi-Duplication: Node A is already linked to B. Check if B and C are duplicates."* (This allows for multiple duplicated branches to be identified and cleaned up efficiently.)
+
+
+
+---
+
+## 🛠 TEMPORARY: ALPHA SCAFFOLDING & NEXT STEPS
+> **Status:** Jan 9, 2026 - Visualization Logic Verified.
+> **Action:** This section is to be deleted once the transition to Firebase/Live Data is complete.
+
+### 1. Current Implementation Audit
+The following files constitute the current "Visual Prototype" and require verification/refactoring in the next phase:
+* **`App.tsx` & `index.css`**: Currently uses a "Full-Screen Canvas" approach with CSS-based animations for the **Deprecation Protocol**. 
+* **`graphAdapter.ts`**: 
+    * **Layout:** Uses hardcoded vertical/horizontal offsets ($250 \times 200$). This is a placeholder; a formal DAG (Directed Acyclic Graph) layout engine (e.g., `dagre`) is required for complex trees.
+    * **Isomorphism (Type 1):** Currently rendered as a physical `Edge`. This is strictly for system verification. In production, these lines must be removed to prevent visual clutter across distant branches.
+* **Dependencies**: Successfully migrated to `@xyflow/react` (v12). `reactflow` (v11) has been uninstalled to prevent namespace collisions.
+
+### 2. Isomorphism Logic
+* **Type 1 (Structural Equivalence):** Different axiom paths leading to the same result. Currently visualized with dashed lines.
+* **Type 2 (Duplication):** Identical nodes/axioms. These trigger the **Zombie Protocol** (Pulsing Yellow status).
+
+### 3. Tomorrow's Sprint (Jan 10, 2026)
+To move from a static visualization to a functional Mathverse app, the following tasks are prioritized:
+* **Custom Math Nodes:** Create a custom node component for `@xyflow/react` that integrates **KaTeX**. This will render the `displayLatex` field as professional math rather than raw text.
+* **Interactive Flashcard Overlay:** Implement the `onNodeClick` handler to launch the Sidepanel/Modal defined in `view.mmd`.
+* **Axiom Lineage Utility:** Develop a recursive function to traverse `parentId` pointers. This allows a selected node to display its full set of inherited axioms.
+* **Teleportation Navigation:** Replace the physical isomorphism lines with a UI button on the Flashcard. Clicking "View Isomorph" will programmatically move the `ReactFlow` viewport to the equivalent node's coordinates.
+
+---
