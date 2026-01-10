@@ -21,11 +21,11 @@ graph TD
     end
     
     %% UX Rules
-    Note_UX[/"UX RULE 1: Context Preservation<br/>Opening a proof must push content down."/]
-    style Note_UX fill:#fff,stroke:#333,stroke-dasharray: 5 5
+    NoteUx[/"UX RULE 1: Context Preservation<br/>Opening a proof must push content down."/]
+    style NoteUx fill:#fff,stroke:#333,stroke-dasharray: 5 5
     
-    Note_Auth[/"UX RULE 2: Conditional Rendering<br/>Edit/Flag buttons only appear<br/>if User has correct Role."/]
-    style Note_Auth fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
+    NoteAuth[/"UX RULE 2: Conditional Rendering<br/>Edit/Flag buttons only appear<br/>if User has correct Role."/]
+    style NoteAuth fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
     
-    Proof -.-> Note_UX
-    Controls -.-> Note_Auth
+    Proof -.-> NoteUx
+    Controls -.-> NoteAuth

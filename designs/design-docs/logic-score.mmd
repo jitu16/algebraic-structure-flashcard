@@ -1,83 +1,74 @@
 graph TD
     subgraph Events ["System Events"]
         %% Red Phase Events
-        Event_Green["Node Verified (Red to Green)"]
-        Event_Gray["Node Dead-Ended (Red to Gray)"]
-        Event_Delete["Node Deleted (Red to Deleted)"]
+        EventGreen["Node Verified (Red to Green)"]
+        EventGray["Node Contradictory (Red to Gray)"]
+        EventDelete["Node Rejected (Red to Deleted)"]
         
         %% Yellow Phase Events
-        Event_Fix["Flag Resolved: Fixed/Edited"]
-        Event_False["Flag Resolved: False Alarm"]
-        Event_FlagGray["Flag Resolved: Axiom Contradiction (to Gray)"]
-        Event_FlagDeprecate["Flag Resolved: Node Killed (to Deleted)"]
+        EventFix["Flag Resolved: Fixed/Edited"]
+        EventFalse["Flag Resolved: False Alarm"]
         
-        %% --- NEW ADDITION START ---
-        Event_Merge["Flag Resolved: Axiom Merged (Duplicate)"]
-        Event_Iso["Flag Resolved: Node Isomorphic (Link)"]
-        %% --- NEW ADDITION END ---
+        %% Formal Deduplication/Integrity Events
+        EventFlagGray["Flag Resolved: Found Contradiction (to Gray)"]
+        EventMerge["Flag Resolved: Axiom Merged (Registry)"]
+        EventDeprecate["Flag Resolved: Branch Duplicated (to Zombie)"]
     end
 
-    subgraph Owner_Rewards ["Owner Rewards"]
-        %% The Owner gets TWO types of points, but we group them by the Person.
-        Owner_Creation[/"Owner: +1 Creation Score"/]
-        Owner_Contrib[/"Owner: +2 Contributor Score"/]
+    subgraph OwnerRewards ["Owner Rewards"]
+        ownerCreation[/"Owner: +1 Creation Score"/]
+        ownerContrib[/"Owner: +2 Contributor Score"/]
     end
 
-    subgraph Public_Rewards ["Voter & Flagger Rewards (Contributor Score)"]
-        Vote_G_Success[/"Green Voter: +1"/]
-        Vote_G_Fail[/"Green Voter: -1"/]
+    subgraph PublicRewards ["Contributor Rewards"]
+        VoteGSuccess[/"Green Voter: +1"/]
+        VoteGFail[/"Green Voter: -1"/]
         
-        Vote_B_Success[/"Black Voter: +1"/]
-        Vote_B_Fail[/"Black Voter: -1"/]
+        VoteBSuccess[/"Black Voter: +1"/]
+        VoteBFail[/"Black Voter: -1"/]
         
-        Flag_Success[/"Flagger (Yellow): +1 (Fix Accepted)"/]
-        Flag_Fail[/"Flagger (Yellow): -1 (False Alarm)"/]
-        Flag_BigWin[/"Flagger (Yellow): +2 (Node Killed/Grayed)"/]
+        FlagSuccess[/"Flagger: +1 (Fix Accepted)"/]
+        FlagFail[/"Flagger: -1 (False Alarm)"/]
         
-        %% --- NEW ADDITION START ---
-        Flag_Merge[/"Librarian Bonus: +1 (Merge/Link)"/]
-        %% --- NEW ADDITION END ---
+        FlagBigWin[/"Flagger: +2 (Found Contradiction)"/]
+        flagLibrarian[/"Librarian Bonus: +1 (Duplicate/Merge)"/]
     end
 
-    %% -- Owner Rewards (Both Types) --
-    Event_Green --> Owner_Creation
-    Event_Gray --> Owner_Creation
-    Event_Green --> Owner_Contrib
-    Event_Gray --> Owner_Contrib
+    %% -- Owner Rewards --
+    EventGreen --> ownerCreation
+    EventGray --> ownerCreation
+    EventGreen --> ownerContrib
+    EventGray --> ownerContrib
 
-    %% -- Voting Rewards (Red Phase) --
-    %% LOGIC CHECK: Gray nodes are Valid Math (just inconsistent), so Green Voters were RIGHT.
-    Event_Green -->|"Voted Green (Right)"| Vote_G_Success
-    Event_Green -->|"Voted Black (Wrong)"| Vote_B_Fail
+    %% -- Voting Rewards --
+    EventGreen -->|"Voted Green (Right)"| VoteGSuccess
+    EventGreen -->|"Voted Black (Wrong)"| VoteBFail
     
-    Event_Gray -->|"Voted Green (Right)"| Vote_G_Success
-    Event_Gray -->|"Voted Black (Wrong)"| Vote_B_Fail
+    EventGray -->|"Voted Green (Right)"| VoteGSuccess
+    EventGray -->|"Voted Black (Wrong)"| VoteBFail
     
-    Event_Delete -->|"Voted Black (Right)"| Vote_B_Success
-    Event_Delete -->|"Voted Green (Wrong)"| Vote_G_Fail
+    EventDelete -->|"Voted Black (Right)"| VoteBSuccess
+    EventDelete -->|"Voted Green (Wrong)"| VoteGFail
 
-    %% -- Flagging Rewards (Yellow Phase) --
-    Event_Fix -->|"Flagged Issue (Helpful)"| Flag_Success
-    Event_False -->|"Flagged Issue (Wrong)"| Flag_Fail
+    %% -- Flagging & Librarian Rewards --
+    EventFix -->|"Flag Resolved: Fixed/Edited"| FlagSuccess
+    EventFalse -->|"Flag Resolved: False Alarm"| FlagFail
     
-    Event_FlagGray -->|"Found Contradiction"| Flag_BigWin
-    Event_FlagDeprecate -->|"Found Fatal Flaw"| Flag_BigWin
+    EventFlagGray -->|"Flag Resolved: Found Contradiction"| FlagBigWin
     
-    %% --- NEW ADDITION START ---
-    Event_Merge -->|"Identified Duplicate"| Flag_Merge
-    Event_Iso -->|"Identified Isomorphism"| Flag_Merge
-    %% --- NEW ADDITION END ---
+    EventDeprecate -->|"Flag Resolved: Branch Duplicated"| flagLibrarian
+    EventMerge -->|"Flag Resolved: Axiom Merged"| flagLibrarian
     
     %% Styling
-    style Owner_Creation fill:#ccffcc,stroke:#006400
-    style Owner_Contrib fill:#ccffcc,stroke:#006400
+    style ownerCreation fill:#ccffcc,stroke:#006400
+    style ownerContrib fill:#ccffcc,stroke:#006400
     
-    style Vote_G_Success fill:#e1f5fe,stroke:#01579b
-    style Vote_B_Success fill:#e1f5fe,stroke:#01579b
-    style Flag_Success fill:#e1f5fe,stroke:#01579b
-    style Flag_BigWin fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    style Flag_Merge fill:#e1f5fe,stroke:#01579b
+    style VoteGSuccess fill:#e1f5fe,stroke:#01579b
+    style VoteBSuccess fill:#e1f5fe,stroke:#01579b
+    style FlagSuccess fill:#e1f5fe,stroke:#01579b
+    style FlagBigWin fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style flagLibrarian fill:#e1f5fe,stroke:#01579b
     
-    style Vote_G_Fail fill:#ffcccc,stroke:#b71c1c
-    style Vote_B_Fail fill:#ffcccc,stroke:#b71c1c
-    style Flag_Fail fill:#ffcccc,stroke:#b71c1c
+    style VoteGFail fill:#ffcccc,stroke:#b71c1c
+    style VoteBFail fill:#ffcccc,stroke:#b71c1c
+    style FlagFail fill:#ffcccc,stroke:#b71c1c

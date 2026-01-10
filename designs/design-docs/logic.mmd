@@ -1,79 +1,71 @@
 graph TD
-    %% 1. The Entry Point
-    Start((Start)) --> Search{Search Axiom}
-    
-    Search -->|"Found"| Select["Select & Customize Notation"]
+    %% 1. The Entry Point: Contextual Initialization
+    Start((Start)) --> Context{Check Root Context}
+    Context -->|"Set/Ops Defined"| Search{Search Axiom}
+    Context -->|"New Branch"| DefineRoot["Define Root Environment<br/>(Sets & Operators)"]
+    DefineRoot --> Search
+
+    Search -->|"Found"| Select["Select & Match Notation<br/>(Check LaTeX vs Render)"]
     Search -->|"Not Found"| CreateAx["Define New Axiom (Registry)"]
     
     Select --> Unverified
     CreateAx --> Unverified
 
     %% 2. The Live Tree States
-    subgraph Live_Tree ["The Visible Tree"]
+    subgraph LiveTree ["The Visible Tree"]
         Unverified[/"Live Node (Unverified)<br/>Color: RED<br/>(Stats: Green Votes vs Black Votes)"/]
         Verified[/"Live Node (Verified)<br/>Color: GREEN"/]
         Contested[/"Flagged Node<br/>Color: YELLOW"/]
         DeadEnd[/"Dead End (Inconsistent)<br/>Color: GRAY"/]
-        
-        %% --- NEW ADDITION START ---
         Zombie[/"Zombie Node (Deprecated)<br/>Color: Flashing YELLOW<br/>(No New Children Allowed)"/]
-        %% --- NEW ADDITION END ---
     end
 
     %% 3. The Red Workflow
     Unverified -->|"Admin Approves (Valid)"| Verified
     Unverified -->|"Admin Confirms Inconsistency"| DeadEnd
     Unverified -->|"Admin Rejects (Spam)"| Delete((Deleted))
-    Unverified -->|"Contributor Deletes OWN Draft"| Delete
     
-    %% 4. The Flagging Workflow
+    %% 4. The Flagging Workflow: Focus on Duplication
     Verified -->|"Viewer/Contributor Flags Issue"| Contested
+    
     Verified -.->|"Flagged as Duplicate Axiom"| AxiomFlag{"Admin Review<br/>(Merge Request)"}
-    Verified -.->|"Flagged as Isomorphic"| IsoFlag{"Admin Review<br/>(Link Request)"}
-    %% --- NEW ADDITION START ---
-    Verified -.->|"Flagged as Duplicate Node"| DeprecateFlag{"Admin Review<br/>(Deprecation)"}
-    %% --- NEW ADDITION END ---
+    
+    %% NEW: Combined Duplication Flag (Notation or Permutation)
+    Verified -.->|"Flagged as Duplicate Node"| DeprecateFlag{"Admin Review<br/>(Notation/Permutation)"}
 
     %% 5. The Resolution Workflow
     Contested -->|"Admin Dismisses (False Alarm)"| Verified
     Contested -->|"Admin Applies Fix (Node Edit)"| Verified
     Contested -->|"Admin Confirms Inconsistency"| DeadEnd
-    Contested -->|"Admin Deprecates"| Delete
+    Contested -->|"Admin Deprecates"| Zombie
     
     %% 6. The Axiom Merge Workflow
-    AxiomFlag -->|"Admin Approves (Merge)"| SystemUpdate["System Redirects Pointers<br/>(Keep System As Is)"]
+    AxiomFlag -->|"Admin Approves (Merge)"| SystemUpdate["System Redirects Pointers"]
     SystemUpdate --> Verified
     SystemUpdate -.->|"Old Axiom Deleted"| Delete
     AxiomFlag -->|"Admin Rejects (Distinct)"| Verified
 
-    %% 7. The Isomorphism Workflow
-    IsoFlag -->|"Admin Confirms (Link)"| LinkUpdate["System Adds Link<br/>(Updates Isomorphic Array)"]
-    LinkUpdate --> Verified
-    IsoFlag -->|"Admin Rejects (Distinct)"| Verified
-
-    %% 8. The Deprecation Workflow (NEW)
+    %% 7. The Deprecation Workflow (Zombie Protocol)
     DeprecateFlag -->|"Admin Marks as Duplicate"| Zombie
-    Zombie -.->|"Manual/Auto Cleanup"| Delete
-    
-    %% --- FIXED LINE BELOW ---
+    Zombie -.->|"Manual/Auto Cleanup<br/>(Theorem Migration)"| Delete
     DeprecateFlag -->|"Admin Rejects (Distinct)"| Verified
 
-    %% 9. Maintenance Loop
+    %% 8. Maintenance Loop
     Verified -->|"Admin Edits (Direct Fix)"| Verified
 
-    %% 10. Roles
-    Note_Roles[/"ROLES:<br/>1. Viewer: Read Only<br/>2. Voter: Vote & Flag<br/>3. Contributor: Create, Vote, Flag<br/>4. Admin: Verify, Edit, Delete, MERGE, LINK, DEPRECATE"/]
-    style Note_Roles fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
+    %% 9. Roles & Rules
+    NoteRoles[/"ROLES:<br/>1. Viewer: Read Only<br/>2. Voter: Vote & Flag<br/>3. Contributor: Create, Vote, Flag<br/>4. Admin: Full Authority"/]
+    style NoteRoles fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
 
-    Note_Inherit[/"RULE 1: Creation Inheritance<br/>If Parent is Red, Child starts Red."/]
-    style Note_Inherit fill:#fff,stroke:#333,stroke-dasharray: 5 5
+    NoteNotation[/"NOTATION RULE:<br/>Contributors must use LaTeX symbols<br/>consistent with the Root Node's<br/>Operator definitions."/]
+    style NoteNotation fill:#fff,stroke:#333,stroke-dasharray: 5 5
 
-    Note_Cascade[/"RULE 2: Update Cascade<br/>If Parent is Edited, Children turn Red."/]
-    style Note_Cascade fill:#ffeeee,stroke:#ff0000,stroke-dasharray: 5 5
+    NoteCascade[/"UPDATE CASCADE:<br/>If Parent environment is changed,<br/>all children revert to Red Status."/]
+    style NoteCascade fill:#ffeeee,stroke:#ff0000,stroke-dasharray: 5 5
     
-    Note_Roles -.-> Start
-    Note_Inherit -.-> Unverified
-    Note_Cascade -.-> Verified
+    NoteRoles -.-> Start
+    NoteNotation -.-> Select
+    NoteCascade -.-> Verified
 
     %% Styling
     style Unverified fill:#ffcccc,stroke:#f00
@@ -82,6 +74,5 @@ graph TD
     style DeadEnd fill:#eee,stroke:#333
     style Delete fill:#fff,stroke:#000,stroke-width:1px
     style AxiomFlag fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    style IsoFlag fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     style DeprecateFlag fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     style Zombie fill:#ffffcc,stroke:#fc0,stroke-dasharray: 5 5

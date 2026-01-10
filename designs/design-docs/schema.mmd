@@ -3,78 +3,76 @@ classDiagram
         +String id PK
         +String email
         +String role "Values: admin, contributor, voter"
-        +Int creation_reputation
-        +Int contributor_reputation
+        +Int CreationReputation
+        +Int ContributorReputation
     }
 
     class Universe {
         +String id PK
         +String name
-        +Array~String~ root_axiom_ids "Pointers to the Axiom Registry"
+        +Array~String~ sets "e.g., ['V', 'F']"
+        +Array~String~ operators "e.g., ['+', '·']"
+        +Array~String~ RootAxiomIds "Pointers to the Axiom Registry"
     }
 
     class Axiom {
         +String id PK
-        +String canonical_name "e.g., 'Commutativity'"
+        +String CanonicalName "e.g., 'Commutativity'"
         +Array~String~ aliases "Tags/Synonyms: ['Abelian', 'Symmetric']"
-        +String default_latex "e.g., a \cdot b = b \cdot a"
-        +String author_id FK
-        +Timestamp created_at
+        +String DefaultLatex "e.g., a \cdot b = b \cdot a"
+        +String AuthorId FK
+        +Timestamp CreatedAt
     }
     
     note for Axiom "The 'Concept' Library.\nStores unique definitions."
 
     class Node {
         +String id PK
-        +String parent_id FK
-        +String author_id FK
+        +String ParentId FK
+        +String AuthorId FK
         
-        +String axiom_id FK "LOGIC: Links to the Concept"
-        +String display_latex "VISUAL: The Notation Override"
+        +String AxiomId FK "LOGIC: Links to the Concept"
+        +String DisplayLatex "VISUAL: The Notation Override"
         
-        +String status "Values: unverified, verified, contested, dead_end"
+        +String status "Values: unverified, verified, contested, DeadEnd, deprecated"
         
-        +Array~String~ isomorphic_to_ids "Type 1 Iso: Different Axioms, Same System"
+        +String DuplicateOfId "Pointer to the Survivor Node"
+        +Boolean ToBeDeleted "Deprecation Flag (Triggers Yellow Flash)"
         
-        %% --- NEW ADDITION START ---
-        +String duplicate_of_id "Type 2 Iso: Pointer to the Survivor Node"
-        +Boolean to_be_deleted "Deprecation Flag (Triggers Yellow Flash)"
-        %% --- NEW ADDITION END ---
-        
-        +Int vote_count_green
-        +Int vote_count_black
-        +Int flag_count_yellow
+        +Int VoteCountGreen
+        +Int VoteCountBlack
+        +Int FlagCountYellow
     }
 
     class Vote {
         +String id PK
-        +String node_id FK
-        +String user_id FK
+        +String NodeId FK
+        +String UserId FK
         +String type "Values: green, black"
         +Timestamp timestamp
     }
     
     class Flag {
         +String id PK
-        +String type "Values: node_issue, axiom_duplicate, isomorphism, deprecation"
+        +String type "Values: NodeIssue, AxiomDuplicate, NotationError, duplication"
         
-        +String target_node_id FK "If flagging a Node"
-        +String target_axiom_id FK "If flagging an Axiom"
+        +String TargetNodeId FK "If flagging a Node"
+        +String TargetAxiomId FK "If flagging an Axiom"
         
-        +String reporter_id FK
-        +String reason
-        +String suggested_fix_latex "For Node Typos"
+        +String ReporterId FK
+        +String reason "e.g., Notation Divergence or Permutation"
+        +String SuggestedFixLatex "For Node Typos"
         
-        +String duplicate_of_id "Points to Master Axiom (Merge) OR Isomorphic Node (Link)"
+        +String DuplicateOfId "Points to Master Axiom (Merge) OR Survivor Node"
         
         +String status
     }
     
     class Theorem {
         +String id PK
-        +String node_id FK
-        +String statement_latex
-        +String proof_latex
+        +String NodeId FK
+        +String StatementLatex
+        +String ProofLatex
     }
 
     User "1" -- "*" Node : creates

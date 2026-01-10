@@ -1,45 +1,53 @@
 graph TD
-    %% ENTRY POINT 1: ADMIN FLAG
     subgraph Admin_Trigger ["Event: Admin Flags Node X as Duplicate"]
-        Start_Admin((Start)) --> IsMarked{"Is Node X already<br/>marked 'to_be_deleted'?"}
+        Start_Admin((Start)) --> IsMarked{"Is Node X already<br/>marked 'toBeDeleted'?"}
         
-        %% Branch 1: Not Marked Yet
-        IsMarked -->|"No (Fresh Flag)"| CheckKids_1{"Has Children?"}
+        IsMarked -->|"No (Fresh Flag)"| markX1["1. Set toBeDeleted = TRUE<br/>2. Set duplicateOf = SurvivorID"]
+        markX1 --> checkKids1{"Has Children?"}
         
-        CheckKids_1 -->|"No (Lone Node)"| Die_1[/"DELETE Node X"/]
+        %% Admin Trigger Check 1
+        checkKids1 -->|"No (Lone Node)"| parentZombie1{"Is my Parent<br/>marked 'toBeDeleted'?"}
+        parentZombie1 -->|"Yes"| die1[/"DELETE Node X"/]
+        parentZombie1 -->|"No"| perm1[/"PERMANENT ZOMBIE"/]
         
-        CheckKids_1 -->|"Yes (Start Zombie Branch)"| Mark_X["1. Set to_be_deleted = TRUE<br/>2. Set duplicate_of = SurvivorID"]
-        Mark_X --> Cascade["TRIGGER: Mark ALL Children for Death!<br/>(Recursion)"]
+        checkKids1 -->|"Yes (Start Zombie Branch)"| Cascade["TRIGGER: Mark ALL Children for Death!<br/>(Recursion)"]
         
-        %% Branch 2: Already Marked
-        IsMarked -->|"Yes (Update/Redundant)"| CheckKids_2{"Has Children?"}
+        IsMarked -->|"Yes (Update/Redundant)"| checkKids2{"Has Children?"}
         
-        CheckKids_2 -->|"Yes (Just Update)"| Update_ID["Update duplicate_of = SurvivorID"]
+        checkKids2 -->|"Yes (Just Update)"| updateID["Update duplicateOf = SurvivorID"]
         
-        CheckKids_2 -->|"No (Ready to Die)"| Die_2[/"DELETE Node X"/]
-        Die_2 --> Signal_Parent_2["SEND SIGNAL: 'Parent, I died'"]
+        %% Admin Trigger Check 2
+        checkKids2 -->|"No (Ready to Die)"| parentZombie2{"Is my Parent<br/>marked 'toBeDeleted'?"}
+        parentZombie2 -->|"Yes"| die2[/"DELETE Node X"/]
+        die2 --> signalParent2["SEND SIGNAL: 'Parent, I died'"]
+        parentZombie2 -->|"No"| perm2[/"PERMANENT ZOMBIE"/]
     end
 
-    %% ENTRY POINT 2: SIGNAL RECEIVED
-    subgraph Signal_Trigger ["Event: Parent Receives Death Signal"]
-        Start_Signal((Signal Received)) --> Integrity{"Integrity Check:<br/>Is the Dead Child<br/>still in my list?"}
+    subgraph signalTrigger ["Event: Parent Receives Death Signal"]
+        startSignal((Signal Received)) --> Integrity{"Integrity Check:<br/>Is the Dead Child<br/>still in my list?"}
         
-        Integrity -->|"Yes (Error!)"| Alert_Admin["ALERT ADMIN:<br/>DB Consistency Failure"]
+        Integrity -->|"Yes (Error!)"| alertAdmin["ALERT ADMIN:<br/>DB Consistency Failure"]
         
-        Integrity -->|"No (Clean)"| Check_Remaining{"Do I have ANY<br/>remaining children?"}
+        Integrity -->|"No (Clean)"| checkRemaining{"Do I have ANY<br/>remaining children?"}
         
-        Check_Remaining -->|"Yes (>0)"| Ignore["Ignore Signal<br/>(Stay Zombie)"]
+        checkRemaining -->|"Yes (>0)"| Ignore["Ignore Signal<br/>(Stay Zombie)"]
         
-        Check_Remaining -->|"No (I am now empty)"| Die_Signal[/"DELETE Self"/]
-        Die_Signal --> Bubble_Up["SEND SIGNAL: 'Grandparent, I died'"]
+        %% Signal Trigger Check
+        checkRemaining -->|"No (I am now empty)"| parentZombie3{"Is my Parent<br/>marked 'toBeDeleted'?"}
+        parentZombie3 -->|"Yes"| dieSignal[/"DELETE Self"/]
+        dieSignal --> bubbleUp["SEND SIGNAL: 'Grandparent, I died'"]
+        parentZombie3 -->|"No"| perm3[/"PERMANENT ZOMBIE"/]
     end
 
-    %% Styling
-    style Die_1 fill:#ffcccc,stroke:#b71c1c,stroke-width:2px
-    style Die_2 fill:#ffcccc,stroke:#b71c1c,stroke-width:2px
-    style Die_Signal fill:#ffcccc,stroke:#b71c1c,stroke-width:2px
+    style die1 fill:#ffcccc,stroke:#b71c1c,stroke-width:2px
+    style die2 fill:#ffcccc,stroke:#b71c1c,stroke-width:2px
+    style dieSignal fill:#ffcccc,stroke:#b71c1c,stroke-width:2px
     
-    style Signal_Parent_2 fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
-    style Bubble_Up fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
+    style perm1 fill:#ffffcc,stroke:#fc0,stroke-width:3px,stroke-dasharray: 5 5
+    style perm2 fill:#ffffcc,stroke:#fc0,stroke-width:3px,stroke-dasharray: 5 5
+    style perm3 fill:#ffffcc,stroke:#fc0,stroke-width:3px,stroke-dasharray: 5 5
     
-    style Alert_Admin fill:#ff0000,stroke:#fff,color:#fff
+    style signalParent2 fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
+    style bubbleUp fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
+    
+    style alertAdmin fill:#ff0000,stroke:#fff,color:#fff
