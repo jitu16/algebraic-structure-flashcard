@@ -3,8 +3,8 @@ classDiagram
         +String id PK
         +String email
         +String role "Values: admin, contributor, voter"
-        +Int CreationReputation
-        +Int ContributorReputation
+        +Int creationReputation
+        +Int contributorReputation
     }
 
     class Universe {
@@ -12,67 +12,67 @@ classDiagram
         +String name
         +Array~String~ sets "e.g., ['V', 'F']"
         +Array~String~ operators "e.g., ['+', '·']"
-        +Array~String~ RootAxiomIds "Pointers to the Axiom Registry"
+        +Array~String~ rootAxiomIds "Pointers to the Axiom Registry"
     }
 
     class Axiom {
         +String id PK
-        +String CanonicalName "e.g., 'Commutativity'"
+        +String canonicalName "e.g., 'Commutativity'"
         +Array~String~ aliases "Tags/Synonyms: ['Abelian', 'Symmetric']"
-        +String DefaultLatex "e.g., a \cdot b = b \cdot a"
-        +String AuthorId FK
-        +Timestamp CreatedAt
+        +String defaultLatex "e.g., a \cdot b = b \cdot a"
+        +String authorId FK
+        +Timestamp createdAt
     }
     
     note for Axiom "The 'Concept' Library.\nStores unique definitions."
 
     class Node {
         +String id PK
-        +String ParentId FK
-        +String AuthorId FK
+        +String parentId FK
+        +String authorId FK
         
-        +String AxiomId FK "LOGIC: Links to the Concept"
-        +String DisplayLatex "VISUAL: The Notation Override"
+        +String axiomId FK "LOGIC: Links to the Concept"
+        +String displayLatex "VISUAL: The Notation Override"
         
-        +String status "Values: unverified, verified, contested, DeadEnd, deprecated"
+        +String status "Values: unverified, verified, contested, deadEnd, deprecated"
         
-        +String DuplicateOfId "Pointer to the Survivor Node"
-        +Boolean ToBeDeleted "Deprecation Flag (Triggers Yellow Flash)"
+        +String duplicateOfId "Pointer to the Survivor Node"
+        +Boolean toBeDeleted "Deprecation Flag (Triggers Yellow Flash)"
         
-        +Int VoteCountGreen
-        +Int VoteCountBlack
-        +Int FlagCountYellow
+        +Int voteCountGreen
+        +Int voteCountBlack
+        +Int flagCountYellow
     }
 
     class Vote {
         +String id PK
-        +String NodeId FK
-        +String UserId FK
+        +String nodeId FK
+        +String userId FK
         +String type "Values: green, black"
         +Timestamp timestamp
     }
     
     class Flag {
         +String id PK
-        +String type "Values: NodeIssue, AxiomDuplicate, NotationError, duplication"
+        +String type "Values: nodeIssue, axiomDuplicate, notationError, duplication"
         
-        +String TargetNodeId FK "If flagging a Node"
-        +String TargetAxiomId FK "If flagging an Axiom"
+        +String targetNodeId FK "If flagging a Node"
+        +String targetAxiomId FK "If flagging an Axiom"
         
-        +String ReporterId FK
+        +String reporterId FK
         +String reason "e.g., Notation Divergence or Permutation"
-        +String SuggestedFixLatex "For Node Typos"
+        +String suggestedFixLatex "For Node Typos"
         
-        +String DuplicateOfId "Points to Master Axiom (Merge) OR Survivor Node"
+        +String duplicateOfId "Points to Master Axiom (Merge) OR Survivor Node"
         
         +String status
     }
     
     class Theorem {
         +String id PK
-        +String NodeId FK
-        +String StatementLatex
-        +String ProofLatex
+        +String nodeId FK
+        +String statementLatex
+        +String proofLatex
     }
 
     User "1" -- "*" Node : creates

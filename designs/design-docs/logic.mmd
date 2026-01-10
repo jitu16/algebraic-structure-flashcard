@@ -1,78 +1,78 @@
 graph TD
     %% 1. The Entry Point: Contextual Initialization
-    Start((Start)) --> Context{Check Root Context}
-    Context -->|"Set/Ops Defined"| Search{Search Axiom}
-    Context -->|"New Branch"| DefineRoot["Define Root Environment<br/>(Sets & Operators)"]
-    DefineRoot --> Search
+    start((Start)) --> context{Check Root Context}
+    context -->|"Set/Ops Defined"| search{Search Axiom}
+    context -->|"New Branch"| defineRoot["Define Root Environment<br/>(Sets & Operators)"]
+    defineRoot --> search
 
-    Search -->|"Found"| Select["Select & Match Notation<br/>(Check LaTeX vs Render)"]
-    Search -->|"Not Found"| CreateAx["Define New Axiom (Registry)"]
+    search -->|"Found"| select["Select & Match Notation<br/>(Check LaTeX vs Render)"]
+    search -->|"Not Found"| createAx["Define New Axiom (Registry)"]
     
-    Select --> Unverified
-    CreateAx --> Unverified
+    select --> unverified
+    createAx --> unverified
 
     %% 2. The Live Tree States
-    subgraph LiveTree ["The Visible Tree"]
-        Unverified[/"Live Node (Unverified)<br/>Color: RED<br/>(Stats: Green Votes vs Black Votes)"/]
-        Verified[/"Live Node (Verified)<br/>Color: GREEN"/]
-        Contested[/"Flagged Node<br/>Color: YELLOW"/]
-        DeadEnd[/"Dead End (Inconsistent)<br/>Color: GRAY"/]
-        Zombie[/"Zombie Node (Deprecated)<br/>Color: Flashing YELLOW<br/>(No New Children Allowed)"/]
+    subgraph liveTree ["The Visible Tree"]
+        unverified[/"Live Node (Unverified)<br/>Color: RED<br/>(Stats: Green Votes vs Black Votes)"/]
+        verified[/"Live Node (Verified)<br/>Color: GREEN"/]
+        contested[/"Flagged Node<br/>Color: YELLOW"/]
+        deadEnd[/"Dead End (Inconsistent)<br/>Color: GRAY"/]
+        zombie[/"Zombie Node (Deprecated)<br/>Color: Flashing YELLOW<br/>(No New Children Allowed)"/]
     end
 
     %% 3. The Red Workflow
-    Unverified -->|"Admin Approves (Valid)"| Verified
-    Unverified -->|"Admin Confirms Inconsistency"| DeadEnd
-    Unverified -->|"Admin Rejects (Spam)"| Delete((Deleted))
+    unverified -->|"Admin Approves (Valid)"| verified
+    unverified -->|"Admin Confirms Inconsistency"| deadEnd
+    unverified -->|"Admin Rejects (Spam)"| delete((Deleted))
     
     %% 4. The Flagging Workflow: Focus on Duplication
-    Verified -->|"Viewer/Contributor Flags Issue"| Contested
+    verified -->|"Viewer/Contributor Flags Issue"| contested
     
-    Verified -.->|"Flagged as Duplicate Axiom"| AxiomFlag{"Admin Review<br/>(Merge Request)"}
+    verified -.->|"Flagged as Duplicate Axiom"| axiomFlag{"Admin Review<br/>(Merge Request)"}
     
     %% NEW: Combined Duplication Flag (Notation or Permutation)
-    Verified -.->|"Flagged as Duplicate Node"| DeprecateFlag{"Admin Review<br/>(Notation/Permutation)"}
+    verified -.->|"Flagged as Duplicate Node"| deprecateFlag{"Admin Review<br/>(Notation/Permutation)"}
 
     %% 5. The Resolution Workflow
-    Contested -->|"Admin Dismisses (False Alarm)"| Verified
-    Contested -->|"Admin Applies Fix (Node Edit)"| Verified
-    Contested -->|"Admin Confirms Inconsistency"| DeadEnd
-    Contested -->|"Admin Deprecates"| Zombie
+    contested -->|"Admin Dismisses (False Alarm)"| verified
+    contested -->|"Admin Applies Fix (Node Edit)"| verified
+    contested -->|"Admin Confirms Inconsistency"| deadEnd
+    contested -->|"Admin Deprecates"| zombie
     
     %% 6. The Axiom Merge Workflow
-    AxiomFlag -->|"Admin Approves (Merge)"| SystemUpdate["System Redirects Pointers"]
-    SystemUpdate --> Verified
-    SystemUpdate -.->|"Old Axiom Deleted"| Delete
-    AxiomFlag -->|"Admin Rejects (Distinct)"| Verified
+    axiomFlag -->|"Admin Approves (Merge)"| systemUpdate["System Redirects Pointers"]
+    systemUpdate --> verified
+    systemUpdate -.->|"Old Axiom Deleted"| delete
+    axiomFlag -->|"Admin Rejects (Distinct)"| verified
 
     %% 7. The Deprecation Workflow (Zombie Protocol)
-    DeprecateFlag -->|"Admin Marks as Duplicate"| Zombie
-    Zombie -.->|"Manual/Auto Cleanup<br/>(Theorem Migration)"| Delete
-    DeprecateFlag -->|"Admin Rejects (Distinct)"| Verified
+    deprecateFlag -->|"Admin Marks as Duplicate"| zombie
+    zombie -.->|"Manual/Auto Cleanup<br/>(Theorem Migration)"| delete
+    deprecateFlag -->|"Admin Rejects (Distinct)"| verified
 
     %% 8. Maintenance Loop
-    Verified -->|"Admin Edits (Direct Fix)"| Verified
+    verified -->|"Admin Edits (Direct Fix)"| verified
 
     %% 9. Roles & Rules
-    NoteRoles[/"ROLES:<br/>1. Viewer: Read Only<br/>2. Voter: Vote & Flag<br/>3. Contributor: Create, Vote, Flag<br/>4. Admin: Full Authority"/]
-    style NoteRoles fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
+    noteRoles[/"ROLES:<br/>1. Viewer: Read Only<br/>2. Voter: Vote & Flag<br/>3. Contributor: Create, Vote, Flag<br/>4. Admin: Full Authority"/]
+    style noteRoles fill:#e1f5fe,stroke:#01579b,stroke-dasharray: 5 5
 
-    NoteNotation[/"NOTATION RULE:<br/>Contributors must use LaTeX symbols<br/>consistent with the Root Node's<br/>Operator definitions."/]
-    style NoteNotation fill:#fff,stroke:#333,stroke-dasharray: 5 5
+    noteNotation[/"NOTATION RULE:<br/>Contributors must use LaTeX symbols<br/>consistent with the Root Node's<br/>Operator definitions."/]
+    style noteNotation fill:#fff,stroke:#333,stroke-dasharray: 5 5
 
-    NoteCascade[/"UPDATE CASCADE:<br/>If Parent environment is changed,<br/>all children revert to Red Status."/]
-    style NoteCascade fill:#ffeeee,stroke:#ff0000,stroke-dasharray: 5 5
+    noteCascade[/"UPDATE CASCADE:<br/>If Parent environment is changed,<br/>all children revert to Red Status."/]
+    style noteCascade fill:#ffeeee,stroke:#ff0000,stroke-dasharray: 5 5
     
-    NoteRoles -.-> Start
-    NoteNotation -.-> Select
-    NoteCascade -.-> Verified
+    noteRoles -.-> start
+    noteNotation -.-> select
+    noteCascade -.-> verified
 
     %% Styling
-    style Unverified fill:#ffcccc,stroke:#f00
-    style Verified fill:#ccffcc,stroke:#0f0
-    style Contested fill:#ffffcc,stroke:#fc0
-    style DeadEnd fill:#eee,stroke:#333
-    style Delete fill:#fff,stroke:#000,stroke-width:1px
-    style AxiomFlag fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    style DeprecateFlag fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    style Zombie fill:#ffffcc,stroke:#fc0,stroke-dasharray: 5 5
+    style unverified fill:#ffcccc,stroke:#f00
+    style verified fill:#ccffcc,stroke:#0f0
+    style contested fill:#ffffcc,stroke:#fc0
+    style deadEnd fill:#eee,stroke:#333
+    style delete fill:#fff,stroke:#000,stroke-width:1px
+    style axiomFlag fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style deprecateFlag fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style zombie fill:#ffffcc,stroke:#fc0,stroke-dasharray: 5 5

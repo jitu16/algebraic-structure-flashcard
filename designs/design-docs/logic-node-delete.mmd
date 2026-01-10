@@ -1,8 +1,8 @@
 graph TD
-    subgraph Admin_Trigger ["Event: Admin Flags Node X as Duplicate"]
-        Start_Admin((Start)) --> IsMarked{"Is Node X already<br/>marked 'toBeDeleted'?"}
+    subgraph adminTrigger ["Event: Admin Flags Node X as Duplicate"]
+        startAdmin((Start)) --> isMarked{"Is Node X already<br/>marked 'toBeDeleted'?"}
         
-        IsMarked -->|"No (Fresh Flag)"| markX1["1. Set toBeDeleted = TRUE<br/>2. Set duplicateOf = SurvivorID"]
+        isMarked -->|"No (Fresh Flag)"| markX1["1. Set toBeDeleted = TRUE<br/>2. Set duplicateOf = SurvivorID"]
         markX1 --> checkKids1{"Has Children?"}
         
         %% Admin Trigger Check 1
@@ -10,9 +10,9 @@ graph TD
         parentZombie1 -->|"Yes"| die1[/"DELETE Node X"/]
         parentZombie1 -->|"No"| perm1[/"PERMANENT ZOMBIE"/]
         
-        checkKids1 -->|"Yes (Start Zombie Branch)"| Cascade["TRIGGER: Mark ALL Children for Death!<br/>(Recursion)"]
+        checkKids1 -->|"Yes (Start Zombie Branch)"| cascade["TRIGGER: Mark ALL Children for Death!<br/>(Recursion)"]
         
-        IsMarked -->|"Yes (Update/Redundant)"| checkKids2{"Has Children?"}
+        isMarked -->|"Yes (Update/Redundant)"| checkKids2{"Has Children?"}
         
         checkKids2 -->|"Yes (Just Update)"| updateID["Update duplicateOf = SurvivorID"]
         
@@ -24,13 +24,13 @@ graph TD
     end
 
     subgraph signalTrigger ["Event: Parent Receives Death Signal"]
-        startSignal((Signal Received)) --> Integrity{"Integrity Check:<br/>Is the Dead Child<br/>still in my list?"}
+        startSignal((Signal Received)) --> integrity{"Integrity Check:<br/>Is the Dead Child<br/>still in my list?"}
         
-        Integrity -->|"Yes (Error!)"| alertAdmin["ALERT ADMIN:<br/>DB Consistency Failure"]
+        integrity -->|"Yes (Error!)"| alertAdmin["ALERT ADMIN:<br/>DB Consistency Failure"]
         
-        Integrity -->|"No (Clean)"| checkRemaining{"Do I have ANY<br/>remaining children?"}
+        integrity -->|"No (Clean)"| checkRemaining{"Do I have ANY<br/>remaining children?"}
         
-        checkRemaining -->|"Yes (>0)"| Ignore["Ignore Signal<br/>(Stay Zombie)"]
+        checkRemaining -->|"Yes (>0)"| ignore["Ignore Signal<br/>(Stay Zombie)"]
         
         %% Signal Trigger Check
         checkRemaining -->|"No (I am now empty)"| parentZombie3{"Is my Parent<br/>marked 'toBeDeleted'?"}

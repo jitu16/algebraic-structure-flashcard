@@ -1,74 +1,74 @@
 graph TD
-    subgraph Events ["System Events"]
+    subgraph events ["System Events"]
         %% Red Phase Events
-        EventGreen["Node Verified (Red to Green)"]
-        EventGray["Node Contradictory (Red to Gray)"]
-        EventDelete["Node Rejected (Red to Deleted)"]
+        eventGreen["Node Verified (Red to Green)"]
+        eventGray["Node Contradictory (Red to Gray)"]
+        eventDelete["Node Rejected (Red to Deleted)"]
         
         %% Yellow Phase Events
-        EventFix["Flag Resolved: Fixed/Edited"]
-        EventFalse["Flag Resolved: False Alarm"]
+        eventFix["Flag Resolved: Fixed/Edited"]
+        eventFalse["Flag Resolved: False Alarm"]
         
         %% Formal Deduplication/Integrity Events
-        EventFlagGray["Flag Resolved: Found Contradiction (to Gray)"]
-        EventMerge["Flag Resolved: Axiom Merged (Registry)"]
-        EventDeprecate["Flag Resolved: Branch Duplicated (to Zombie)"]
+        eventFlagGray["Flag Resolved: Found Contradiction (to Gray)"]
+        eventMerge["Flag Resolved: Axiom Merged (Registry)"]
+        eventDeprecate["Flag Resolved: Branch Duplicated (to Zombie)"]
     end
 
-    subgraph OwnerRewards ["Owner Rewards"]
+    subgraph ownerRewards ["Owner Rewards"]
         ownerCreation[/"Owner: +1 Creation Score"/]
         ownerContrib[/"Owner: +2 Contributor Score"/]
     end
 
-    subgraph PublicRewards ["Contributor Rewards"]
-        VoteGSuccess[/"Green Voter: +1"/]
-        VoteGFail[/"Green Voter: -1"/]
+    subgraph publicRewards ["Contributor Rewards"]
+        voteGSuccess[/"Green Voter: +1"/]
+        voteGFail[/"Green Voter: -1"/]
         
-        VoteBSuccess[/"Black Voter: +1"/]
-        VoteBFail[/"Black Voter: -1"/]
+        voteBSuccess[/"Black Voter: +1"/]
+        voteBFail[/"Black Voter: -1"/]
         
-        FlagSuccess[/"Flagger: +1 (Fix Accepted)"/]
-        FlagFail[/"Flagger: -1 (False Alarm)"/]
+        flagSuccess[/"Flagger: +1 (Fix Accepted)"/]
+        flagFail[/"Flagger: -1 (False Alarm)"/]
         
-        FlagBigWin[/"Flagger: +2 (Found Contradiction)"/]
+        flagBigWin[/"Flagger: +2 (Found Contradiction)"/]
         flagLibrarian[/"Librarian Bonus: +1 (Duplicate/Merge)"/]
     end
 
     %% -- Owner Rewards --
-    EventGreen --> ownerCreation
-    EventGray --> ownerCreation
-    EventGreen --> ownerContrib
-    EventGray --> ownerContrib
+    eventGreen --> ownerCreation
+    eventGray --> ownerCreation
+    eventGreen --> ownerContrib
+    eventGray --> ownerContrib
 
     %% -- Voting Rewards --
-    EventGreen -->|"Voted Green (Right)"| VoteGSuccess
-    EventGreen -->|"Voted Black (Wrong)"| VoteBFail
+    eventGreen -->|"Voted Green (Right)"| voteGSuccess
+    eventGreen -->|"Voted Black (Wrong)"| voteBFail
     
-    EventGray -->|"Voted Green (Right)"| VoteGSuccess
-    EventGray -->|"Voted Black (Wrong)"| VoteBFail
+    eventGray -->|"Voted Green (Right)"| voteGSuccess
+    eventGray -->|"Voted Black (Wrong)"| voteBFail
     
-    EventDelete -->|"Voted Black (Right)"| VoteBSuccess
-    EventDelete -->|"Voted Green (Wrong)"| VoteGFail
+    eventDelete -->|"Voted Black (Right)"| voteBSuccess
+    eventDelete -->|"Voted Green (Wrong)"| voteGFail
 
     %% -- Flagging & Librarian Rewards --
-    EventFix -->|"Flag Resolved: Fixed/Edited"| FlagSuccess
-    EventFalse -->|"Flag Resolved: False Alarm"| FlagFail
+    eventFix -->|"Flag Resolved: Fixed/Edited"| flagSuccess
+    eventFalse -->|"Flag Resolved: False Alarm"| flagFail
     
-    EventFlagGray -->|"Flag Resolved: Found Contradiction"| FlagBigWin
+    eventFlagGray -->|"Flag Resolved: Found Contradiction"| flagBigWin
     
-    EventDeprecate -->|"Flag Resolved: Branch Duplicated"| flagLibrarian
-    EventMerge -->|"Flag Resolved: Axiom Merged"| flagLibrarian
+    eventDeprecate -->|"Flag Resolved: Branch Duplicated"| flagLibrarian
+    eventMerge -->|"Flag Resolved: Axiom Merged"| flagLibrarian
     
     %% Styling
     style ownerCreation fill:#ccffcc,stroke:#006400
     style ownerContrib fill:#ccffcc,stroke:#006400
     
-    style VoteGSuccess fill:#e1f5fe,stroke:#01579b
-    style VoteBSuccess fill:#e1f5fe,stroke:#01579b
-    style FlagSuccess fill:#e1f5fe,stroke:#01579b
-    style FlagBigWin fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style voteGSuccess fill:#e1f5fe,stroke:#01579b
+    style voteBSuccess fill:#e1f5fe,stroke:#01579b
+    style flagSuccess fill:#e1f5fe,stroke:#01579b
+    style flagBigWin fill:#e1f5fe,stroke:#01579b,stroke-width:2px
     style flagLibrarian fill:#e1f5fe,stroke:#01579b
     
-    style VoteGFail fill:#ffcccc,stroke:#b71c1c
-    style VoteBFail fill:#ffcccc,stroke:#b71c1c
-    style FlagFail fill:#ffcccc,stroke:#b71c1c
+    style voteGFail fill:#ffcccc,stroke:#b71c1c
+    style voteBFail fill:#ffcccc,stroke:#b71c1c
+    style flagFail fill:#ffcccc,stroke:#b71c1c
