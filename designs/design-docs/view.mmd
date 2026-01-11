@@ -3,29 +3,49 @@ graph TD
     
     subgraph StructuralLayer ["Layer 1: Structural Tree (Algebraic Systems)"]
         SystemExplorer["System Explorer Canvas<br/>(Axiom Nodes)"]
-        SystemOverlay["Overlay: Legend & Metadata"]
     end
     
-    subgraph DeductiveLayer ["Layer 2: Deductive Graph (Local Proofs)"]
-        ProofCanvas["Deduction Canvas<br/>(Theorem Nodes)"]
+    subgraph DeductiveLayer ["Layer 2: Deductive Domain (Theorems)"]
+        direction TB
         
-        subgraph ContextPanel ["Premise Library (Context)"]
-            ActiveAxioms["Active Axioms (Definitions)"]
-            EstablishedTheorems["Prior Theorems (Lemmas)"]
+        %% Entry Point
+        NodeClick{Click Node}
+        
+        %% MODE A: The Flashcard (Default)
+        subgraph FlashcardMode ["Mode A: Flashcard View (Default)"]
+            SectionInherited["Collapsible: Inherited Axioms/Theorems"]
+            SectionLocal["Collapsible: Local Theorems"]
+            ToggleButton["Button: 'View Proof Tree'"]
         end
         
-        InferenceTools["Inference Tools<br/>(Create Implication)"]
+        %% MODE B: The Graph (Optional)
+        subgraph GraphMode ["Mode B: Deductive Graph (Optional)"]
+            ProofCanvas["Theorem Graph Canvas"]
+            
+            %% Permission Logic
+            CheckPerm{Permission Check}
+            EditTools["Creation Toolbar<br/>(Add Theorem)"]
+        end
     end
     
     %% Navigation Flow
     User --> SystemExplorer
-    SystemExplorer --"Select System"--> ProofCanvas
+    SystemExplorer --"Select System"--> NodeClick
     
-    %% Logic Flow in Workspace
-    ActiveAxioms -.->|"Grounds Truth"| ProofCanvas
-    EstablishedTheorems --"Import as Lemma"--> ProofCanvas
-    InferenceTools --"Derive"--> ProofCanvas
+    NodeClick --> FlashcardMode
+    ToggleButton --"Toggle"--> GraphMode
+    GraphMode --"Back to Text"--> FlashcardMode
+    
+    %% Editing Flow
+    GraphMode --> CheckPerm
+    CheckPerm --"Citizen/Admin"--> EditTools
+    EditTools --"Update"--> ProofCanvas
+    
+    %% Logic Flow
+    SectionInherited -.->|"Data Source"| ProofCanvas
 
     %% Visual States
     style StructuralLayer fill:#f9f9f9,stroke:#333
     style DeductiveLayer fill:#e1f5fe,stroke:#01579b
+    style FlashcardMode fill:#fff,stroke:#333,stroke-dasharray: 5 5
+    style EditTools fill:#ccffcc,stroke:#006400

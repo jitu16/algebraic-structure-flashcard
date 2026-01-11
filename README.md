@@ -15,6 +15,40 @@ We want to visualize the dramatic power of individual axioms. By studying this t
 
 ---
 
+### Directory Structure
+├── designs/									  #
+│   └── design-docs								  #
+│		├── logic-governance.mmd 				  #
+│		├── logic-node-delete.mmd				  #
+│		├── logic-score.mmd      				  #
+│		├── logic.mmd            				  #
+│		├── schema.mmd           				  #
+│		├── stack.mmd            				  #
+│		└── view.mmd             				  #
+├── src/										  #
+      ├── components/							  #
+      │   ├── AlgebraicStructureExplorer.tsx	  #
+      │   ├── Flashcard.module.css			      #
+      │   ├── Flashcard.tsx						  #
+      │   ├── MathNode.tsx						  #
+      │   ├── Overlay.module.css				  #
+      │   └── Overlay.tsx						  #
+      ├── data/									  #
+      │   └── initialData.ts					  #
+      ├── styles/								  #
+      │   └── theme.ts							  #
+      ├── types/								  #
+      │   └── index.ts							  #
+      ├── utils/								  #
+      │   ├── edgeFactory.ts					  #
+      │   ├── graphAdapter.ts					  #
+      │   └── lineage.ts						  #
+      ├── App.tsx								  #
+      ├── index.css								  #
+      └── main.tsx								  #
+
+---
+
 ### System Architecture: The Logic Engine
 
 This is a **gamified, rigorous logic engine**. We have designed strict rules to ensure the tree remains mathematically sound while allowing for open contribution.
