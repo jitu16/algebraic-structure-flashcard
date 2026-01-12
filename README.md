@@ -26,9 +26,11 @@ We want to visualize the dramatic power of individual axioms. By studying this t
 │       └── view.mmd                              # UX Flow: Structural Layer & Deductive Hybrid View
 └── src/                                          # Source code root
       ├── components/                             # UI Components & Graph Logic
-      │   ├── AlgebraicStructureExplorer.tsx      # Main graph engine (Structural & Deductive)
+      │   ├── StructuralEngine.tsx                # Macro View: The Map of Algebraic Systems
+      │   ├── DeductiveEngine.tsx                 # Micro View: The Proof Tree for a specific Node
+      │   ├── GenericGraphEngine.tsx              # Pure Canvas: Handles React Flow rendering for both views
       │   ├── Flashcard.module.css                # Scoped styles for the Node Detail Panel
-      │   ├── Flashcard.tsx                       # Hybrid View: Info Panel with "View Tree" toggle
+      │   ├── Flashcard.tsx                       # Hybrid View: Info Panel with "View Proof Tree" toggle
       │   ├── MathNode.tsx                        # Custom Graph Node with KaTeX rendering
       │   ├── Overlay.module.css                  # Scoped styles for UI controls
       │   └── Overlay.tsx                         # Legend, Navigation & Metadata display
@@ -137,21 +139,18 @@ As the tree grows, users will inevitably rediscover the same mathematical struct
 * **The Insight Alert:** If a user flags A -> C, but A is already a duplicate of B, the system blocks this and alerts the Admin to check if B and C are also duplicates.
 
 
-
 ## 🛠 TEMPORARY: ALPHA SCAFFOLDING & NEXT STEPS
-> **Status:** Jan 11, 2026 - Architecture Finalized. Code Refactor Pending.
-> **Action:** This section to be deleted once transition to Phase 2 (Interactivity) is complete.
+> **Status:** Jan 12, 2026 - Phase 1 (Architecture Refactor) Complete.
+> **Current Focus:** Phase 2 (Content Injection & Polish).
 
-### 1. Architecture Audit
-* **Design Files:** All Mermaid diagrams updated to reflect "Fractal Architecture" and "Rigorous Terminology" (removing sci-fi metaphors).
-* **CSS Strategy:** Modular CSS (`*.module.css`) adopted for clean separation of UI domains.
+### 1. Completed Milestones (The "Fractal" Refactor)
+* **[DONE] Strict Typing:** `types.ts` now supports `StructureNode` (Macro) and `TheoremNode` (Micro).
+* **[DONE] The Generic Engine:** Created `GenericGraphEngine.tsx` to handle raw rendering.
+* **[DONE] Domain Separation:** Split the monolith into `StructuralEngine.tsx` and `DeductiveEngine.tsx`.
+* **[DONE] Navigation:** Implemented drill-down logic (Map $\to$ Flashcard $\to$ Proof Tree) and back-navigation.
+* **[DONE] Math Rendering:** Integrated KaTeX support for Titles, Flashcards, and Graph Nodes.
 
-### 2. Immediate Coding Tasks (Tomorrow's Sprint)
-* **Step 1 (Strict Typing):** Update `types.ts`.
-    * Rename `Universe` $\to$ `RootEnvironment`.
-    * Upgrade `Theorem` to `TheoremNode` (adding `parentId`, `duplicateOfId`, `status` to support the tree structure).
-* **Step 2 (The Generic Engine):** Refactor `AlgebraicStructureExplorer.tsx` into a reusable `GenericGraphEngine.tsx` that accepts `nodes` and `edges` as props.
-* **Step 3 (The Domain Wrappers):** Create two new container components:
-    * `StructuralEngine.tsx` (Injects Axiom Data for the System Map).
-    * `DeductiveEngine.tsx` (Injects Theorem Data for the Proof Graph).
-* **Step 4 (Navigation):** Update `App.tsx` to manage the state transition from "Structural View" to "Deductive View" when a user clicks a node.
+### 2. Immediate Tasks (The "Polish" Sprint)
+* **Layout Algorithms:** The current `graphAdapter` uses a naive "X/Y" calculation. We need to implement Dagre or ElkJS for automatic tree layout.
+* **Theorem Data Entry:** The current `initialData.ts` is sparse. We need to populate the "Magma" and "Group" trees with real theorems to test the `DeductiveEngine` at scale.
+* **Visual Polish:** Fix z-index collisions between the Overlay and Navigation buttons.

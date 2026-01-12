@@ -1,20 +1,30 @@
-/**
- * @file src/data/initialData.ts
- * @description Static seed data to simulate the database. 
- * Includes examples of verified nodes, zombies (deprecated), and isomorphisms.
- */
+/* src/data/initialData.ts */
+import type { 
+  Axiom, 
+  StructureNode, 
+  TheoremNode, 
+  RootEnvironment 
+} from '../types';
 
-import type { Axiom, MathNode, Theorem } from '../types';
 // ==========================================
-// 1. THE AXIOMS (Concepts)
+// 1. THE ENVIRONMENT (The Playground)
 // ==========================================
+export const initialEnvironment: RootEnvironment = {
+  id: 'env_additive_magma',
+  name: 'Additive Magma',
+  sets: ['S'],
+  operators: ['+']
+};
 
+// ==========================================
+// 2. THE AXIOMS (Concepts)
+// ==========================================
 export const initialAxioms: Axiom[] = [
   {
     id: 'axComm',
     canonicalName: 'Commutativity',
     aliases: ['Symmetric', 'Abelian'],
-    defaultLatex: 'a \\cdot b = b \\cdot a',
+    defaultLatex: 'a + b = b + a',
     authorId: 'systemAdmin',
     createdAt: Date.now(),
   },
@@ -22,7 +32,7 @@ export const initialAxioms: Axiom[] = [
     id: 'axAssoc',
     canonicalName: 'Associativity',
     aliases: ['Grouping'],
-    defaultLatex: '(a \\cdot b) \\cdot c = a \\cdot (b \\cdot c)',
+    defaultLatex: '(a + b) + c = a + (b + c)',
     authorId: 'systemAdmin',
     createdAt: Date.now(),
   },
@@ -30,7 +40,7 @@ export const initialAxioms: Axiom[] = [
     id: 'axIdent',
     canonicalName: 'Identity Element',
     aliases: ['Neutral Element', 'Unity'],
-    defaultLatex: '\\exists e : a \\cdot e = a',
+    defaultLatex: '\\exists e : a + e = a',
     authorId: 'systemAdmin',
     createdAt: Date.now(),
   },
@@ -38,32 +48,36 @@ export const initialAxioms: Axiom[] = [
     id: 'axInv',
     canonicalName: 'Inverse Element',
     aliases: ['Reversibility'],
-    defaultLatex: '\\forall a, \\exists a^{-1} : a \\cdot a^{-1} = e',
-    authorId: 'systemAdmin',
-    createdAt: Date.now(),
-  },
-  {
-    id: 'axDist',
-    canonicalName: 'Distributivity',
-    aliases: [],
-    defaultLatex: 'a \\cdot (b + c) = (a \\cdot b) + (a \\cdot c)',
+    defaultLatex: '\\forall a, \\exists a^{-1} : a + a^{-1} = e',
     authorId: 'systemAdmin',
     createdAt: Date.now(),
   },
 ];
 
 // ==========================================
-// 2. THE NODES (The Tree)
+// 3. THE STRUCTURAL TREE (Nodes)
 // ==========================================
+export const initialNodes: StructureNode[] = [
+  // --- LEVEL 0: GENESIS (Definitions only) ---
+  {
+    id: 'node_genesis',
+    parentId: null, // The Absolute Root
+    axiomId: null,  // No Axiom, just definitions
+    authorId: 'systemAdmin',
+    displayLatex: '\\text{Magma } (S, +)', 
+    status: 'verified',
+    toBeDeleted: false,
+    stats: { greenVotes: 100, blackVotes: 0, yellowFlags: 0 },
+    createdAt: Date.now(),
+  },
 
-export const initialNodes: MathNode[] = [
-  // --- LEVEL 1: ROOTS ---
+  // --- LEVEL 1: FIRST PRINCIPLES ---
   {
     id: 'nodeRootComm',
-    parentId: null, // Root
+    parentId: 'node_genesis', // Now a child of Genesis
     authorId: 'systemAdmin',
     axiomId: 'axComm',
-    displayLatex: 'x + y = y + x', // Using additive notation
+    displayLatex: 'x + y = y + x',
     status: 'unverified',
     toBeDeleted: false,
     stats: { greenVotes: 50, blackVotes: 1, yellowFlags: 0 },
@@ -71,7 +85,7 @@ export const initialNodes: MathNode[] = [
   },
   {
     id: 'nodeRootAssoc',
-    parentId: null, // Root
+    parentId: 'node_genesis', // Now a child of Genesis
     authorId: 'systemAdmin',
     axiomId: 'axAssoc',
     displayLatex: '(x + y) + z = x + (y + z)',
@@ -82,26 +96,22 @@ export const initialNodes: MathNode[] = [
   },
 
   // --- LEVEL 2: COMBINATIONS ---
-  
-  // Node A: Commutative + Associative (Foundation of Abelian Group)
   {
     id: 'nodeCommAssoc',
-    parentId: 'nodeRootComm', // Child of Commutativity
+    parentId: 'nodeRootComm',
     authorId: 'userContributor',
-    axiomId: 'axAssoc', // Adds Associativity
+    axiomId: 'axAssoc',
     displayLatex: '(x + y) + z = x + (y + z)',
     status: 'verified',
     toBeDeleted: false,
     stats: { greenVotes: 20, blackVotes: 0, yellowFlags: 0 },
     createdAt: Date.now(),
   },
-
-  // Node B: Associative + Commutative (Same logic, different path)
   {
     id: 'nodeAssocComm',
-    parentId: 'nodeRootAssoc', // Child of Associativity
+    parentId: 'nodeRootAssoc',
     authorId: 'userContributor',
-    axiomId: 'axComm', // Adds Commutativity
+    axiomId: 'axComm',
     displayLatex: 'x + y = y + x',
     status: 'verified',
     toBeDeleted: false,
@@ -109,56 +119,70 @@ export const initialNodes: MathNode[] = [
     createdAt: Date.now(),
   },
 
-  // --- THE ZOMBIE BRANCH (Type 2 Isomorphism test) ---
-  
-  // Node C: A duplicate created by accident
+  // --- THE ZOMBIE BRANCH ---
   {
     id: 'nodeZombieDuplicate',
     parentId: 'nodeCommAssoc',
     authorId: 'userNovice',
     axiomId: 'axAssoc',
     displayLatex: '\\text{Duplicate of Node A}',
-    status: 'deprecated', // <--- FLASH YELLOW
-    
-    // The "One-Way Ticket" pointers
-    duplicateOfId: 'nodeCommAssoc', // Survivor is Node A
+    status: 'deprecated', // FLASH YELLOW
+    duplicateOfId: 'nodeCommAssoc',
     toBeDeleted: true,
-    
     stats: { greenVotes: 2, blackVotes: 10, yellowFlags: 5 },
     createdAt: Date.now(),
   },
-  
-  // Node D: The Child of the Zombie (Should also inherit Flash logic in UI)
   {
     id: 'nodeZombieChild',
     parentId: 'nodeZombieDuplicate',
     authorId: 'userNovice',
     axiomId: 'axIdent',
-    displayLatex: 'x \\cdot 0 = x',
-    status: 'deprecated', // Inherited status
-    duplicateOfId: undefined, // Hasn't been manually mapped yet
-    toBeDeleted: true,        // Inherited flag
+    displayLatex: 'x + 0 = x',
+    status: 'deprecated',
+    toBeDeleted: true,
     stats: { greenVotes: 0, blackVotes: 0, yellowFlags: 0 },
     createdAt: Date.now(),
   },
 ];
 
-
-export const initialTheorems: Theorem[] = [
+// ==========================================
+// 4. THE DEDUCTIVE TREE (Theorems)
+// ==========================================
+export const initialTheorems: TheoremNode[] = [
   {
     id: 'thm-1',
-    nodeId: 'nodeRootComm', // Root node (Commutativity)
+    rootNodeId: 'nodeRootComm', // Context
+    parentId: null, // First logic step
     statementLatex: 'x + 0 = 0 + x',
     proofLatex: 'Direct application of the commutativity axiom where y = 0.',
     authorId: 'systemAdmin',
+    status: 'verified',
+    toBeDeleted: false,
+    stats: { greenVotes: 10, blackVotes: 0 },
     createdAt: Date.now()
   },
   {
     id: 'thm-2',
-    nodeId: 'nodeCommAssoc', // Child node
+    rootNodeId: 'nodeCommAssoc', // Context
+    parentId: null,
     statementLatex: 'x + (y + z) = (z + y) + x',
     proofLatex: 'Combine Associativity to group (y+z) then Commutativity to swap the order.',
     authorId: 'userContributor',
+    status: 'verified',
+    toBeDeleted: false,
+    stats: { greenVotes: 5, blackVotes: 0 },
+    createdAt: Date.now()
+  },
+  {
+    id: 'thm_magma_closure',
+    rootNodeId: 'node_genesis', // <--- Links this theorem to Magma
+    parentId: null,
+    statementLatex: '\\forall a, b \\in S, a * b \\in S',
+    proofLatex: 'By definition of a binary operation on a set.',
+    authorId: 'systemAdmin',
+    status: 'verified',
+    toBeDeleted: false,
+    stats: { greenVotes: 100, blackVotes: 0 },
     createdAt: Date.now()
   }
 ];

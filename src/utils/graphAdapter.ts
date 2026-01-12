@@ -1,15 +1,15 @@
 //import { MarkerType } from '@xyflow/react';
 import type { Node, Edge } from '@xyflow/react';
-import type { MathNode } from '../types'; 
+import type { StructureNode } from '../types'; 
 import { createParentEdge, createDuplicateEdge } from './edgeFactory';
 
-export const nodesToGraph = (mathNodes: MathNode[]): { nodes: Node[]; edges: Edge[] } => {
+export const nodesToGraph = (structureNode: StructureNode[]): { nodes: Node[]; edges: Edge[] } => {
   const nodes: Node[] = [];
   const edges: Edge[] = [];
   const levelCounts: Record<number, number> = {}; 
 
-  mathNodes.forEach((mn) => {
-    const level = mn.parentId ? 2 : 1; 
+  structureNode.forEach((node) => {
+    const level = node.parentId ? 2 : 1; 
     if (!levelCounts[level]) levelCounts[level] = 0;
     
     const xPos = levelCounts[level] * 250;
@@ -17,15 +17,15 @@ export const nodesToGraph = (mathNodes: MathNode[]): { nodes: Node[]; edges: Edg
     levelCounts[level]++;
 
     nodes.push({
-      id: mn.id,
+      id: node.id,
       position: { x: xPos, y: yPos },
       type: 'mathNode', 
-      data: { ...mn }, 
+      data: { ...node }, 
     });
 
-    if (mn.parentId) {edges.push(createParentEdge(mn.parentId,mn.id));}
+    if (node.parentId) {edges.push(createParentEdge(node.parentId,node.id));}
 
-    if (mn.duplicateOfId) {edges.push(createDuplicateEdge(mn.id,mn.duplicateOfId));}
+    if (node.duplicateOfId) {edges.push(createDuplicateEdge(node.id,node.duplicateOfId));}
   });
 
   return { nodes, edges };
