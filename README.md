@@ -140,17 +140,20 @@ As the tree grows, users will inevitably rediscover the same mathematical struct
 
 
 ## 🛠 TEMPORARY: ALPHA SCAFFOLDING & NEXT STEPS
-> **Status:** Jan 12, 2026 - Phase 1 (Architecture Refactor) Complete.
-> **Current Focus:** Phase 2 (Content Injection & Polish).
+> **Status:** Jan 12, 2026 - Phase 2 (Polish) Complete.
+> **Current Focus:** Phase 3 (The Logic Engine).
+> **History:** See `CHANGELOG.md` for completed milestones.
 
-### 1. Completed Milestones (The "Fractal" Refactor)
-* **[DONE] Strict Typing:** `types.ts` now supports `StructureNode` (Macro) and `TheoremNode` (Micro).
-* **[DONE] The Generic Engine:** Created `GenericGraphEngine.tsx` to handle raw rendering.
-* **[DONE] Domain Separation:** Split the monolith into `StructuralEngine.tsx` and `DeductiveEngine.tsx`.
-* **[DONE] Navigation:** Implemented drill-down logic (Map $\to$ Flashcard $\to$ Proof Tree) and back-navigation.
-* **[DONE] Math Rendering:** Integrated KaTeX support for Titles, Flashcards, and Graph Nodes.
+### Immediate Tasks (Phase 3: The Logic Engine)
+We are now moving from a static map to an interactive "Game of Truth."
 
-### 2. Immediate Tasks (The "Polish" Sprint)
-* **Layout Algorithms:** The current `graphAdapter` uses a naive "X/Y" calculation. We need to implement Dagre or ElkJS for automatic tree layout.
-* **Theorem Data Entry:** The current `initialData.ts` is sparse. We need to populate the "Magma" and "Group" trees with real theorems to test the `DeductiveEngine` at scale.
-* **Visual Polish:** Fix z-index collisions between the Overlay and Navigation buttons.
+* **1. The Voting Hook (`useVoting`):**
+    * Create a reusable React hook to manage `greenVotes` / `blackVotes` state locally.
+    * Connect this logic to both Structure and Theorem nodes.
+* **2. Interactive MathNodes:**
+    * Update `MathNode.tsx` to include interactive Up/Down arrow buttons.
+    * Implement visual feedback (highlighting) when a user casts a vote.
+* **3. Status Governance Utility:**
+    * Create `checkStatus(node)` utility function.
+    * **Logic:** Implement the threshold rule: `If (Green - Black > Threshold) return 'verified'`.
+    * **Effect:** Automatically trigger the Red $\to$ Green border transition in the UI.

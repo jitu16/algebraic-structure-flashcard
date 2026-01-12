@@ -25,13 +25,18 @@ const LatexRenderer: React.FC<{ latex: string }> = ({ latex }) => {
 };
 
 // ==========================================
-// 2. HELPER: Collapsible Proof (New)
+// 2. HELPER: Collapsible Theorem Details (New)
 // ==========================================
-const CollapsibleProof: React.FC<{ proofLatex: string }> = ({ proofLatex }) => {
+interface CollapsibleProps {
+  statement: string;
+  proof: string;
+}
+
+const CollapsibleTheoremDetails: React.FC<CollapsibleProps> = ({ statement, proof }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div style={{ marginTop: '4px' }}>
+    <div style={{ marginTop: '2px' }}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
         style={{
@@ -44,19 +49,33 @@ const CollapsibleProof: React.FC<{ proofLatex: string }> = ({ proofLatex }) => {
           textDecoration: 'underline'
         }}
       >
-        {isOpen ? '▼ Hide Proof' : '▶ Show Proof'}
+        {isOpen ? '▼ Hide Details' : '▶ Show Statement & Proof'}
       </button>
       
       {isOpen && (
         <div style={{ 
-          marginTop: '5px', 
-          padding: '8px', 
-          background: '#f5f5f5', 
+          marginTop: '8px', 
+          padding: '10px', 
+          background: '#f9f9f9', 
           borderRadius: '4px',
-          borderLeft: '2px solid #ccc',
-          fontSize: '0.85rem'
+          borderLeft: '3px solid #ddd',
+          fontSize: '0.9rem'
         }}>
-          <LatexRenderer latex={proofLatex} />
+          {/* Section 1: Statement */}
+          <div style={{ marginBottom: '10px' }}>
+            <strong style={{ color: '#333' }}>Statement: </strong>
+            <div style={{ marginTop: '4px', paddingLeft: '5px' }}>
+              <LatexRenderer latex={statement} />
+            </div>
+          </div>
+
+          {/* Section 2: Proof */}
+          <div>
+            <strong style={{ color: '#333' }}>Proof: </strong>
+            <div style={{ marginTop: '4px', paddingLeft: '5px', color: '#555' }}>
+              <LatexRenderer latex={proof} />
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -131,7 +150,7 @@ export const TheoremFlashcard: React.FC<TheoremFlashcardProps> = ({ node, onClos
         </div>
 
         <h3>Formal Proof</h3>
-        {/* We keep the full proof visible here since it's the main focus of this view */}
+        {/* Full view for the Theorem Flashcard (Mode B) */}
         <div style={{ padding: '15px', background: '#fafafa', border: '1px solid #eee', minHeight: '150px' }}>
            <LatexRenderer latex={node.proofLatex} />
         </div>
@@ -208,7 +227,8 @@ const HeritageSection: React.FC<HeritageProps> = ({ axioms, theorems }) => (
         <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
           {theorems.map(t => (
             <li key={t.id} style={{ fontSize: '0.9rem' }}>
-              <LatexRenderer latex={t.statementLatex} />
+              <LatexRenderer latex={t.name} /> 
+              {/* Note: We show Name here too for consistency, user can hover/click later */}
             </li>
           ))}
         </ul>
@@ -224,34 +244,47 @@ interface LocalScopeProps {
   theorems: TheoremNode[];
 }
 
-const LocalScopeSection: React.FC<LocalScopeProps> = ({ node, axiom, theorems }) => (
-  <section className={styles.sectionCurrent}>
-    <h3>
-      Current System: <LatexRenderer latex={axiom?.canonicalName || "Genesis Definition"} />
-    </h3>
-    
-    <div style={{ margin: '10px 0', padding: '10px', background: '#fff', border: '1px solid #eee' }}>
-      <em>Formula: </em> 
-      <span style={{ fontWeight: 'bold' }}>
-        <LatexRenderer latex={node.displayLatex} />
-      </span>
-    </div>
-    
-    <h4>Local Theorems</h4>
-    {theorems.length > 0 ? (
-      theorems.map(t => (
-        <div key={t.id} className={styles.theoremItem} style={{ marginBottom: '10px' }}>
-            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
-              <LatexRenderer latex={t.name || t.statementLatex} />
-            </div>
-            {/* UPDATED: Now uses the collapsible component */}
-            <CollapsibleProof proofLatex={t.proofLatex} />
-        </div>
-      ))
-    ) : (
-      <p style={{ color: '#888', fontStyle: 'italic' }}>
-        No theorems proven in this scope yet.
-      </p>
-    )}
-  </section>
-);
+const LocalScopeSection: React.FC<LocalScopeProps> = ({ node, axiom, theorems }) => {
+
+  const isRoot = !axiom;
+  const headerLabel = isRoot ? "System Definition" : "Current Axiom";
+  
+  const headerValue = isRoot ? node.displayLatex : axiom.canonicalName;
+  const formulaLabel = isRoot ? "Notation" : "Formula";
+
+  return (
+    <section className={styles.sectionCurrent}>
+      {/* Dynamic Header */}
+      <h3>
+        {headerLabel}: <LatexRenderer latex={headerValue} />
+      </h3>
+      
+      <div style={{ margin: '10px 0', padding: '10px', background: '#fff', border: '1px solid #eee' }}>
+        <em>{formulaLabel}: </em> 
+        <span style={{ fontWeight: 'bold' }}>
+          <LatexRenderer latex={node.displayLatex} />
+        </span>
+      </div>
+      
+      <h4>Local Theorems</h4>
+      {theorems.length > 0 ? (
+        theorems.map(t => (
+          <div key={t.id} className={styles.theoremItem} style={{ marginBottom: '10px' }}>
+              <div style={{ fontWeight: 'bold' }}>
+                <LatexRenderer latex={t.name} />
+              </div>
+              
+              <CollapsibleTheoremDetails 
+                statement={t.statementLatex}
+                proof={t.proofLatex}
+              />
+          </div>
+        ))
+      ) : (
+        <p style={{ color: '#888', fontStyle: 'italic' }}>
+          No theorems proven in this scope yet.
+        </p>
+      )}
+    </section>
+  );
+};

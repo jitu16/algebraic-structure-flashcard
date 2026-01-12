@@ -22,7 +22,7 @@ export const initialEnvironment: RootEnvironment = {
 export const initialAxioms: Axiom[] = [
   {
     id: 'axComm',
-    canonicalName: 'Commutativity',
+    canonicalName: '\\text{Commutativity}',
     aliases: ['Symmetric', 'Abelian'],
     defaultLatex: 'a + b = b + a',
     authorId: 'systemAdmin',
@@ -30,7 +30,7 @@ export const initialAxioms: Axiom[] = [
   },
   {
     id: 'axAssoc',
-    canonicalName: 'Associativity',
+    canonicalName: '\\text{Associativity}',
     aliases: ['Grouping'],
     defaultLatex: '(a + b) + c = a + (b + c)',
     authorId: 'systemAdmin',
@@ -38,7 +38,7 @@ export const initialAxioms: Axiom[] = [
   },
   {
     id: 'axIdent',
-    canonicalName: 'Identity Element',
+    canonicalName: '\\text{Identity Element}',
     aliases: ['Neutral Element', 'Unity'],
     defaultLatex: '\\exists e : a + e = a',
     authorId: 'systemAdmin',
@@ -46,7 +46,7 @@ export const initialAxioms: Axiom[] = [
   },
   {
     id: 'axInv',
-    canonicalName: 'Inverse Element',
+    canonicalName: '\\text{Inverse Element}',
     aliases: ['Reversibility'],
     defaultLatex: '\\forall a, \\exists a^{-1} : a + a^{-1} = e',
     authorId: 'systemAdmin',
@@ -153,7 +153,7 @@ export const initialTheorems: TheoremNode[] = [
     id: 'thm_unique_identity',
     rootNodeId: 'node_genesis',
     parentId: 'thm_magma_closure',
-    name: "Uniqueness of Identity",
+    name: "\\text{Uniqueness of Identity}",
     aliases: ["Identity Uniqueness"],
     statementLatex: "\\text{The identity element } e \\text{ is unique.}",
     proofLatex: "\\text{Assume } e, e' \\text{ are identities...}",
@@ -162,15 +162,15 @@ export const initialTheorems: TheoremNode[] = [
     status: 'verified',
     stats: { greenVotes: 42, blackVotes: 1 },
     createdAt: Date.now()
- },
+  },
   {
     id: 'thm_socks_shoes',
     rootNodeId: 'node_genesis',
     parentId: 'thm_unique_identity',
-    name: "Socks and Shoes Property",
+    name: "\\text{Socks and Shoes Property}",
     aliases: ["Reverse Inverse Law"],
-    statementLatex: "(ab)^{-1} = b^{-1}a^{-1}",
-    proofLatex: "\\text{Multiply } ab \\text{ by } b^{-1}a^{-1}...",
+    statementLatex: "(a b)^{-1} = b^{-1}a^{-1}",
+    proofLatex: "\\text{Multiply } a b \\text{ by } b^{-1}a^{-1}...",
     authorId: 'user_euler',
     toBeDeleted: true,
     status: 'verified',
@@ -182,9 +182,9 @@ export const initialTheorems: TheoremNode[] = [
     rootNodeId: 'nodeRootComm', // Context
     parentId: null, // First logic step
     statementLatex: 'x + 0 = 0 + x',
-    name: "Foo",
+    name: "\\text{Foo}",
     aliases: ["Bar"],        
-    proofLatex: 'Direct application of the commutativity axiom where y = 0.',
+    proofLatex: '\\text{Direct application of the commutativity axiom where y = 0}.',
     authorId: 'systemAdmin',
     status: 'verified',
     toBeDeleted: false,
@@ -196,9 +196,9 @@ export const initialTheorems: TheoremNode[] = [
     rootNodeId: 'nodeCommAssoc', // Context
     parentId: null,
     statementLatex: 'x + (y + z) = (z + y) + x',
-    name: "Ola",
+    name: "\\text{Ola}",
     aliases: [],
-    proofLatex: 'Combine Associativity to group (y+z) then Commutativity to swap the order.',
+    proofLatex: '\\text{Combine Associativity to group (y+z) then Commutativity to swap the order.}',
     authorId: 'userContributor',
     status: 'verified',
     toBeDeleted: false,
@@ -210,9 +210,9 @@ export const initialTheorems: TheoremNode[] = [
     rootNodeId: 'node_genesis', // <--- Links this theorem to Magma
     parentId: null,
     statementLatex: '\\forall a, b \\in S, a * b \\in S',
-    name: "Stupid",
+    name: "\\text{Stupid Theorem}",
     aliases: ["GGT"],
-    proofLatex: 'By definition of a binary operation on a set.',
+    proofLatex: '\\text{By definition of a binary operation on a set.}',
     authorId: 'systemAdmin',
     status: 'verified',
     toBeDeleted: false,
