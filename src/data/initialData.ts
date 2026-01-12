@@ -150,10 +150,40 @@ export const initialNodes: StructureNode[] = [
 // ==========================================
 export const initialTheorems: TheoremNode[] = [
   {
+    id: 'thm_unique_identity',
+    rootNodeId: 'node_genesis',
+    parentId: 'thm_magma_closure',
+    name: "Uniqueness of Identity",
+    aliases: ["Identity Uniqueness"],
+    statementLatex: "\\text{The identity element } e \\text{ is unique.}",
+    proofLatex: "\\text{Assume } e, e' \\text{ are identities...}",
+    authorId: 'user_gauss',
+    toBeDeleted: false,
+    status: 'verified',
+    stats: { greenVotes: 42, blackVotes: 1 },
+    createdAt: Date.now()
+ },
+  {
+    id: 'thm_socks_shoes',
+    rootNodeId: 'node_genesis',
+    parentId: 'thm_unique_identity',
+    name: "Socks and Shoes Property",
+    aliases: ["Reverse Inverse Law"],
+    statementLatex: "(ab)^{-1} = b^{-1}a^{-1}",
+    proofLatex: "\\text{Multiply } ab \\text{ by } b^{-1}a^{-1}...",
+    authorId: 'user_euler',
+    toBeDeleted: true,
+    status: 'verified',
+    stats: { greenVotes: 120, blackVotes: 5 },
+    createdAt: Date.now()
+  },
+  {
     id: 'thm-1',
     rootNodeId: 'nodeRootComm', // Context
     parentId: null, // First logic step
     statementLatex: 'x + 0 = 0 + x',
+    name: "Foo",
+    aliases: ["Bar"],        
     proofLatex: 'Direct application of the commutativity axiom where y = 0.',
     authorId: 'systemAdmin',
     status: 'verified',
@@ -166,6 +196,8 @@ export const initialTheorems: TheoremNode[] = [
     rootNodeId: 'nodeCommAssoc', // Context
     parentId: null,
     statementLatex: 'x + (y + z) = (z + y) + x',
+    name: "Ola",
+    aliases: [],
     proofLatex: 'Combine Associativity to group (y+z) then Commutativity to swap the order.',
     authorId: 'userContributor',
     status: 'verified',
@@ -178,6 +210,8 @@ export const initialTheorems: TheoremNode[] = [
     rootNodeId: 'node_genesis', // <--- Links this theorem to Magma
     parentId: null,
     statementLatex: '\\forall a, b \\in S, a * b \\in S',
+    name: "Stupid",
+    aliases: ["GGT"],
     proofLatex: 'By definition of a binary operation on a set.',
     authorId: 'systemAdmin',
     status: 'verified',

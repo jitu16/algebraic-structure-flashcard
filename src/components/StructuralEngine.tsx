@@ -2,24 +2,22 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { useNodesState, useEdgesState } from '@xyflow/react';
 import { GenericGraphEngine } from './GenericGraphEngine';
-import { MathNode } from './MathNode'; // The visual component for the node
+import { MathNode } from './MathNode'; 
 import { Flashcard } from './Flashcard';
 import { nodesToGraph } from '../utils/graphAdapter';
 import { initialNodes, initialAxioms, initialTheorems } from '../data/initialData';
 import type { StructureNode } from '../types';
 
 interface StructuralEngineProps {
-  /**
-   * Callback to trigger the "Zoom In" to the Deductive Layer.
-   * Called when user clicks "View Proof Tree" on a Flashcard.
-   */
   onNavigateToDeductive: (nodeId: string) => void;
 }
 
 export const StructuralEngine: React.FC<StructuralEngineProps> = ({ onNavigateToDeductive }) => {
-  // 1. Initialize Graph Data (Transforming raw data into React Flow nodes)
+  
+  // 1. Initialize Graph Data (Using Smart Layout)
   const { nodes: initialGraphNodes, edges: initialGraphEdges } = useMemo(
-    () => nodesToGraph(initialNodes), 
+    // PASS 'structural' MODE HERE:
+    () => nodesToGraph(initialNodes, 'structural', initialAxioms), 
     []
   );
 
@@ -31,7 +29,6 @@ export const StructuralEngine: React.FC<StructuralEngineProps> = ({ onNavigateTo
   // 3. Memoized Helpers
   const nodeTypes = useMemo(() => ({ mathNode: MathNode }), []);
 
-  // Find the actual data object for the selected node
   const selectedNodeData = useMemo(() => 
     initialNodes.find(n => n.id === selectedNodeId), 
   [selectedNodeId]);
@@ -42,7 +39,7 @@ export const StructuralEngine: React.FC<StructuralEngineProps> = ({ onNavigateTo
   }, []);
 
   const onPaneClick = useCallback(() => {
-    setSelectedNodeId(null); // Deselect when clicking empty space
+    setSelectedNodeId(null); 
   }, []);
 
   const handleToggleMode = useCallback(() => {
@@ -65,7 +62,7 @@ export const StructuralEngine: React.FC<StructuralEngineProps> = ({ onNavigateTo
         title="\text{Structural Map (Algebraic Systems)}"
       />
 
-      {/* The Detail View (Hybrid Flashcard) */}
+      {/* The Detail View */}
       {selectedNodeData && (
         <Flashcard 
           node={selectedNodeData as StructureNode}

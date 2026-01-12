@@ -52,7 +52,10 @@ export interface TheoremNode {
   id: string;
   rootNodeId: string; // Context: Which StructureNode does this belong to?
   parentId: string | null; // Logic: Derived from which previous Theorem?
-  
+
+  name: string;
+  aliases: string[];
+
   statementLatex: string;
   proofLatex: string;
   authorId: string;

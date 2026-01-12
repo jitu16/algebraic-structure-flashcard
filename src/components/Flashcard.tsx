@@ -1,5 +1,5 @@
 /* src/components/Flashcard.tsx */
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import katex from 'katex';
 import 'katex/dist/katex.min.css';
 import styles from './Flashcard.module.css';
@@ -16,7 +16,7 @@ const LatexRenderer: React.FC<{ latex: string }> = ({ latex }) => {
     if (containerRef.current) {
       katex.render(latex, containerRef.current, {
         throwOnError: false,
-        displayMode: false // Inline rendering
+        displayMode: false 
       });
     }
   }, [latex]);
@@ -25,7 +25,46 @@ const LatexRenderer: React.FC<{ latex: string }> = ({ latex }) => {
 };
 
 // ==========================================
-// 2. MAIN COMPONENT
+// 2. HELPER: Collapsible Proof (New)
+// ==========================================
+const CollapsibleProof: React.FC<{ proofLatex: string }> = ({ proofLatex }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div style={{ marginTop: '4px' }}>
+      <button 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: '#0288d1',
+          cursor: 'pointer',
+          fontSize: '0.8rem',
+          padding: 0,
+          textDecoration: 'underline'
+        }}
+      >
+        {isOpen ? '▼ Hide Proof' : '▶ Show Proof'}
+      </button>
+      
+      {isOpen && (
+        <div style={{ 
+          marginTop: '5px', 
+          padding: '8px', 
+          background: '#f5f5f5', 
+          borderRadius: '4px',
+          borderLeft: '2px solid #ccc',
+          fontSize: '0.85rem'
+        }}>
+          <LatexRenderer latex={proofLatex} />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ==========================================
+// 3. MAIN COMPONENT (Structural View)
 // ==========================================
 
 interface FlashcardProps {
@@ -45,16 +84,11 @@ export const Flashcard: React.FC<FlashcardProps> = ({
   onClose,
   onToggleMode 
 }) => {
-  // Logic Layer: Fetch data once
   const lineage = getCumulativeLineage(node.id, allNodes, allAxioms, allTheorems);
 
-  // Presentation Layer: Composition
   return (
     <div className={styles.panel}>
-      <FlashcardHeader 
-        onClose={onClose} 
-        onToggleMode={onToggleMode} 
-      />
+      <FlashcardHeader onClose={onClose} onToggleMode={onToggleMode} />
       
       <HeritageSection 
         axioms={lineage.inheritedAxioms} 
@@ -71,7 +105,56 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 };
 
 // ==========================================
-// 3. SUB-COMPONENTS
+// 4. NEW COMPONENT (Theorem View)
+// ==========================================
+
+interface TheoremFlashcardProps {
+  node: TheoremNode;
+  onClose: () => void;
+}
+
+export const TheoremFlashcard: React.FC<TheoremFlashcardProps> = ({ node, onClose }) => {
+  return (
+    <div className={styles.panel}>
+      {/* Simple Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+        <button onClick={onClose} style={{ cursor: 'pointer' }}>Close</button>
+        <span className={styles.badge} style={{ alignSelf: 'center' }}>
+          {node.status}
+        </span>
+      </div>
+
+      <section className={styles.sectionCurrent}>
+        <h3>Theorem Statement</h3>
+        <div style={{ padding: '15px', background: '#fff', border: '1px solid #eee', fontSize: '1.1rem', marginBottom: '20px' }}>
+           <LatexRenderer latex={node.statementLatex} />
+        </div>
+
+        <h3>Formal Proof</h3>
+        {/* We keep the full proof visible here since it's the main focus of this view */}
+        <div style={{ padding: '15px', background: '#fafafa', border: '1px solid #eee', minHeight: '150px' }}>
+           <LatexRenderer latex={node.proofLatex} />
+        </div>
+
+        {/* Footer Stats */}
+        <div style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <small style={{ color: '#666' }}>Author: {node.authorId}</small>
+            <div>
+                <span style={{ color: 'green', marginRight: '15px', fontWeight: 'bold' }}>
+                  ▲ {node.stats?.greenVotes || 0}
+                </span>
+                <span style={{ color: 'black', fontWeight: 'bold' }}>
+                  ▼ {node.stats?.blackVotes || 0}
+                </span>
+            </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+// ==========================================
+// 5. SUB-COMPONENTS (Helpers)
 // ==========================================
 
 // --- Header ---
@@ -88,9 +171,9 @@ const FlashcardHeader: React.FC<HeaderProps> = ({ onClose, onToggleMode }) => (
       style={{ 
         background: '#e1f5fe', 
         border: '1px solid #01579b', 
-        borderRadius: '4px',
-        padding: '4px 8px',
-        cursor: 'pointer',
+        borderRadius: '4px', 
+        padding: '4px 8px', 
+        cursor: 'pointer', 
         fontWeight: 'bold'
       }}
     >
@@ -108,8 +191,6 @@ interface HeritageProps {
 const HeritageSection: React.FC<HeritageProps> = ({ axioms, theorems }) => (
   <section className={styles.sectionInherited}>
     <h4>Heritage</h4>
-    
-    {/* Inherited Axioms */}
     <div style={{ marginBottom: '8px' }}>
       <strong>Active Axioms:</strong>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
@@ -121,10 +202,9 @@ const HeritageSection: React.FC<HeritageProps> = ({ axioms, theorems }) => (
       </div>
     </div>
     
-    {/* Inherited Theorems */}
     {theorems.length > 0 && (
       <div style={{ marginTop: '10px' }}>
-        <strong>Inherited Toolkit (Theorems):</strong>
+        <strong>Inherited (Theorems):</strong>
         <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
           {theorems.map(t => (
             <li key={t.id} style={{ fontSize: '0.9rem' }}>
@@ -161,10 +241,11 @@ const LocalScopeSection: React.FC<LocalScopeProps> = ({ node, axiom, theorems })
     {theorems.length > 0 ? (
       theorems.map(t => (
         <div key={t.id} className={styles.theoremItem} style={{ marginBottom: '10px' }}>
-            <strong><LatexRenderer latex={t.statementLatex} /></strong>
-            <p style={{ fontSize: '0.8rem', color: '#666', margin: '4px 0' }}>
-              Proof: <LatexRenderer latex={t.proofLatex} />
-            </p>
+            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+              <LatexRenderer latex={t.name || t.statementLatex} />
+            </div>
+            {/* UPDATED: Now uses the collapsible component */}
+            <CollapsibleProof proofLatex={t.proofLatex} />
         </div>
       ))
     ) : (
