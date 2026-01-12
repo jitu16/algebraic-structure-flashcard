@@ -16,36 +16,36 @@ We want to visualize the dramatic power of individual axioms. By studying this t
 ---
 
 ### Directory Structure
-├── designs/									  #
-│   └── design-docs								  #
-│		├── logic-governance.mmd 				  #
-│		├── logic-node-delete.mmd				  #
-│		├── logic-score.mmd      				  #
-│		├── logic.mmd            				  #
-│		├── schema.mmd           				  #
-│		├── stack.mmd            				  #
-│		└── view.mmd             				  #
-├── src/										  #
-      ├── components/							  #
-      │   ├── AlgebraicStructureExplorer.tsx	  #
-      │   ├── Flashcard.module.css			      #
-      │   ├── Flashcard.tsx						  #
-      │   ├── MathNode.tsx						  #
-      │   ├── Overlay.module.css				  #
-      │   └── Overlay.tsx						  #
-      ├── data/									  #
-      │   └── initialData.ts					  #
-      ├── styles/								  #
-      │   └── theme.ts							  #
-      ├── types/								  #
-      │   └── index.ts							  #
-      ├── utils/								  #
-      │   ├── edgeFactory.ts					  #
-      │   ├── graphAdapter.ts					  #
-      │   └── lineage.ts						  #
-      ├── App.tsx								  #
-      ├── index.css								  #
-      └── main.tsx								  #
+├── designs/									  ## Project documentation and diagrams
+│   └── design-docs								  ## MermaidJS source files
+│		├── logic-governance.mmd 				  ## Permissions: Trust Ladder & Domain separation
+│		├── logic-node-delete.mmd				  ## Deprecation: Zombie Protocol & Survivor Links
+│		├── logic-score.mmd      				  ## Reputation: Voting logic & scoring rules
+│		├── logic.mmd            				  ## Lifecycle: Node validation flow (Red->Green->Gray
+│		├── schema.mmd           				  ## Data Models: RootEnvironment, StructureNode, TheoremNode
+│		├── stack.mmd            				  ## Tech Stack: React Flow Engines & Data Layers
+│		└── view.mmd             				  ## UX Flow: Structural Layer & Deductive Hybrid View
+├── src/										  ## Source code root
+      ├── components/							  ## UI Components & Graph Logic
+      │   ├── AlgebraicStructureExplorer.tsx	  ## Main graph engine (Structural & Deductive
+      │   ├── Flashcard.module.css			      ## Scoped styles for the Node Detail Panel
+      │   ├── Flashcard.tsx						  ## Hybrid View: Info Panel with "View Tree" toggle
+      │   ├── MathNode.tsx						  ## Custom Graph Node with KaTeX rendering
+      │   ├── Overlay.module.css				  ## Scoped styles for UI controls
+      │   └── Overlay.tsx						  ## Legend, Navigation & Metadata display
+      ├── data/									  ## Static content storage
+      │   └── initialData.ts					  ## Seed data for Alpha (Axioms/Theorems
+      ├── styles/								  ## Design tokens
+      │   └── theme.ts							  ## Color palette & Status constants
+      ├── types/								  ## TypeScript definitions
+      │   └── index.ts							  ## Core Interfaces (Nodes, Roles, Governance
+      ├── utils/								  ## Business logic & Helpers
+      │   ├── edgeFactory.ts					  ## Helper to generate graph connections
+      │   ├── graphAdapter.ts					  ## Transformer: App Data -> React Flow Nodes
+      │   └── lineage.ts						  ## Recursion: Fetches inherited axioms/theorems
+      ├── App.tsx								  ## Main Controller: Navigates Structural vs Deductive
+      ├── index.css								  ## Global styles & KaTeX imports
+      └── main.tsx								  ## React DOM Entry Point
 
 ---
 
