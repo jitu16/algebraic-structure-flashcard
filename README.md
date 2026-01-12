@@ -14,6 +14,7 @@ We want to visualize the dramatic power of individual axioms. By studying this t
 
 ---
 ### Directory Structure
+```text
 ├── designs/                                      # Project documentation and diagrams
 │   └── design-docs                               # MermaidJS source files
 │       ├── logic-governance.mmd                  # Permissions: Trust Ladder & Domain separation
@@ -44,7 +45,7 @@ We want to visualize the dramatic power of individual axioms. By studying this t
       ├── App.tsx                                 # Main Controller: Navigates Structural vs Deductive
       ├── index.css                               # Global styles & KaTeX imports
       └── main.tsx                                # React DOM Entry Point
-	  
+```
 ---
 
 ### System Architecture: The Logic Engine
