@@ -12,7 +12,7 @@ We want to visualize the dramatic power of individual axioms. By studying this t
 * **Insight:** Watching theorems grow reveals the true significance of the axioms that birth them.
 * **Rigor:** Every branch is anchored by its environment (Sets and Operators). The systematic classification of these growing structures creates a living, rigorous encyclopedia of mathematical reality.
 
----
+
 ### Directory Structure
 ```text
 ├── designs/                                      # Project documentation and diagrams
@@ -46,7 +46,7 @@ We want to visualize the dramatic power of individual axioms. By studying this t
       ├── index.css                               # Global styles & KaTeX imports
       └── main.tsx                                # React DOM Entry Point
 ```
----
+
 
 ### System Architecture: The Logic Engine
 
@@ -59,11 +59,10 @@ This is a **gamified, rigorous logic engine**. We have designed strict rules to 
 
 #### 2. The Fractal Architecture: A Tree within a Tree
 To handle the complexity of mathematical proofs, we utilize a **Fractal Architecture** separating the high-level map from the local proofs.
-* **The Structural Tree (Macro Domain):** This is the main map. Nodes represent **Algebraic Systems**. Edges represent the addition of a **New Axiom**.
-* **The Deductive Tree (Micro Domain):** Inside every Structural Node exists a "Theorem Graph."
-    * **The Root:** The specific Axiom defining that node.
-    * **The Nodes:** Theorems or Lemmas derived within that system.
-    * **The Logic:** Contributors build proofs by connecting new **Theorem Nodes** to existing Axioms or previous Theorems.
+* **The Structural Tree (Structural Domain):** This is the main map. Nodes represent **Algebraic Systems**. Edges represent the addition of a **New Axiom**.
+* **The Deductive Workspace (Deductive Domain):** Inside every Structural Node exists a **Hybrid Workspace**:
+    * **Mode A (Flashcard):** The default view. Presents Inherited Axioms and Local Theorems in a clean, readable text format for learners.
+    * **Mode B (Graph):** The "Proof Tree" view. A visual graph of theorems and lemmas, used by contributors to derive new truths or find structural links.
 
 #### 3. The Lifecycle of Truth (`logic.mmd`)
 Nodes (both Structural and Theorem) follow this lifecycle:
@@ -109,7 +108,7 @@ As the tree grows, users will inevitably rediscover the same mathematical struct
 * **The Progenitor:** This node detects that its parent is "Healthy" (not marked for deletion). It remains as a permanent, non-interactive warning marker.
 * **The Followers (Children):** These detect that their parent is a Zombie. Once their theorems are migrated, they delete themselves and send a "Death Signal" upward. This facilitates a clean, automated purge of the redundant branch until it hits the Progenitor and stops.
 
----
+
 
 ### The Tech Stack (`stack.mmd`)
 * **Core:** React + TypeScript (Vite)
@@ -117,7 +116,7 @@ As the tree grows, users will inevitably rediscover the same mathematical struct
 * **Math:** KaTeX (for fast LaTeX rendering)
 * **Database:** Firebase (NoSQL for the graph structure)
 
----
+
 
 ## Future Implementation Details & Notes
 
@@ -137,7 +136,7 @@ As the tree grows, users will inevitably rediscover the same mathematical struct
 * **The Guardrail:** If a node already has a `duplicateOfId` set, the system rejects new Duplicate Flags pointing elsewhere.
 * **The Insight Alert:** If a user flags A -> C, but A is already a duplicate of B, the system blocks this and alerts the Admin to check if B and C are also duplicates.
 
----
+
 
 ## 🛠 TEMPORARY: ALPHA SCAFFOLDING & NEXT STEPS
 > **Status:** Jan 11, 2026 - Architecture Finalized. Code Refactor Pending.
