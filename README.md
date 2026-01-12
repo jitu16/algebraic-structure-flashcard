@@ -1,7 +1,7 @@
 # Algebraic Structure Explorer
 
 > *Drafted by Gemini based on the Owner's blueprint. Proofread and authorized by the Owner.*
-
+Boo
 ### The Vision
 We are building the first **crowdsourced map of algebraic structures**. 
 
