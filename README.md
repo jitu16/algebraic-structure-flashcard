@@ -26,8 +26,8 @@ We want to visualize the dramatic power of individual axioms. By studying this t
 │       └── view.mmd                              # UX Flow: Structural Layer & Deductive Hybrid View
 └── src/                                          # Source code root
       ├── components/                             # UI Components & Graph Logic
-      │   ├── StructuralEngine.tsx                # Macro View: The Map of Algebraic Systems
-      │   ├── DeductiveEngine.tsx                 # Micro View: The Proof Tree for a specific Node
+      │   ├── AlgebraicStructureSpace.tsx         # Macro View: The Map of Algebraic Systems
+      │   ├── TheoremSpace.tsx                    # Micro View: The Proof Tree for a specific Node
       │   ├── GenericGraphEngine.tsx              # Pure Canvas: Handles React Flow rendering for both views
       │   ├── Flashcard.module.css                # Scoped styles for the Node Detail Panel
       │   ├── Flashcard.tsx                       # Hybrid View: Info Panel with "View Proof Tree" toggle
@@ -36,12 +36,15 @@ We want to visualize the dramatic power of individual axioms. By studying this t
       │   └── Overlay.tsx                         # Legend, Navigation & Metadata display
       ├── data/                                   # Static content storage
       │   └── initialData.ts                      # Seed data for Alpha (Axioms/Theorems)
+      ├── hooks/                                  # React Hooks
+      │   └── useVoting.ts                        # Manages local/remote voting state
       ├── styles/                                 # Design tokens
       │   └── theme.ts                            # Color palette & Status constants
       ├── types/                                  # TypeScript definitions
       │   └── index.ts                            # Core Interfaces (Nodes, Roles, Governance)
       ├── utils/                                  # Business logic & Helpers
-      │   ├── edgeFactory.ts                      # Helper to generate graph connections
+      │   ├── checkStatus.ts                      # Governance logic (Red -> Green threshold)
+      │   ├── edgeFactory.ts                      # Helper to generate graph connections	  
       │   ├── graphAdapter.ts                     # Transformer: App Data -> React Flow Nodes
       │   └── lineage.ts                          # Recursion: Fetches inherited axioms/theorems
       ├── App.tsx                                 # Main Controller: Navigates Structural vs Deductive
@@ -139,21 +142,19 @@ As the tree grows, users will inevitably rediscover the same mathematical struct
 * **The Insight Alert:** If a user flags A -> C, but A is already a duplicate of B, the system blocks this and alerts the Admin to check if B and C are also duplicates.
 
 
-## 🛠 TEMPORARY: ALPHA SCAFFOLDING & NEXT STEPS
-> **Status:** Jan 12, 2026 - Phase 2 (Polish) Complete.
-> **Current Focus:** Phase 3 (The Logic Engine).
-> **History:** See `CHANGELOG.md` for completed milestones.
+### Immediate Tasks (Phase 4b: Creation)
+We are now entering the "God Mode" phase, allowing users to expand the map.
 
-### Immediate Tasks (Phase 3: The Logic Engine)
-We are now moving from a static map to an interactive "Game of Truth."
+#### 1. Node Creation UI
+* **Structure Creator:** Design a Modal Form to add new Algebraic Structures.
+    * *Requirements:* User must define a Name (e.g., "Ring"), LaTeX Notation, and select or define the Axiom that creates it.
+* **Theorem Creator:** Design a Modal Form to add new Theorems to the Deductive Space.
+    * *Requirements:* User must define a Name, Statement (LaTeX), and Proof (LaTeX).
 
-* **1. The Voting Hook (`useVoting`):**
-    * Create a reusable React hook to manage `greenVotes` / `blackVotes` state locally.
-    * Connect this logic to both Structure and Theorem nodes.
-* **2. Interactive MathNodes:**
-    * Update `MathNode.tsx` to include interactive Up/Down arrow buttons.
-    * Implement visual feedback (highlighting) when a user casts a vote.
-* **3. Status Governance Utility:**
-    * Create `checkStatus(node)` utility function.
-    * **Logic:** Implement the threshold rule: `If (Green - Black > Threshold) return 'verified'`.
-    * **Effect:** Automatically trigger the Red $\to$ Green border transition in the UI.
+#### 2. Validation & Logic Guards
+* **Axiom Deduping:** Prevent users from adding the same axiom twice in the same branch.
+* **Auto-Linking:** Ensure new nodes automatically link to the correct `parentId` based on the user's current view.
+
+#### 3. Persistence Layer
+* **Backend Integration:** Connect the current in-memory state to **Firebase**.
+* **Save/Load:** Ensure the tree state persists across page reloads.
