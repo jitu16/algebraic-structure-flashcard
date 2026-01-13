@@ -2,25 +2,189 @@
 import { useState } from 'react';
 import 'katex/dist/katex.min.css';
 import styles from './Flashcard.module.css';
-import type { StructureNode, Axiom, TheoremNode } from '../types';
+import type { AnyGraphNode, StructureNode, TheoremNode, Axiom } from '../types';
 import { getCumulativeLineage } from '../utils/lineage';
 import { LatexRenderer } from './LatexRenderer';
 
+interface UnifiedFlashcardProps {
+  node: AnyGraphNode;
+  allNodes?: StructureNode[];
+  allAxioms?: Axiom[];
+  allTheorems?: TheoremNode[];
+  onClose: () => void;
+  onToggleMode?: () => void;
+}
 
-// ==========================================
-// 1. HELPER: Collapsible Theorem Details
-// ==========================================
+export const Flashcard = (props: UnifiedFlashcardProps) => {
+  const { node } = props;
 
+  if (node.type === 'algebraic structure') {
+    if (!props.allNodes || !props.allAxioms || !props.allTheorems || !props.onToggleMode) {
+      return null;
+    }
+    return (
+      <StructureFlashcard 
+        node={node}
+        allNodes={props.allNodes}
+        allAxioms={props.allAxioms}
+        allTheorems={props.allTheorems}
+        onClose={props.onClose}
+        onToggleMode={props.onToggleMode}
+      />
+    );
+  } 
+  
+  if (node.type === 'theorem') {
+    return (
+      <TheoremFlashcard 
+        node={node} 
+        onClose={props.onClose} 
+      />
+    );
+  }
+
+  return null; 
+};
+
+// --- INTERNAL HELPERS ---
+
+interface StructureFlashcardProps {
+  node: StructureNode;
+  allNodes: StructureNode[];
+  allAxioms: Axiom[];
+  allTheorems: TheoremNode[];
+  onClose: () => void;
+  onToggleMode: () => void;
+}
+
+const StructureFlashcard = ({ 
+  node, 
+  allNodes, 
+  allAxioms, 
+  allTheorems, 
+  onClose,
+  onToggleMode 
+}: StructureFlashcardProps) => {
+  const lineage = getCumulativeLineage(node.id, allNodes, allAxioms, allTheorems);
+
+  return (
+    <div className={styles.panel}>
+      <FlashcardHeader onClose={onClose} onToggleMode={onToggleMode} />
+      
+      <HeritageSection 
+        axioms={lineage.inheritedAxioms} 
+        theorems={lineage.inheritedTheorems} 
+      />
+      
+      <LocalScopeSection 
+        node={node} 
+        axiom={lineage.localAxiom} 
+        theorems={lineage.localTheorems} 
+      />
+    </div>
+  );
+};
+
+interface TheoremFlashcardProps {
+  node: TheoremNode;
+  onClose: () => void;
+}
+
+const TheoremFlashcard = ({ node, onClose }: TheoremFlashcardProps) => {
+  return (
+    <div className={styles.panel}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+        <button onClick={onClose} style={{ cursor: 'pointer' }}>Close</button>
+        <span className={styles.badge} style={{ alignSelf: 'center' }}>
+          {node.status}
+        </span>
+      </div>
+
+      <section className={styles.sectionCurrent}>
+        <h3>Theorem Statement</h3>
+        <div style={{ padding: '15px', background: '#fff', border: '1px solid #eee', fontSize: '1.1rem', marginBottom: '20px' }}>
+           <LatexRenderer latex={node.statementLatex} />
+        </div>
+
+        <h3>Formal Proof</h3>
+        <div style={{ padding: '15px', background: '#fafafa', border: '1px solid #eee', minHeight: '150px' }}>
+           <LatexRenderer latex={node.proofLatex} />
+        </div>
+
+        <div style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <small style={{ color: '#666' }}>Author: {node.authorId}</small>
+            <div>
+                <span style={{ color: 'green', marginRight: '15px', fontWeight: 'bold' }}>
+                  ▲ {node.stats?.greenVotes || 0}
+                </span>
+                <span style={{ color: 'black', fontWeight: 'bold' }}>
+                  ▼ {node.stats?.blackVotes || 0}
+                </span>
+            </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+// --- SUB-COMPONENTS ---
+
+interface LocalScopeProps {
+  node: StructureNode;
+  axiom?: Axiom;
+  theorems: TheoremNode[];
+}
+
+const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
+  return (
+    <section className={styles.sectionCurrent}>
+      {/* 1. The Structure Name (e.g., Magma) */}
+      <h3>
+        Structure: <LatexRenderer latex={node.displayLatex} />
+      </h3>
+      
+      {/* 2. The Axiom defining this structure (if any) */}
+      {axiom && (
+        <div style={{ margin: '10px 0', padding: '10px', background: '#fff', border: '1px solid #eee' }}>
+          <div style={{ marginBottom: '5px', color: '#555', fontSize: '0.9rem' }}>
+            Added Axiom: <strong><LatexRenderer latex={axiom.canonicalName} /></strong>
+          </div>
+          <span style={{ fontWeight: 'bold' }}>
+            <LatexRenderer latex={axiom.defaultLatex} />
+          </span>
+        </div>
+      )}
+
+      {/* 3. Local Theorems */}
+      <h4 style={{ marginTop: '20px' }}>Local Theorems</h4>
+      {theorems.length > 0 ? (
+        theorems.map(t => (
+          <div key={t.id} className={styles.theoremItem} style={{ marginBottom: '10px' }}>
+              <div style={{ fontWeight: 'bold' }}>
+                <LatexRenderer latex={t.name} />
+              </div>
+              <CollapsibleTheoremDetails 
+                statement={t.statementLatex}
+                proof={t.proofLatex}
+              />
+          </div>
+        ))
+      ) : (
+        <p style={{ color: '#888', fontStyle: 'italic' }}>
+          No theorems proven in this scope yet.
+        </p>
+      )}
+    </section>
+  );
+};
+
+// (Rest of the file: FlashcardHeader, HeritageSection, CollapsibleTheoremDetails - Keep exactly as they were)
+// I am omitting them here for brevity, but they should remain in the file.
 interface CollapsibleProps {
   statement: string;
   proof: string;
 }
 
-/**
- * Accordion component for hiding long theorem proofs.
- * @input statement - The formal mathematical statement.
- * @input proof - The step-by-step proof.
- */
 const CollapsibleTheoremDetails = ({ statement, proof }: CollapsibleProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -50,7 +214,6 @@ const CollapsibleTheoremDetails = ({ statement, proof }: CollapsibleProps) => {
           borderLeft: '3px solid #ddd',
           fontSize: '0.9rem'
         }}>
-          {/* Section 1: Statement */}
           <div style={{ marginBottom: '10px' }}>
             <strong style={{ color: '#333' }}>Statement: </strong>
             <div style={{ marginTop: '4px', paddingLeft: '5px' }}>
@@ -58,7 +221,6 @@ const CollapsibleTheoremDetails = ({ statement, proof }: CollapsibleProps) => {
             </div>
           </div>
 
-          {/* Section 2: Proof */}
           <div>
             <strong style={{ color: '#333' }}>Proof: </strong>
             <div style={{ marginTop: '4px', paddingLeft: '5px', color: '#555' }}>
@@ -71,109 +233,6 @@ const CollapsibleTheoremDetails = ({ statement, proof }: CollapsibleProps) => {
   );
 };
 
-// ==========================================
-// 2. MAIN COMPONENT (Structural View)
-// ==========================================
-
-interface FlashcardProps {
-  node: StructureNode;
-  allNodes: StructureNode[];
-  allAxioms: Axiom[];
-  allTheorems: TheoremNode[];
-  onClose: () => void;
-  onToggleMode: () => void;
-}
-
-/**
- * The Detail View for a Structure Node (e.g., "Group").
- * Displays the node's lineage (Heritage) and its local axioms/theorems.
- */
-export const Flashcard = ({ 
-  node, 
-  allNodes, 
-  allAxioms, 
-  allTheorems, 
-  onClose,
-  onToggleMode 
-}: FlashcardProps) => {
-  const lineage = getCumulativeLineage(node.id, allNodes, allAxioms, allTheorems);
-
-  return (
-    <div className={styles.panel}>
-      <FlashcardHeader onClose={onClose} onToggleMode={onToggleMode} />
-      
-      <HeritageSection 
-        axioms={lineage.inheritedAxioms} 
-        theorems={lineage.inheritedTheorems} 
-      />
-      
-      <LocalScopeSection 
-        node={node} 
-        axiom={lineage.localAxiom} 
-        theorems={lineage.localTheorems} 
-      />
-    </div>
-  );
-};
-
-// ==========================================
-// 3. MAIN COMPONENT (Theorem View)
-// ==========================================
-
-interface TheoremFlashcardProps {
-  node: TheoremNode;
-  onClose: () => void;
-}
-
-/**
- * The Detail View for a Theorem Node.
- * Displays the full statement, formal proof, and author stats.
- */
-export const TheoremFlashcard = ({ node, onClose }: TheoremFlashcardProps) => {
-  return (
-    <div className={styles.panel}>
-      {/* Simple Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-        <button onClick={onClose} style={{ cursor: 'pointer' }}>Close</button>
-        <span className={styles.badge} style={{ alignSelf: 'center' }}>
-          {node.status}
-        </span>
-      </div>
-
-      <section className={styles.sectionCurrent}>
-        <h3>Theorem Statement</h3>
-        <div style={{ padding: '15px', background: '#fff', border: '1px solid #eee', fontSize: '1.1rem', marginBottom: '20px' }}>
-           <LatexRenderer latex={node.statementLatex} />
-        </div>
-
-        <h3>Formal Proof</h3>
-        {/* Full view for the Theorem Flashcard (Mode B) */}
-        <div style={{ padding: '15px', background: '#fafafa', border: '1px solid #eee', minHeight: '150px' }}>
-           <LatexRenderer latex={node.proofLatex} />
-        </div>
-
-        {/* Footer Stats */}
-        <div style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <small style={{ color: '#666' }}>Author: {node.authorId}</small>
-            <div>
-                <span style={{ color: 'green', marginRight: '15px', fontWeight: 'bold' }}>
-                  ▲ {node.stats?.greenVotes || 0}
-                </span>
-                <span style={{ color: 'black', fontWeight: 'bold' }}>
-                  ▼ {node.stats?.blackVotes || 0}
-                </span>
-            </div>
-        </div>
-      </section>
-    </div>
-  );
-};
-
-// ==========================================
-// 4. SUB-COMPONENTS (Helpers)
-// ==========================================
-
-// --- Header ---
 interface HeaderProps {
   onClose: () => void;
   onToggleMode: () => void;
@@ -198,7 +257,6 @@ const FlashcardHeader = ({ onClose, onToggleMode }: HeaderProps) => (
   </div>
 );
 
-// --- Heritage Section ---
 interface HeritageProps {
   axioms: Axiom[];
   theorems: TheoremNode[];
@@ -209,7 +267,6 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
 
   return (
     <section className={styles.sectionInherited}>
-      {/* 1. Collapsible Header */}
       <div 
         onClick={() => setIsOpen(!isOpen)}
         style={{ 
@@ -226,10 +283,8 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
         </span>
       </div>
 
-      {/* 2. Collapsible Content */}
       {isOpen && (
         <>
-          {/* Inherited Axioms List */}
           <div style={{ marginBottom: '20px' }}>
             <strong style={{ display: 'block', marginBottom: '8px', color: '#555' }}>Inherited Axioms:</strong>
             {axioms.length > 0 ? (
@@ -248,7 +303,6 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
             )}
           </div>
           
-          {/* Inherited Theorems List */}
           <div>
             <strong style={{ display: 'block', marginBottom: '8px', color: '#555' }}>Inherited Theorems:</strong>
             {theorems.length > 0 ? (
@@ -258,7 +312,6 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
                     <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
                       <LatexRenderer latex={t.name} /> 
                     </div>
-                    {/* Reuse the consistent collapsible detail view */}
                     <CollapsibleTheoremDetails 
                       statement={t.statementLatex}
                       proof={t.proofLatex}
@@ -271,58 +324,6 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
             )}
           </div>
         </>
-      )}
-    </section>
-  );
-};
-
-// --- Local Scope Section ---
-interface LocalScopeProps {
-  node: StructureNode;
-  axiom?: Axiom;
-  theorems: TheoremNode[];
-}
-
-const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
-
-  const isRoot = !axiom;
-  const headerLabel = isRoot ? "System Definition" : "Current Axiom";
-  
-  const headerValue = isRoot ? node.displayLatex : axiom.canonicalName;
-  const formulaLabel = isRoot ? "Notation" : "Formula";
-
-  return (
-    <section className={styles.sectionCurrent}>
-      {/* Dynamic Header */}
-      <h3>
-        {headerLabel}: <LatexRenderer latex={headerValue} />
-      </h3>
-      
-      <div style={{ margin: '10px 0', padding: '10px', background: '#fff', border: '1px solid #eee' }}>
-        <em>{formulaLabel}: </em> 
-        <span style={{ fontWeight: 'bold' }}>
-          <LatexRenderer latex={node.displayLatex} />
-        </span>
-      </div>
-      
-      <h4>Local Theorems</h4>
-      {theorems.length > 0 ? (
-        theorems.map(t => (
-          <div key={t.id} className={styles.theoremItem} style={{ marginBottom: '10px' }}>
-              <div style={{ fontWeight: 'bold' }}>
-                <LatexRenderer latex={t.name} />
-              </div>
-              
-              <CollapsibleTheoremDetails 
-                statement={t.statementLatex}
-                proof={t.proofLatex}
-              />
-          </div>
-        ))
-      ) : (
-        <p style={{ color: '#888', fontStyle: 'italic' }}>
-          No theorems proven in this scope yet.
-        </p>
       )}
     </section>
   );

@@ -1,34 +1,31 @@
-/* src/components/DeductiveEngine.tsx */
+/* src/components/TheoremSpaceEngine.tsx */
 import React, { useMemo, useState, useCallback } from 'react';
 import { useNodesState, useEdgesState } from '@xyflow/react';
 import { GenericGraphEngine } from './GenericGraphEngine';
 import { MathNode } from './MathNode'; 
-import { TheoremFlashcard } from './Flashcard'; 
+import { Flashcard } from './Flashcard';
 import { initialTheorems, initialNodes } from '../data/initialData';
 import { nodesToGraph } from '../utils/graphAdapter'; 
-import type { TheoremNode } from '../types';
 
-interface DeductiveEngineProps {
+interface TheoremSpaceEngineProps {
   rootNodeId: string; 
-  onBack: () => void; 
+  onNavigateToStructureSpace: () => void; 
 }
 
 /**
- * micro-view: The "Proof Tree" for a specific Algebraic Structure.
- * Displays theorems as nodes and proof dependencies as edges.
- * * @input rootNodeId - The ID of the Structure (e.g., "group") to visualize.
- * @input onBack - Callback to return to the main map.
- * @output A full-screen interactive graph of theorems.
+ * The Micro-View Engine: Manages the "Theorem Space".
+ * * This engine visualizes the local proof tree for a specific Algebraic Structure (e.g., theorems proven within a "Group").
+ * It handles the "deductive" mode of the graph, where nodes represent theorems and edges represent logical dependencies.
+ * * @param rootNodeId - The ID of the Structure (context) to visualize.
+ * @param onNavigateToStructureSpace - Callback to return to the macro-view (Algebraic Structure Space).
  */
-export const DeductiveEngine = ({ rootNodeId, onBack }: DeductiveEngineProps) => {
+export const TheoremSpaceEngine = ({ rootNodeId, onNavigateToStructureSpace }: TheoremSpaceEngineProps) => {
   
-  // 1. Get Context Name
   const rootNodeName = useMemo(() => {
     const node = initialNodes.find(n => n.id === rootNodeId);
     return node?.displayLatex || "\\text{Structure}";
   }, [rootNodeId]);
 
-  // 2. Filter & Transform Data (Using the Smart Layout Engine)
   const { nodes: initialGraphNodes, edges: initialGraphEdges } = useMemo(() => {
     const relevantTheorems = initialTheorems.filter(t => t.rootNodeId === rootNodeId);
     return nodesToGraph(relevantTheorems, 'deductive'); 
@@ -37,7 +34,6 @@ export const DeductiveEngine = ({ rootNodeId, onBack }: DeductiveEngineProps) =>
   const [nodes, , onNodesChange] = useNodesState(initialGraphNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialGraphEdges);
   
-  // 3. Selection State
   const [selectedTheoremId, setSelectedTheoremId] = useState<string | null>(null);
 
   const selectedTheoremData = useMemo(() => 
@@ -46,7 +42,6 @@ export const DeductiveEngine = ({ rootNodeId, onBack }: DeductiveEngineProps) =>
 
   const nodeTypes = useMemo(() => ({ mathNode: MathNode }), []);
 
-  // 4. Handle Clicks
   const onNodeClick = useCallback((_: React.MouseEvent, node: any) => {
     setSelectedTheoremId(node.id);
   }, []);
@@ -58,7 +53,6 @@ export const DeductiveEngine = ({ rootNodeId, onBack }: DeductiveEngineProps) =>
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       
-      {/* Navigation Overlay */}
       <div style={{
         position: 'absolute',
         top: '20px',
@@ -74,7 +68,7 @@ export const DeductiveEngine = ({ rootNodeId, onBack }: DeductiveEngineProps) =>
         alignItems: 'flex-end' 
       }}>
         <button 
-          onClick={onBack}
+          onClick={onNavigateToStructureSpace}
           style={{
             cursor: 'pointer',
             padding: '8px 16px',
@@ -87,14 +81,13 @@ export const DeductiveEngine = ({ rootNodeId, onBack }: DeductiveEngineProps) =>
             marginBottom: '5px'
           }}
         >
-          &larr; Back to Algebraic Structure Map
+          &larr; Back to Structure Space
         </button>
         <div style={{ fontSize: '0.85rem', color: '#666' }}>
           Viewing Proof Tree
         </div>
       </div>
 
-      {/* The Graph */}
       <GenericGraphEngine
         nodes={nodes}
         edges={edges}
@@ -103,13 +96,12 @@ export const DeductiveEngine = ({ rootNodeId, onBack }: DeductiveEngineProps) =>
         onNodeClick={onNodeClick} 
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
-        title={`\\text{Deductive Layer: } ${rootNodeName}`}
+        title={`\\text{Theorem Space: } ${rootNodeName}`}
       />
 
-      {/* The Detail View (Theorem Flashcard) */}
       {selectedTheoremData && (
-        <TheoremFlashcard 
-          node={selectedTheoremData as TheoremNode}
+        <Flashcard 
+          node={selectedTheoremData}
           onClose={() => setSelectedTheoremId(null)}
         />
       )}

@@ -1,26 +1,33 @@
 /* src/utils/graphAdapter.ts */
 import dagre from 'dagre';
 import { type Node, type Edge, Position } from '@xyflow/react';
-import type { StructureNode, TheoremNode, Axiom } from '../types'; 
+import type { StructureNode, TheoremNode, Axiom, AnyGraphNode } from '../types'; 
 import { createParentEdge, createDuplicateEdge } from './edgeFactory';
 
-// Compact sizes since we are using names now
-const NODE_WIDTH = 200;
-const NODE_HEIGHT = 60;
+const NODE_WIDTH = 300;
+const NODE_HEIGHT = 120;
 
 type GraphMode = 'structural' | 'deductive';
 
+/**
+ * Transforms raw logic data into React Flow nodes and edges.
+ * Uses Dagre for automatic layout calculations to arrange nodes hierarchically.
+ * * @param dataNodes - The list of nodes (Structures or Theorems) to visualize.
+ * @param mode - The current visualization mode ('structural' or 'deductive').
+ * @param axioms - Optional list of axioms. Required in 'structural' mode to generate detailed labels.
+ * @returns An object containing the layouted nodes and edges ready for React Flow.
+ */
 export const nodesToGraph = (
-  dataNodes: (StructureNode | TheoremNode)[], 
+  dataNodes: AnyGraphNode[], 
   mode: GraphMode,
-  axioms?: Axiom[] // <--- NEW PARAMETER (Needed for lookup)
+  axioms?: Axiom[] 
 ): { nodes: Node[]; edges: Edge[] } => {
   
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setGraph({ 
     rankdir: 'TB', 
-    nodesep: 40,   
-    ranksep: 60    
+    nodesep: 50,
+    ranksep: 80    
   });
   dagreGraph.setDefaultEdgeLabel(() => ({}));
 
@@ -28,36 +35,44 @@ export const nodesToGraph = (
   const edges: Edge[] = [];
 
   dataNodes.forEach((data) => {
-    // 1. DETERMINE LABEL
     let label = "";
     
-    if (mode === 'structural') {
-      const sNode = data as StructureNode;
-      if (sNode.axiomId && axioms) {
-        // Look up the Axiom Name (e.g., "Associativity")
-        const linkedAxiom = axioms.find(ax => ax.id === sNode.axiomId);
-        label = linkedAxiom ? `\\text{${linkedAxiom.canonicalName}}` : "\\text{Definition}";
-      } else {
-        // Genesis Node fallback
-        label = "\\text{Genesis}";
+    if (data.type === 'algebraic structure') {
+      const structureName = data.displayLatex;
+      
+      let axiomBlock = "";
+      if (axioms && data.axiomId) {
+        const ax = axioms.find(a => a.id === data.axiomId);
+        if (ax) {
+          axiomBlock = `\\\\ \\text{\\small{Axiom: ${ax.canonicalName}}} \\\\ {\\tiny ${ax.defaultLatex}}`;
+        }
       }
-    } else {
-      // Theorem Mode: Use the explicit name
-      const tNode = data as TheoremNode;
-      label = `\\text{${tNode.name}}`;
+
+      label = `\\begin{matrix} \\text{\\textbf{${structureName}}} ${axiomBlock} \\end{matrix}`;
+
+    } else if (data.type === 'theorem') {
+      const name = data.name;
+      const statement = data.statementLatex;
+      label = `\\begin{matrix} \\text{\\textbf{${name}}} \\\\ {\\small ${statement}} \\end{matrix}`;
     }
 
     dagreGraph.setNode(data.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
 
+    const visualData = { 
+      ...data,
+      stats: data.stats || { greenVotes: 0, blackVotes: 0 }
+    };
+
+    if (data.type === 'algebraic structure') {
+      (visualData as StructureNode).displayLatex = label;
+    } else if (data.type === 'theorem') {
+      (visualData as TheoremNode).statementLatex = label;
+    }
+
     nodes.push({
       id: data.id,
       type: 'mathNode',
-      data: { 
-        ...data, 
-        // We inject the NAME into displayLatex so MathNode renders it nicely
-        displayLatex: label,
-        stats: data.stats || { greenVotes: 0, blackVotes: 0 }
-      },
+      data: visualData as any, 
       position: { x: 0, y: 0 }, 
       targetPosition: Position.Top,
       sourcePosition: Position.Bottom,
@@ -83,6 +98,7 @@ export const nodesToGraph = (
         x: nodeWithPosition.x - NODE_WIDTH / 2,
         y: nodeWithPosition.y - NODE_HEIGHT / 2,
       },
+      style: { width: NODE_WIDTH, height: NODE_HEIGHT }
     };
   });
 

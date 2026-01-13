@@ -1,222 +1,236 @@
 /* src/data/initialData.ts */
-import type { 
-  Axiom, 
-  StructureNode, 
-  TheoremNode, 
-  RootEnvironment 
-} from '../types';
+import type { StructureNode, Axiom, TheoremNode } from '../types';
 
-// ==========================================
-// 1. THE ENVIRONMENT (The Playground)
-// ==========================================
-export const initialEnvironment: RootEnvironment = {
-  id: 'env_additive_magma',
-  name: 'Additive Magma',
-  sets: ['S'],
-  operators: ['+']
-};
+const NOW = Date.now();
 
-// ==========================================
-// 2. THE AXIOMS (Concepts)
-// ==========================================
+/**
+ * 1. AXIOMS
+ * The fundamental rules that define algebraic structures.
+ */
 export const initialAxioms: Axiom[] = [
   {
-    id: 'axComm',
-    canonicalName: '\\text{Commutativity}',
-    aliases: ['Symmetric', 'Abelian'],
-    defaultLatex: 'a + b = b + a',
-    authorId: 'systemAdmin',
-    createdAt: Date.now(),
+    id: 'closure',
+    canonicalName: 'Closure',
+    aliases: ['Internal Operation'],
+    defaultLatex: '\\forall a, b \\in S, a \\cdot b \\in S',
+    authorId: 'System_Genesis',
+    createdAt: NOW
   },
   {
-    id: 'axAssoc',
-    canonicalName: '\\text{Associativity}',
-    aliases: ['Grouping'],
-    defaultLatex: '(a + b) + c = a + (b + c)',
-    authorId: 'systemAdmin',
-    createdAt: Date.now(),
+    id: 'associativity',
+    canonicalName: 'Associativity',
+    aliases: [],
+    defaultLatex: '\\forall a, b, c \\in S, (a \\cdot b) \\cdot c = a \\cdot (b \\cdot c)',
+    authorId: 'System_Genesis',
+    createdAt: NOW
   },
   {
-    id: 'axIdent',
-    canonicalName: '\\text{Identity Element}',
-    aliases: ['Neutral Element', 'Unity'],
-    defaultLatex: '\\exists e : a + e = a',
-    authorId: 'systemAdmin',
-    createdAt: Date.now(),
+    id: 'identity',
+    canonicalName: 'Identity Element',
+    aliases: ['Neutral Element', 'Unit'],
+    defaultLatex: '\\exists e \\in S \\text{ s.t. } \\forall a \\in S, a \\cdot e = e \\cdot a = a',
+    authorId: 'System_Genesis',
+    createdAt: NOW
   },
   {
-    id: 'axInv',
-    canonicalName: '\\text{Inverse Element}',
-    aliases: ['Reversibility'],
-    defaultLatex: '\\forall a, \\exists a^{-1} : a + a^{-1} = e',
-    authorId: 'systemAdmin',
-    createdAt: Date.now(),
+    id: 'inverse',
+    canonicalName: 'Inverse Element',
+    aliases: ['Symmetric Element'],
+    defaultLatex: '\\forall a \\in S, \\exists a^{-1} \\in S \\text{ s.t. } a \\cdot a^{-1} = a^{-1} \\cdot a = e',
+    authorId: 'System_Genesis',
+    createdAt: NOW
   },
+  {
+    id: 'commutativity',
+    canonicalName: 'Commutativity',
+    aliases: ['Abelian Property'],
+    defaultLatex: '\\forall a, b \\in S, a \\cdot b = b \\cdot a',
+    authorId: 'System_Genesis',
+    createdAt: NOW
+  }
 ];
 
-// ==========================================
-// 3. THE STRUCTURAL TREE (Nodes)
-// ==========================================
+/**
+ * 2. STRUCTURE NODES (The Map)
+ * The visual nodes for the Algebraic Structure Space Engine.
+ */
 export const initialNodes: StructureNode[] = [
-  // --- LEVEL 0: GENESIS (Definitions only) ---
   {
-    id: 'node_genesis',
-    parentId: null, // The Absolute Root
-    axiomId: null,  // No Axiom, just definitions
-    authorId: 'systemAdmin',
-    displayLatex: '\\text{Magma } (S, +)', 
+    id: 'magma',
+    type: 'algebraic structure', // FIXED: Updated type name
+    parentId: null,              // Root Node
+    axiomId: 'closure',
+    authorId: 'Bourbaki_00',
+    displayLatex: '\\text{Magma}',
     status: 'verified',
     toBeDeleted: false,
-    stats: { greenVotes: 100, blackVotes: 0, yellowFlags: 0 },
-    createdAt: Date.now(),
-  },
-
-  // --- LEVEL 1: FIRST PRINCIPLES ---
-  {
-    id: 'nodeRootComm',
-    parentId: 'node_genesis', // Now a child of Genesis
-    authorId: 'systemAdmin',
-    axiomId: 'axComm',
-    displayLatex: 'x + y = y + x',
-    status: 'unverified',
-    toBeDeleted: false,
-    stats: { greenVotes: 50, blackVotes: 1, yellowFlags: 0 },
-    createdAt: Date.now(),
+    createdAt: NOW,
+    stats: { greenVotes: 42, blackVotes: 1 }
   },
   {
-    id: 'nodeRootAssoc',
-    parentId: 'node_genesis', // Now a child of Genesis
-    authorId: 'systemAdmin',
-    axiomId: 'axAssoc',
-    displayLatex: '(x + y) + z = x + (y + z)',
+    id: 'semigroup',
+    type: 'algebraic structure',
+    parentId: 'magma',           // Linked to Parent
+    axiomId: 'associativity',
+    authorId: 'Bourbaki_00',
+    displayLatex: '\\text{Semigroup}',
     status: 'verified',
     toBeDeleted: false,
-    stats: { greenVotes: 45, blackVotes: 0, yellowFlags: 0 },
-    createdAt: Date.now(),
+    createdAt: NOW,
+    stats: { greenVotes: 35, blackVotes: 0 }
   },
-
-  // --- LEVEL 2: COMBINATIONS ---
   {
-    id: 'nodeCommAssoc',
-    parentId: 'nodeRootComm',
-    authorId: 'userContributor',
-    axiomId: 'axAssoc',
-    displayLatex: '(x + y) + z = x + (y + z)',
+    id: 'monoid',
+    type: 'algebraic structure',
+    parentId: 'semigroup',
+    axiomId: 'identity',
+    authorId: 'Bourbaki_00',
+    displayLatex: '\\text{Monoid}',
     status: 'verified',
     toBeDeleted: false,
-    stats: { greenVotes: 20, blackVotes: 0, yellowFlags: 0 },
-    createdAt: Date.now(),
+    createdAt: NOW,
+    stats: { greenVotes: 50, blackVotes: 2 }
   },
   {
-    id: 'nodeAssocComm',
-    parentId: 'nodeRootAssoc',
-    authorId: 'userContributor',
-    axiomId: 'axComm',
-    displayLatex: 'x + y = y + x',
+    id: 'group',
+    type: 'algebraic structure',
+    parentId: 'monoid',
+    axiomId: 'inverse',
+    authorId: 'Galois_Genius',
+    displayLatex: '\\text{Group}',
     status: 'verified',
     toBeDeleted: false,
-    stats: { greenVotes: 20, blackVotes: 0, yellowFlags: 0 },
-    createdAt: Date.now(),
-  },
-
-  // --- THE ZOMBIE BRANCH ---
-  {
-    id: 'nodeZombieDuplicate',
-    parentId: 'nodeCommAssoc',
-    authorId: 'userNovice',
-    axiomId: 'axAssoc',
-    displayLatex: '\\text{Duplicate of Node A}',
-    status: 'deprecated', // FLASH YELLOW
-    duplicateOfId: 'nodeCommAssoc',
-    toBeDeleted: true,
-    stats: { greenVotes: 2, blackVotes: 10, yellowFlags: 5 },
-    createdAt: Date.now(),
+    createdAt: NOW,
+    stats: { greenVotes: 120, blackVotes: 5 }
   },
   {
-    id: 'nodeZombieChild',
-    parentId: 'nodeZombieDuplicate',
-    authorId: 'userNovice',
-    axiomId: 'axIdent',
-    displayLatex: 'x + 0 = x',
+    id: 'abelian-group',
+    type: 'algebraic structure',
+    parentId: 'group',
+    axiomId: 'commutativity',
+    authorId: 'Abel_Official',
+    displayLatex: '\\text{Abelian Group}',
+    status: 'verified',
+    toBeDeleted: false,
+    createdAt: NOW,
+    stats: { greenVotes: 85, blackVotes: 3 }
+  },
+  // TEST CASE: Deprecated / Zombie (Yellow)
+  {
+    id: 'duplicate-group',
+    type: 'algebraic structure',
+    parentId: 'monoid',          // Attached to Monoid (incorrectly)
+    axiomId: 'inverse',
+    authorId: 'Newbie_Mistake',
+    displayLatex: '\\text{Group (Dup)}',
     status: 'deprecated',
     toBeDeleted: true,
-    stats: { greenVotes: 0, blackVotes: 0, yellowFlags: 0 },
-    createdAt: Date.now(),
-  },
+    duplicateOfId: 'group',
+    createdAt: NOW,
+    stats: { greenVotes: 2, blackVotes: 15 }
+  }
 ];
 
-// ==========================================
-// 4. THE DEDUCTIVE TREE (Theorems)
-// ==========================================
+/**
+ * 3. THEOREMS (The Deductive Layer)
+ * Specific proofs tied to structures.
+ */
 export const initialTheorems: TheoremNode[] = [
+  // --- MONOID THEOREMS ---
   {
-    id: 'thm_unique_identity',
-    rootNodeId: 'node_genesis',
-    parentId: 'thm_magma_closure',
-    name: "\\text{Uniqueness of Identity}",
-    aliases: ["Identity Uniqueness"],
-    statementLatex: "\\text{The identity element } e \\text{ is unique.}",
-    proofLatex: "\\text{Assume } e, e' \\text{ are identities...}",
-    authorId: 'user_gauss',
-    toBeDeleted: false,
-    status: 'verified',
-    stats: { greenVotes: 42, blackVotes: 1 },
-    createdAt: Date.now()
-  },
-  {
-    id: 'thm_socks_shoes',
-    rootNodeId: 'node_genesis',
-    parentId: 'thm_unique_identity',
-    name: "\\text{Socks and Shoes Property}",
-    aliases: ["Reverse Inverse Law"],
-    statementLatex: "(a b)^{-1} = b^{-1}a^{-1}",
-    proofLatex: "\\text{Multiply } a b \\text{ by } b^{-1}a^{-1}...",
-    authorId: 'user_euler',
-    toBeDeleted: true,
-    status: 'verified',
-    stats: { greenVotes: 120, blackVotes: 5 },
-    createdAt: Date.now()
-  },
-  {
-    id: 'thm-1',
-    rootNodeId: 'nodeRootComm', // Context
-    parentId: null, // First logic step
-    statementLatex: 'x + 0 = 0 + x',
-    name: "\\text{Foo}",
-    aliases: ["Bar"],        
-    proofLatex: '\\text{Direct application of the commutativity axiom where y = 0}.',
-    authorId: 'systemAdmin',
-    status: 'verified',
-    toBeDeleted: false,
-    stats: { greenVotes: 10, blackVotes: 0 },
-    createdAt: Date.now()
-  },
-  {
-    id: 'thm-2',
-    rootNodeId: 'nodeCommAssoc', // Context
-    parentId: null,
-    statementLatex: 'x + (y + z) = (z + y) + x',
-    name: "\\text{Ola}",
+    id: 'thm-unique-identity',
+    type: 'theorem',
+    rootNodeId: 'monoid',
+    parentId: null, // First theorem in chain
+    name: '\\text{Uniqueness of Identity}',
     aliases: [],
-    proofLatex: '\\text{Combine Associativity to group (y+z) then Commutativity to swap the order.}',
-    authorId: 'userContributor',
+    statementLatex: '\\text{If } e, e\' \\text{ are identity elements, then } e = e\'.',
+    proofLatex: 'e = e \\cdot e\' \\text{ (since } e\' \\text{ is identity)} \\\\ = e\' \\text{ (since } e \\text{ is identity)}',
+    authorId: 'Euler_01',
     status: 'verified',
     toBeDeleted: false,
-    stats: { greenVotes: 5, blackVotes: 0 },
-    createdAt: Date.now()
+    createdAt: NOW,
+    stats: { greenVotes: 15, blackVotes: 0 }
+  },
+
+  // --- GROUP THEOREMS ---
+  {
+    id: 'thm-unique-inverse',
+    type: 'theorem',
+    rootNodeId: 'group',
+    parentId: null,
+    name: '\\text{Uniqueness of Inverse}',
+    aliases: [],
+    statementLatex: '\\text{Every element } a \\text{ has exactly one inverse } a^{-1}.',
+    proofLatex: '\\text{Suppose } b, c \\text{ are inverses of } a. \\\\ b = b \\cdot e = b \\cdot (a \\cdot c) \\\\ = (b \\cdot a) \\cdot c = e \\cdot c = c.',
+    authorId: 'Gauss_99',
+    status: 'verified',
+    toBeDeleted: false,
+    createdAt: NOW,
+    stats: { greenVotes: 22, blackVotes: 1 }
+  },
+  // TEST CASE: Unverified (Red) - 8 Green Votes
+  {
+    id: 'thm-socks-shoes',
+    type: 'theorem',
+    rootNodeId: 'group',
+    parentId: null,
+    name: '\\text{Socks & Shoes Property}',
+    aliases: ['Reverse Order Law'],
+    statementLatex: '(ab)^{-1} = b^{-1}a^{-1}',
+    proofLatex: '(ab)(b^{-1}a^{-1}) = a(bb^{-1})a^{-1} = aea^{-1} = aa^{-1} = e.',
+    authorId: 'Noether_Fan',
+    status: 'unverified',
+    toBeDeleted: false,
+    createdAt: NOW,
+    stats: { greenVotes: 8, blackVotes: 0 }
   },
   {
-    id: 'thm_magma_closure',
-    rootNodeId: 'node_genesis', // <--- Links this theorem to Magma
+    id: 'thm-cancellation',
+    type: 'theorem',
+    rootNodeId: 'group',
     parentId: null,
-    statementLatex: '\\forall a, b \\in S, a * b \\in S',
-    name: "\\text{Stupid Theorem}",
-    aliases: ["GGT"],
-    proofLatex: '\\text{By definition of a binary operation on a set.}',
-    authorId: 'systemAdmin',
+    name: '\\text{Cancellation Laws}',
+    aliases: [],
+    statementLatex: 'ax = ay \\implies x = y \\quad \\text{and} \\quad xa = ya \\implies x = y',
+    proofLatex: '\\text{Left multiply by } a^{-1}: \\\\ a^{-1}(ax) = a^{-1}(ay) \\\\ (a^{-1}a)x = (a^{-1}a)y \\\\ ex = ey \\implies x = y.',
+    authorId: 'Lagrange_Legacy',
     status: 'verified',
     toBeDeleted: false,
-    stats: { greenVotes: 100, blackVotes: 0 },
-    createdAt: Date.now()
+    createdAt: NOW,
+    stats: { greenVotes: 40, blackVotes: 2 }
+  },
+  // TEST CASE: Inconsistent / Dead End (Gray)
+  {
+    id: 'thm-bad-logic',
+    type: 'theorem',
+    rootNodeId: 'group',
+    parentId: null,
+    name: '\\text{Fallacy of } 1=0',
+    aliases: [],
+    statementLatex: '1 = 0',
+    proofLatex: '\\text{If we assume } x = 0 \\text{ allows division... (Invalid Step)}',
+    authorId: 'Troll_01',
+    status: 'inconsistent',
+    toBeDeleted: false,
+    createdAt: NOW,
+    stats: { greenVotes: 0, blackVotes: 50 }
+  },
+
+  // --- ABELIAN GROUP THEOREMS ---
+  {
+    id: 'thm-abelian-exponent',
+    type: 'theorem',
+    rootNodeId: 'abelian-group',
+    parentId: null,
+    name: '\\text{Exponent Distributivity}',
+    aliases: [],
+    statementLatex: '(ab)^n = a^n b^n \\text{ for all } n \\in \\mathbb{Z}',
+    proofLatex: '\\text{Base case } n=1: (ab)^1 = a^1 b^1. \\\\ \\text{Inductive step...}',
+    authorId: 'Abel_Official',
+    status: 'verified',
+    toBeDeleted: false,
+    createdAt: NOW,
+    stats: { greenVotes: 18, blackVotes: 0 }
   }
 ];

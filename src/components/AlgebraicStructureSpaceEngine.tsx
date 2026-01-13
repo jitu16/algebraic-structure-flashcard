@@ -1,4 +1,4 @@
-/* src/components/StructuralEngine.tsx */
+/* src/components/AlgebraicStructureSpaceEngine.tsx */
 import React, { useMemo, useState, useCallback } from 'react';
 import { useNodesState, useEdgesState } from '@xyflow/react';
 import { GenericGraphEngine } from './GenericGraphEngine';
@@ -6,40 +6,38 @@ import { MathNode } from './MathNode';
 import { Flashcard } from './Flashcard';
 import { nodesToGraph } from '../utils/graphAdapter';
 import { initialNodes, initialAxioms, initialTheorems } from '../data/initialData';
-import type { StructureNode } from '../types';
 
-interface StructuralEngineProps {
-  onNavigateToDeductive: (nodeId: string) => void;
+interface AlgebraicStructureSpaceEngineProps {
+  onNavigateToTheoremSpace: (nodeId: string) => void;
 }
 
 /**
- * Macro-view: The "Map" of Algebraic Systems.
- * Displays structures (Groups, Rings) as nodes and axiomatic extensions as edges.
- * * @input onNavigateToDeductive - Callback to drill down into a specific node's proof tree.
- * @output A full-screen interactive graph with a slide-out Detail Panel (Flashcard).
+ * The Macro-View Engine: Manages the "Algebraic Structure Space".
+ * * This engine visualizes the evolutionary map of algebraic structures (e.g., Magmas → Groups → Rings).
+ * It handles the "structural" mode of the graph, where nodes represent systems and edges represent axiomatic extensions.
+ * * @param onNavigateToTheoremSpace - Callback to transition the view to the Theorem Space (Micro-View) for a selected node.
  */
-export const StructuralEngine = ({ onNavigateToDeductive }: StructuralEngineProps) => {
+export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: AlgebraicStructureSpaceEngineProps) => {
   
-  // 1. Initialize Graph Data (Using Smart Layout)
+  /**
+   * Initialize the Graph using the Structural Adapter.
+   * This transforms raw StructureNodes into React Flow nodes with 'structural' specific styling.
+   */
   const { nodes: initialGraphNodes, edges: initialGraphEdges } = useMemo(
-    // PASS 'structural' MODE HERE:
     () => nodesToGraph(initialNodes, 'structural', initialAxioms), 
     []
   );
 
-  // 2. State Management
   const [nodes, , onNodesChange] = useNodesState(initialGraphNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialGraphEdges);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
-  // 3. Memoized Helpers
   const nodeTypes = useMemo(() => ({ mathNode: MathNode }), []);
 
   const selectedNodeData = useMemo(() => 
     initialNodes.find(n => n.id === selectedNodeId), 
   [selectedNodeId]);
 
-  // 4. Event Handlers
   const onNodeClick = useCallback((_: React.MouseEvent, node: any) => {
     setSelectedNodeId(node.id);
   }, []);
@@ -50,13 +48,12 @@ export const StructuralEngine = ({ onNavigateToDeductive }: StructuralEngineProp
 
   const handleToggleMode = useCallback(() => {
     if (selectedNodeId) {
-      onNavigateToDeductive(selectedNodeId);
+      onNavigateToTheoremSpace(selectedNodeId);
     }
-  }, [selectedNodeId, onNavigateToDeductive]);
+  }, [selectedNodeId, onNavigateToTheoremSpace]);
 
   return (
     <div style={{ width: '100%', height: '100%' }}>
-      {/* The Visual Graph */}
       <GenericGraphEngine
         nodes={nodes}
         edges={edges}
@@ -65,13 +62,12 @@ export const StructuralEngine = ({ onNavigateToDeductive }: StructuralEngineProp
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
-        title="\text{Structural Map (Algebraic Systems)}"
+        title="\text{Algebraic Structure Space}"
       />
 
-      {/* The Detail View */}
       {selectedNodeData && (
         <Flashcard 
-          node={selectedNodeData as StructureNode}
+          node={selectedNodeData}
           allNodes={initialNodes}
           allAxioms={initialAxioms}
           allTheorems={initialTheorems}

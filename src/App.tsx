@@ -1,44 +1,51 @@
 /* src/App.tsx */
 import React, { useState, useCallback } from 'react';
-import { StructuralEngine } from './components/StructuralEngine';
-import { DeductiveEngine } from './components/DeductiveEngine';
+import { AlgebraicStructureSpaceEngine } from './components/AlgebraicStructureSpaceEngine';
+import { TheoremSpaceEngine } from './components/TheoremSpaceEngine.tsx';
 import './index.css';
 
-type ViewMode = 'structural' | 'deductive';
+type ViewMode = 'algebraic-structure-space' | 'theorem-space';
 
+/**
+ * The Main Controller.
+ * Manages the high-level state transition between the "Algebraic Structure Space" (The Map)
+ * and the "Theorem Space" (The Proof Tree).
+ */
 const App: React.FC = () => {
-  // 1. App State
-  const [viewMode, setViewMode] = useState<ViewMode>('structural');
+  const [viewMode, setViewMode] = useState<ViewMode>('algebraic-structure-space');
   const [activeStructureId, setActiveStructureId] = useState<string | null>(null);
 
-  // 2. Navigation Handlers
-  
-  // Transition: Flashcard -> Proof Tree
-  const handleNavigateToDeductive = useCallback((nodeId: string) => {
+  /**
+   * Transition: Flashcard -> Theorem Space
+   * Drills down from a Structure Node (e.g., "Group") into its local Proof Tree.
+   */
+  const handleNavigateToTheoremSpace = useCallback((nodeId: string) => {
     setActiveStructureId(nodeId);
-    setViewMode('deductive');
+    setViewMode('theorem-space');
   }, []);
 
-  // Transition: Proof Tree -> Structural Map
-  const handleBackToMap = useCallback(() => {
+  /**
+   * Transition: Theorem Space -> Algebraic Structure Space
+   * Returns from the local Proof Tree back to the main universe map.
+   */
+  const handleNavigateToStructureSpace = useCallback(() => {
     setActiveStructureId(null);
-    setViewMode('structural');
+    setViewMode('algebraic-structure-space');
   }, []);
 
-  // 3. Render
   return (
     <main className="app-root" style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      {viewMode === 'structural' ? (
+      {viewMode === 'algebraic-structure-space' ? (
         // Mode A: The Universe Map
-        <StructuralEngine 
-          onNavigateToDeductive={handleNavigateToDeductive} 
+        <AlgebraicStructureSpaceEngine 
+          onNavigateToTheoremSpace={handleNavigateToTheoremSpace} 
         />
       ) : (
         // Mode B: The Local Proof Tree
         activeStructureId && (
-          <DeductiveEngine 
+          <TheoremSpaceEngine 
             rootNodeId={activeStructureId} 
-            onBack={handleBackToMap} 
+            onNavigateToStructureSpace={handleNavigateToStructureSpace} 
           />
         )
       )}

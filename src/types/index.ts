@@ -1,13 +1,11 @@
 /* src/types/index.ts */
 
-// 1. Updated Roles to match Trust Ladder
 export type UserRole = 'novice' | 'citizen' | 'admin';
 
 export type NodeStatus = 
   | 'unverified'
   | 'verified'
-  | 'contested'
-  | 'deadEnd'
+  | 'inconsistent'
   | 'deprecated';
 
 export type VoteType = 'green' | 'black';
@@ -19,20 +17,19 @@ export type FlagType =
 
 export type FlagStatus = 'open' | 'resolvedFixed' | 'resolvedFalseAlarm' | 'resolvedKilled';
 
-// 2. Updated RootEnvironment (No rootAxiomId)
 export interface RootEnvironment {
   id: string;
-  name: string; // e.g., "Standard Ring Theory"
-  sets: string[]; // ['R']
-  operators: string[]; // ['+', '*']
+  name: string;
+  sets: string[];
+  operators: string[];
 }
 
-// 3. Renamed to StructureNode (Explicit)
 export interface StructureNode {
   id: string;
+  type: 'algebraic structure';
   parentId: string | null;
   authorId: string;
-  axiomId: string | null; // Null if this is the "Genesis Node" defining the Set/Op
+  axiomId: string | null;
   displayLatex: string; 
   status: NodeStatus;
   
@@ -42,16 +39,15 @@ export interface StructureNode {
   stats: {
     greenVotes: number;
     blackVotes: number;
-    yellowFlags: number;
   };
   createdAt: number;
 }
 
-// 4. Renamed to TheoremNode (Explicit)
 export interface TheoremNode {
   id: string;
-  rootNodeId: string; // Context: Which StructureNode does this belong to?
-  parentId: string | null; // Logic: Derived from which previous Theorem?
+  type: 'theorem';
+  rootNodeId: string;
+  parentId: string | null;
 
   name: string;
   aliases: string[];
@@ -94,7 +90,7 @@ export interface UserProfile {
 
 export interface Vote {
   id: string;
-  nodeId: string; // This handles both node/theorem via ID lookup
+  nodeId: string;
   userId: string;
   type: VoteType;
   timestamp: number;
@@ -113,5 +109,4 @@ export interface Flag {
   timestamp: number;
 }
 
-// Combined type for the Generic Engine
 export type AnyGraphNode = StructureNode | TheoremNode;
