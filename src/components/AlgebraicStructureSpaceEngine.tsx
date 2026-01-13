@@ -1,11 +1,13 @@
 /* src/components/AlgebraicStructureSpaceEngine.tsx */
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useNodesState, useEdgesState } from '@xyflow/react';
 import { GenericGraphEngine } from './GenericGraphEngine';
 import { MathNode } from './MathNode'; 
 import { Flashcard } from './Flashcard';
 import { nodesToGraph } from '../utils/graphAdapter';
 import { initialNodes, initialAxioms, initialTheorems } from '../data/initialData';
+import { CreateStructureModal, type StructureFormData } from './modals/CreateStructureModal';
+import type { StructureNode, Axiom } from '../types';
 
 interface AlgebraicStructureSpaceEngineProps {
   onNavigateToTheoremSpace: (nodeId: string) => void;
@@ -19,24 +21,30 @@ interface AlgebraicStructureSpaceEngineProps {
  */
 export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: AlgebraicStructureSpaceEngineProps) => {
   
-  /**
-   * Initialize the Graph using the Structural Adapter.
-   * This transforms raw StructureNodes into React Flow nodes with 'structural' specific styling.
-   */
-  const { nodes: initialGraphNodes, edges: initialGraphEdges } = useMemo(
-    () => nodesToGraph(initialNodes, 'structural', initialAxioms), 
-    []
+  const [dataNodes, setDataNodes] = useState<StructureNode[]>(initialNodes as StructureNode[]);
+  const [dataAxioms, setDataAxioms] = useState<Axiom[]>(initialAxioms);
+
+  const { nodes: layoutNodes, edges: layoutEdges } = useMemo(
+    () => nodesToGraph(dataNodes, 'structural', dataAxioms), 
+    [dataNodes, dataAxioms]
   );
 
-  const [nodes, , onNodesChange] = useNodesState(initialGraphNodes);
-  const [edges, , onEdgesChange] = useEdgesState(initialGraphEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(layoutNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutEdges);
+  
+  useEffect(() => {
+    setNodes(layoutNodes);
+    setEdges(layoutEdges);
+  }, [layoutNodes, layoutEdges, setNodes, setEdges]);
+
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const nodeTypes = useMemo(() => ({ mathNode: MathNode }), []);
 
   const selectedNodeData = useMemo(() => 
-    initialNodes.find(n => n.id === selectedNodeId), 
-  [selectedNodeId]);
+    dataNodes.find(n => n.id === selectedNodeId), 
+  [selectedNodeId, dataNodes]);
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: any) => {
     setSelectedNodeId(node.id);
@@ -52,8 +60,87 @@ export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: Alge
     }
   }, [selectedNodeId, onNavigateToTheoremSpace]);
 
+  const handleCreateStructure = (formData: StructureFormData) => {
+    if (!selectedNodeId || !selectedNodeData) return;
+
+    if (selectedNodeData.status === 'deprecated') {
+      return; 
+    }
+    
+    if (selectedNodeData.status === 'deadend') {
+      return; 
+    }
+    
+    const timestamp = Date.now();
+    const newAxiomId = `ax-${timestamp}`;
+    const newStructureId = `struct-${timestamp}`;
+    const currentUser = 'temp-user-id'; 
+
+    const newAxiom: Axiom = {
+      id: newAxiomId,
+      canonicalName: formData.axiomName,
+      aliases: [], 
+      defaultLatex: formData.axiomLatex,
+      authorId: currentUser, 
+      createdAt: timestamp   
+    };
+
+    const newStructure: StructureNode = {
+      id: newStructureId,
+      type: 'algebraic structure',
+      parentId: selectedNodeId,
+      axiomId: newAxiomId,
+      authorId: currentUser, 
+      displayLatex: formData.structureName, 
+      status: 'unverified',
+      toBeDeleted: false, 
+      stats: {
+        greenVotes: 0,
+        blackVotes: 0
+      },
+      createdAt: timestamp 
+    };
+
+    setDataAxioms(prev => [...prev, newAxiom]);
+    setDataNodes(prev => [...prev, newStructure]);
+  };
+
   return (
-    <div style={{ width: '100%', height: '100%' }}>
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+      
+      {selectedNodeId
+	&& selectedNodeData?.status !== 'deprecated'
+	&& selectedNodeData?.status !== 'deadend'
+	&& (
+        <div style={{
+          position: 'absolute',
+          top: '20px',
+          left: '50%', 
+          transform: 'translateX(-50%)',
+          zIndex: 100, 
+        }}>
+          <button 
+            onClick={() => setIsCreateModalOpen(true)}
+            style={{
+              padding: '10px 24px',
+              background: '#2e7d32',
+              color: 'white',
+              border: 'none',
+              borderRadius: '24px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '1rem'
+            }}
+          >
+            <span style={{ fontSize: '1.2rem', lineHeight: '1rem' }}>+</span> Extend Structure
+          </button>
+        </div>
+      )}
+
       <GenericGraphEngine
         nodes={nodes}
         edges={edges}
@@ -68,11 +155,20 @@ export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: Alge
       {selectedNodeData && (
         <Flashcard 
           node={selectedNodeData}
-          allNodes={initialNodes}
-          allAxioms={initialAxioms}
+          allNodes={dataNodes}
+          allAxioms={dataAxioms}
           allTheorems={initialTheorems}
           onClose={() => setSelectedNodeId(null)}
           onToggleMode={handleToggleMode}
+        />
+      )}
+
+      {isCreateModalOpen && selectedNodeData && (
+        <CreateStructureModal 
+          parentId={selectedNodeData.id}
+          parentName={selectedNodeData.displayLatex}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSubmit={handleCreateStructure}
         />
       )}
     </div>

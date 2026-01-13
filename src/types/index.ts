@@ -5,7 +5,8 @@ export type UserRole = 'novice' | 'citizen' | 'admin';
 export type NodeStatus = 
   | 'unverified'
   | 'verified'
-  | 'inconsistent'
+  | 'deadend' //you can not extend this node! 
+  | 'trash'   //When a lot of users vote for a node to be deleted, it becomes trash -> will flash red.
   | 'deprecated';
 
 export type VoteType = 'green' | 'black';

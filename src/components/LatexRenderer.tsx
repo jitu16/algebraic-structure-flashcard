@@ -16,12 +16,16 @@ interface LatexRendererProps {
 export const LatexRenderer = ({ latex }: LatexRendererProps) => {
   const containerRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
+useEffect(() => {
     if (containerRef.current) {
-      katex.render(latex, containerRef.current, {
-        throwOnError: false,
-        displayMode: false // Inline math by default
-      });
+      try {
+        katex.render(latex, containerRef.current, {
+          throwOnError: false,
+          displayMode: false
+        });
+      } catch (e) {
+        containerRef.current.innerText = "Invalid LaTeX";
+      }
     }
   }, [latex]);
 

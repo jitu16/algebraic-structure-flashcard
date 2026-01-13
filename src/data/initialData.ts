@@ -110,10 +110,10 @@ export const initialNodes: StructureNode[] = [
     axiomId: 'commutativity',
     authorId: 'Abel_Official',
     displayLatex: '\\text{Abelian Group}',
-    status: 'verified',
+    status: 'unverified',
     toBeDeleted: false,
     createdAt: NOW,
-    stats: { greenVotes: 85, blackVotes: 3 }
+    stats: { greenVotes: 2, blackVotes: 11 }
   },
   // TEST CASE: Deprecated / Zombie (Yellow)
   {
@@ -127,7 +127,7 @@ export const initialNodes: StructureNode[] = [
     toBeDeleted: true,
     duplicateOfId: 'group',
     createdAt: NOW,
-    stats: { greenVotes: 2, blackVotes: 15 }
+    stats: { greenVotes: 2, blackVotes: 20 }
   }
 ];
 
@@ -228,9 +228,9 @@ export const initialTheorems: TheoremNode[] = [
     statementLatex: '(ab)^n = a^n b^n \\text{ for all } n \\in \\mathbb{Z}',
     proofLatex: '\\text{Base case } n=1: (ab)^1 = a^1 b^1. \\\\ \\text{Inductive step...}',
     authorId: 'Abel_Official',
-    status: 'verified',
+    status: 'unverified',
     toBeDeleted: false,
     createdAt: NOW,
-    stats: { greenVotes: 18, blackVotes: 0 }
+    stats: { greenVotes: 9, blackVotes: 0 }
   }
 ];

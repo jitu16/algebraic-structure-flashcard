@@ -5,13 +5,14 @@ import { LatexRenderer } from './LatexRenderer';
 import { useVoting } from '../hooks/useVoting';
 import { checkStatus } from '../utils/checkStatus';
 
-// We extend the shared type with an index signature to satisfy React Flow's internal requirements
+/**
+ * Extended type definition for node data.
+ */
 type MathNodeDataWithIndex = AnyGraphNode & Record<string, unknown>;
 
 /**
- * Visual component for a Graph Node (Structure or Theorem).
- * Renders a mathematical formula (LaTeX) and interactive voting buttons.
- * Dynamically updates its visual status (color) based on vote counts.
+ * Visual component representing a custom Graph Node.
+ * Renders LaTeX, manages voting, and displays status based on Admin flags + Votes.
  */
 export const MathNode = ({ data }: NodeProps<Node<MathNodeDataWithIndex, 'mathNode'>>) => {
   const { stats, userVote, handleVote } = useVoting({
@@ -19,17 +20,25 @@ export const MathNode = ({ data }: NodeProps<Node<MathNodeDataWithIndex, 'mathNo
     blackVotes: data.stats?.blackVotes || 0
   });
 
-  // Strict Type Guarding: Determine render content based on explicit node type
+  /* Determine content to render based on node type. */
   let latexToRender = "";
-  
   if (data.type === 'algebraic structure') {
     latexToRender = data.displayLatex;
   } else if (data.type === 'theorem') {
     latexToRender = data.statementLatex;
   }
     
-  // Dynamically calculate status based on current votes
-  const currentStatus = checkStatus(stats.greenVotes, stats.blackVotes);
+  /* * STATUS CHECK:
+   * We now pass the WHOLE `data` object. 
+   * This allows checkStatus to see the 'isDeprecated' admin flag.
+   * Note: We construct a temporary object combining live 'stats' with the static 'data'
+   * to ensure the status updates instantly when the user votes.
+   */
+  const currentStatus = checkStatus({
+    ...data,
+    stats: stats // Use the live stats from the hook, not the initial data
+  });
+  
   const containerClass = `math-node-container status-${currentStatus}`;
   
   const upButtonClass = `vote-btn ${userVote === 'up' ? 'active-up' : ''}`;
@@ -37,9 +46,7 @@ export const MathNode = ({ data }: NodeProps<Node<MathNodeDataWithIndex, 'mathNo
 
   return (
     <div className={containerClass}>
-      <Handle type="target"
-	position={Position.Top}
-	style={{ bottom: '0px'}} />
+      <Handle type="target" position={Position.Top} style={{ bottom: '0px'}} />
       
       <div className="math-display-area">
         <LatexRenderer latex={latexToRender} />
@@ -61,9 +68,7 @@ export const MathNode = ({ data }: NodeProps<Node<MathNodeDataWithIndex, 'mathNo
         </button>
       </div>
 
-      <Handle type="source"
-	position={Position.Bottom}
-	style={{ bottom: '-25px'}}/>
+      <Handle type="source" position={Position.Bottom} style={{ bottom: '-25px'}}/>
     </div>
   );
 };
