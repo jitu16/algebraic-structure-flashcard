@@ -1,31 +1,23 @@
 /* src/components/Overlay.tsx */
-import React, { useEffect, useRef } from 'react';
-import katex from 'katex'; // Import KaTeX
 import { STATUS_MAP } from '../styles/theme';
 import styles from './Overlay.module.css';
-import 'katex/dist/katex.min.css'; // Ensure CSS is imported
+import { LatexRenderer } from './LatexRenderer';
 
 interface OverlayProps {
   structureName?: string;
 }
 
-export const Overlay: React.FC<OverlayProps> = ({ structureName = "Algebraic Structure (Alpha)" }) => {
-  const titleRef = useRef<HTMLHeadingElement>(null);
-
-  // Effect to render the title LaTeX whenever structureName changes
-  useEffect(() => {
-    if (titleRef.current) {
-      katex.render(structureName, titleRef.current, {
-        throwOnError: false,
-        displayMode: false
-      });
-    }
-  }, [structureName]);
-
+/**
+ * UI Overlay displaying the current view title and the Legend.
+ * @input structureName - Title string (supports LaTeX) to display at the top-left.
+ */
+export const Overlay = ({ structureName = "Algebraic Structure (Alpha)" }: OverlayProps) => {
   return (
     <div className={styles.overlay}>
-      {/* Attach ref here so KaTeX can inject the HTML */}
-      <h2 ref={titleRef}> </h2>
+      {/* Replaced manual Ref/Effect logic with the shared component */}
+      <h2>
+        <LatexRenderer latex={structureName} />
+      </h2>
       
       <div className={styles.legend}>
         <p>✅ {STATUS_MAP.verified.label}: Green</p>

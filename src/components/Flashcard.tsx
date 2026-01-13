@@ -1,38 +1,27 @@
 /* src/components/Flashcard.tsx */
-import React, { useEffect, useRef, useState } from 'react';
-import katex from 'katex';
+import { useState } from 'react';
 import 'katex/dist/katex.min.css';
 import styles from './Flashcard.module.css';
 import type { StructureNode, Axiom, TheoremNode } from '../types';
 import { getCumulativeLineage } from '../utils/lineage';
+import { LatexRenderer } from './LatexRenderer';
+
 
 // ==========================================
-// 1. HELPER: LaTeX Renderer
+// 1. HELPER: Collapsible Theorem Details
 // ==========================================
-const LatexRenderer: React.FC<{ latex: string }> = ({ latex }) => {
-  const containerRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
-    if (containerRef.current) {
-      katex.render(latex, containerRef.current, {
-        throwOnError: false,
-        displayMode: false 
-      });
-    }
-  }, [latex]);
-
-  return <span ref={containerRef} />;
-};
-
-// ==========================================
-// 2. HELPER: Collapsible Theorem Details (New)
-// ==========================================
 interface CollapsibleProps {
   statement: string;
   proof: string;
 }
 
-const CollapsibleTheoremDetails: React.FC<CollapsibleProps> = ({ statement, proof }) => {
+/**
+ * Accordion component for hiding long theorem proofs.
+ * @input statement - The formal mathematical statement.
+ * @input proof - The step-by-step proof.
+ */
+const CollapsibleTheoremDetails = ({ statement, proof }: CollapsibleProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -83,7 +72,7 @@ const CollapsibleTheoremDetails: React.FC<CollapsibleProps> = ({ statement, proo
 };
 
 // ==========================================
-// 3. MAIN COMPONENT (Structural View)
+// 2. MAIN COMPONENT (Structural View)
 // ==========================================
 
 interface FlashcardProps {
@@ -95,14 +84,18 @@ interface FlashcardProps {
   onToggleMode: () => void;
 }
 
-export const Flashcard: React.FC<FlashcardProps> = ({ 
+/**
+ * The Detail View for a Structure Node (e.g., "Group").
+ * Displays the node's lineage (Heritage) and its local axioms/theorems.
+ */
+export const Flashcard = ({ 
   node, 
   allNodes, 
   allAxioms, 
   allTheorems, 
   onClose,
   onToggleMode 
-}) => {
+}: FlashcardProps) => {
   const lineage = getCumulativeLineage(node.id, allNodes, allAxioms, allTheorems);
 
   return (
@@ -124,7 +117,7 @@ export const Flashcard: React.FC<FlashcardProps> = ({
 };
 
 // ==========================================
-// 4. NEW COMPONENT (Theorem View)
+// 3. MAIN COMPONENT (Theorem View)
 // ==========================================
 
 interface TheoremFlashcardProps {
@@ -132,7 +125,11 @@ interface TheoremFlashcardProps {
   onClose: () => void;
 }
 
-export const TheoremFlashcard: React.FC<TheoremFlashcardProps> = ({ node, onClose }) => {
+/**
+ * The Detail View for a Theorem Node.
+ * Displays the full statement, formal proof, and author stats.
+ */
+export const TheoremFlashcard = ({ node, onClose }: TheoremFlashcardProps) => {
   return (
     <div className={styles.panel}>
       {/* Simple Header */}
@@ -173,7 +170,7 @@ export const TheoremFlashcard: React.FC<TheoremFlashcardProps> = ({ node, onClos
 };
 
 // ==========================================
-// 5. SUB-COMPONENTS (Helpers)
+// 4. SUB-COMPONENTS (Helpers)
 // ==========================================
 
 // --- Header ---
@@ -182,7 +179,7 @@ interface HeaderProps {
   onToggleMode: () => void;
 }
 
-const FlashcardHeader: React.FC<HeaderProps> = ({ onClose, onToggleMode }) => (
+const FlashcardHeader = ({ onClose, onToggleMode }: HeaderProps) => (
   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
     <button onClick={onClose} style={{ cursor: 'pointer' }}>Close</button>
     <button 
@@ -207,35 +204,77 @@ interface HeritageProps {
   theorems: TheoremNode[];
 }
 
-const HeritageSection: React.FC<HeritageProps> = ({ axioms, theorems }) => (
-  <section className={styles.sectionInherited}>
-    <h4>Heritage</h4>
-    <div style={{ marginBottom: '8px' }}>
-      <strong>Active Axioms:</strong>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', marginTop: '5px' }}>
-        {axioms.map(ax => (
-          <span key={ax.id} className={styles.badge}>
-            <LatexRenderer latex={ax.canonicalName} />
-          </span>
-        ))}
+const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <section className={styles.sectionInherited}>
+      {/* 1. Collapsible Header */}
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ 
+          cursor: 'pointer', 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: isOpen ? '15px' : '0'
+        }}
+      >
+        <h4 style={{ margin: 0 }}>Inherited Axioms & Theorems</h4>
+        <span style={{ color: '#666', fontSize: '0.8rem' }}>
+          {isOpen ? '▲ Collapse' : '▼ Expand'}
+        </span>
       </div>
-    </div>
-    
-    {theorems.length > 0 && (
-      <div style={{ marginTop: '10px' }}>
-        <strong>Inherited (Theorems):</strong>
-        <ul style={{ paddingLeft: '20px', margin: '5px 0' }}>
-          {theorems.map(t => (
-            <li key={t.id} style={{ fontSize: '0.9rem' }}>
-              <LatexRenderer latex={t.name} /> 
-              {/* Note: We show Name here too for consistency, user can hover/click later */}
-            </li>
-          ))}
-        </ul>
-      </div>
-    )}
-  </section>
-);
+
+      {/* 2. Collapsible Content */}
+      {isOpen && (
+        <>
+          {/* Inherited Axioms List */}
+          <div style={{ marginBottom: '20px' }}>
+            <strong style={{ display: 'block', marginBottom: '8px', color: '#555' }}>Inherited Axioms:</strong>
+            {axioms.length > 0 ? (
+              <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                {axioms.map(ax => (
+                  <li key={ax.id} style={{ marginBottom: '8px', fontSize: '0.9rem' }}>
+                    <strong><LatexRenderer latex={ax.canonicalName} />: </strong>
+                    <span style={{ color: '#444' }}>
+                      <LatexRenderer latex={ax.defaultLatex} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span style={{ color: '#999', fontStyle: 'italic', fontSize: '0.9rem' }}>None (Genesis)</span>
+            )}
+          </div>
+          
+          {/* Inherited Theorems List */}
+          <div>
+            <strong style={{ display: 'block', marginBottom: '8px', color: '#555' }}>Inherited Theorems:</strong>
+            {theorems.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {theorems.map(t => (
+                  <div key={t.id} className={styles.theoremItem} style={{ borderLeft: '3px solid #ccc' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+                      <LatexRenderer latex={t.name} /> 
+                    </div>
+                    {/* Reuse the consistent collapsible detail view */}
+                    <CollapsibleTheoremDetails 
+                      statement={t.statementLatex}
+                      proof={t.proofLatex}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span style={{ color: '#999', fontStyle: 'italic', fontSize: '0.9rem' }}>None inherited.</span>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+};
 
 // --- Local Scope Section ---
 interface LocalScopeProps {
@@ -244,7 +283,7 @@ interface LocalScopeProps {
   theorems: TheoremNode[];
 }
 
-const LocalScopeSection: React.FC<LocalScopeProps> = ({ node, axiom, theorems }) => {
+const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
 
   const isRoot = !axiom;
   const headerLabel = isRoot ? "System Definition" : "Current Axiom";

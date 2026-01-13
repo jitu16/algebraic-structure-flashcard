@@ -1,35 +1,44 @@
 /* src/components/MathNode.tsx */
-import React, { useEffect, useRef } from 'react';
-// We need 'Node' and 'NodeProps' from the library
 import { Handle, Position, type Node, type NodeProps } from '@xyflow/react';
-import katex from 'katex';
-import type { MathNode as MathNodeData } from '../types'; //
+// REMOVED: import katex from 'katex';
+import type { StructureNode, TheoremNode } from '../types';
+import { LatexRenderer } from './LatexRenderer'; // <--- Import the new component
 
+// ------------------------------------------------------------------
+// TYPES
+// ------------------------------------------------------------------
+
+type MathNodeData = StructureNode | TheoremNode;
 type MathNodeDataWithIndex = MathNodeData & Record<string, unknown>;
 
-export const MathNode: React.FC<NodeProps<Node<MathNodeDataWithIndex, 'mathNode'>>> = ({ data }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+// ------------------------------------------------------------------
+// COMPONENT
+// ------------------------------------------------------------------
 
-  useEffect(() => {
-    if (containerRef.current && data.displayLatex) {
-      katex.render(data.displayLatex, containerRef.current, {
-        throwOnError: false,
-        displayMode: false
-      });
-    }
-  }, [data.displayLatex]);
-
+/**
+ * Visual component for a Graph Node (Structure or Theorem).
+ * Renders a mathematical formula (LaTeX) and voting statistics.
+ */
+export const MathNode = ({ data }: NodeProps<Node<MathNodeDataWithIndex, 'mathNode'>>) => {
+  
+  // Logic: Determine what string to render
+  const latexToRender: string = (typeof data.displayLatex === 'string' ? data.displayLatex : '')
+    || (data as TheoremNode).statementLatex
+    || "";
   const containerClass = `math-node-container status-${data.status}`;
 
   return (
     <div className={containerClass}>
       <Handle type="target" position={Position.Top} />
       
-      <div ref={containerRef} className="math-display-area" />
+      {/* Replaced manual Ref/Effect with the modular component */}
+      <div className="math-display-area">
+        <LatexRenderer latex={latexToRender} />
+      </div>
       
       <div className="math-node-stats">
-        <span className="stat-green">▲ {data.stats.greenVotes}</span>
-        <span className="stat-black">▼ {data.stats.blackVotes}</span>
+        <span className="stat-green">▲ {data.stats?.greenVotes || 0}</span>
+        <span className="stat-black">▼ {data.stats?.blackVotes || 0}</span>
       </div>
 
       <Handle type="source" position={Position.Bottom} />

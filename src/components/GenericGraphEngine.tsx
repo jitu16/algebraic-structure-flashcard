@@ -31,7 +31,15 @@ interface GenericGraphEngineProps {
   title?: string;
 }
 
-export const GenericGraphEngine: React.FC<GenericGraphEngineProps> = ({
+/**
+ * Pure UI Component: Renders the React Flow canvas.
+ * It is agnostic to the data type (Structure vs Theorem) and just renders whatever nodes/edges are passed to it.
+ * * @input nodes - Array of React Flow nodes.
+ * @input edges - Array of React Flow edges.
+ * @input nodeTypes - Mapping of node types (e.g., { mathNode: MathNode }).
+ * @output A full-screen interactive graph canvas with background, controls, and minimap.
+ */
+export const GenericGraphEngine = ({
   nodes,
   edges,
   onNodesChange,
@@ -40,7 +48,7 @@ export const GenericGraphEngine: React.FC<GenericGraphEngineProps> = ({
   onPaneClick,
   nodeTypes,
   title = "Mathverse Explorer"
-}) => {
+}: GenericGraphEngineProps) => {
   return (
     <div style={{ width: '100%', height: '100vh', position: 'relative' }}>
       <ReactFlow

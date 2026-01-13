@@ -3,7 +3,6 @@ import React, { useMemo, useState, useCallback } from 'react';
 import { useNodesState, useEdgesState } from '@xyflow/react';
 import { GenericGraphEngine } from './GenericGraphEngine';
 import { MathNode } from './MathNode'; 
-// FIX: Import the new specialized Flashcard
 import { TheoremFlashcard } from './Flashcard'; 
 import { initialTheorems, initialNodes } from '../data/initialData';
 import { nodesToGraph } from '../utils/graphAdapter'; 
@@ -14,7 +13,14 @@ interface DeductiveEngineProps {
   onBack: () => void; 
 }
 
-export const DeductiveEngine: React.FC<DeductiveEngineProps> = ({ rootNodeId, onBack }) => {
+/**
+ * micro-view: The "Proof Tree" for a specific Algebraic Structure.
+ * Displays theorems as nodes and proof dependencies as edges.
+ * * @input rootNodeId - The ID of the Structure (e.g., "group") to visualize.
+ * @input onBack - Callback to return to the main map.
+ * @output A full-screen interactive graph of theorems.
+ */
+export const DeductiveEngine = ({ rootNodeId, onBack }: DeductiveEngineProps) => {
   
   // 1. Get Context Name
   const rootNodeName = useMemo(() => {

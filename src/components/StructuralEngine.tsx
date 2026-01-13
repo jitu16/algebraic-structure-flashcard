@@ -12,7 +12,13 @@ interface StructuralEngineProps {
   onNavigateToDeductive: (nodeId: string) => void;
 }
 
-export const StructuralEngine: React.FC<StructuralEngineProps> = ({ onNavigateToDeductive }) => {
+/**
+ * Macro-view: The "Map" of Algebraic Systems.
+ * Displays structures (Groups, Rings) as nodes and axiomatic extensions as edges.
+ * * @input onNavigateToDeductive - Callback to drill down into a specific node's proof tree.
+ * @output A full-screen interactive graph with a slide-out Detail Panel (Flashcard).
+ */
+export const StructuralEngine = ({ onNavigateToDeductive }: StructuralEngineProps) => {
   
   // 1. Initialize Graph Data (Using Smart Layout)
   const { nodes: initialGraphNodes, edges: initialGraphEdges } = useMemo(
