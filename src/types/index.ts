@@ -33,7 +33,7 @@ export interface StructureNode {
   axiomId: string | null;
   displayLatex: string; 
   status: NodeStatus;
-  
+  rootContextId: string;
   duplicateOfId?: string;
   toBeDeleted: boolean;
   
@@ -56,7 +56,7 @@ export interface TheoremNode {
   statementLatex: string;
   proofLatex: string;
   authorId: string;
-  
+  rootContextId: string;  
   status: NodeStatus;
   duplicateOfId?: string;
   toBeDeleted: boolean;

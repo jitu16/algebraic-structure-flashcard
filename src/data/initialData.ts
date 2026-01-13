@@ -1,10 +1,30 @@
 /* src/data/initialData.ts */
-import type { StructureNode, Axiom, TheoremNode } from '../types';
+import type { StructureNode, Axiom, TheoremNode, RootEnvironment } from '../types';
 
 const NOW = Date.now();
 
 /**
- * 1. AXIOMS
+ * 1. ROOT ENVIRONMENTS
+ * Defines the immutable mathematical context (Sets and Operators) for different branches.
+ * These are inherited by all child structures and theorems to ensure notation consistency.
+ */
+export const initialEnvironments: RootEnvironment[] = [
+  {
+    id: 'env-standard-algebra',
+    name: 'Standard Algebraic Context',
+    sets: ['S'],
+    operators: ['\\cdot']
+  },
+  {
+    id: 'env-group-theory',
+    name: 'Group Theory Context',
+    sets: ['G'],
+    operators: ['*']
+  }
+];
+
+/**
+ * 2. AXIOMS
  * The fundamental rules that define algebraic structures.
  */
 export const initialAxioms: Axiom[] = [
@@ -51,18 +71,20 @@ export const initialAxioms: Axiom[] = [
 ];
 
 /**
- * 2. STRUCTURE NODES (The Map)
+ * 3. STRUCTURE NODES (The Map)
  * The visual nodes for the Algebraic Structure Space Engine.
+ * Each node is assigned a rootContextId to link it to its mathematical environment.
  */
 export const initialNodes: StructureNode[] = [
   {
     id: 'magma',
-    type: 'algebraic structure', // FIXED: Updated type name
-    parentId: null,              // Root Node
+    type: 'algebraic structure',
+    parentId: null,
     axiomId: 'closure',
     authorId: 'Bourbaki_00',
     displayLatex: '\\text{Magma}',
     status: 'verified',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 42, blackVotes: 1 }
@@ -70,11 +92,12 @@ export const initialNodes: StructureNode[] = [
   {
     id: 'semigroup',
     type: 'algebraic structure',
-    parentId: 'magma',           // Linked to Parent
+    parentId: 'magma',
     axiomId: 'associativity',
     authorId: 'Bourbaki_00',
     displayLatex: '\\text{Semigroup}',
     status: 'verified',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 35, blackVotes: 0 }
@@ -87,6 +110,7 @@ export const initialNodes: StructureNode[] = [
     authorId: 'Bourbaki_00',
     displayLatex: '\\text{Monoid}',
     status: 'verified',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 50, blackVotes: 2 }
@@ -99,6 +123,7 @@ export const initialNodes: StructureNode[] = [
     authorId: 'Galois_Genius',
     displayLatex: '\\text{Group}',
     status: 'verified',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 120, blackVotes: 5 }
@@ -111,19 +136,20 @@ export const initialNodes: StructureNode[] = [
     authorId: 'Abel_Official',
     displayLatex: '\\text{Abelian Group}',
     status: 'unverified',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 2, blackVotes: 11 }
   },
-  // TEST CASE: Deprecated / Zombie (Yellow)
   {
     id: 'duplicate-group',
     type: 'algebraic structure',
-    parentId: 'monoid',          // Attached to Monoid (incorrectly)
+    parentId: 'monoid',
     axiomId: 'inverse',
     authorId: 'Newbie_Mistake',
     displayLatex: '\\text{Group (Dup)}',
     status: 'deprecated',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: true,
     duplicateOfId: 'group',
     createdAt: NOW,
@@ -132,28 +158,27 @@ export const initialNodes: StructureNode[] = [
 ];
 
 /**
- * 3. THEOREMS (The Deductive Layer)
- * Specific proofs tied to structures.
+ * 4. THEOREMS (The Deductive Layer)
+ * Specific proofs tied to structures. 
+ * Inherits rootContextId from the relevant structure rootNodeId.
  */
 export const initialTheorems: TheoremNode[] = [
-  // --- MONOID THEOREMS ---
   {
     id: 'thm-unique-identity',
     type: 'theorem',
     rootNodeId: 'monoid',
-    parentId: null, // First theorem in chain
+    parentId: null,
     name: '\\text{Uniqueness of Identity}',
     aliases: [],
     statementLatex: '\\text{If } e, e\' \\text{ are identity elements, then } e = e\'.',
     proofLatex: 'e = e \\cdot e\' \\text{ (since } e\' \\text{ is identity)} \\\\ = e\' \\text{ (since } e \\text{ is identity)}',
     authorId: 'Euler_01',
     status: 'verified',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 15, blackVotes: 0 }
   },
-
-  // --- GROUP THEOREMS ---
   {
     id: 'thm-unique-inverse',
     type: 'theorem',
@@ -165,11 +190,11 @@ export const initialTheorems: TheoremNode[] = [
     proofLatex: '\\text{Suppose } b, c \\text{ are inverses of } a. \\\\ b = b \\cdot e = b \\cdot (a \\cdot c) \\\\ = (b \\cdot a) \\cdot c = e \\cdot c = c.',
     authorId: 'Gauss_99',
     status: 'verified',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 22, blackVotes: 1 }
   },
-  // TEST CASE: Unverified (Red) - 8 Green Votes
   {
     id: 'thm-socks-shoes',
     type: 'theorem',
@@ -181,6 +206,7 @@ export const initialTheorems: TheoremNode[] = [
     proofLatex: '(ab)(b^{-1}a^{-1}) = a(bb^{-1})a^{-1} = aea^{-1} = aa^{-1} = e.',
     authorId: 'Noether_Fan',
     status: 'unverified',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 8, blackVotes: 0 }
@@ -196,28 +222,11 @@ export const initialTheorems: TheoremNode[] = [
     proofLatex: '\\text{Left multiply by } a^{-1}: \\\\ a^{-1}(ax) = a^{-1}(ay) \\\\ (a^{-1}a)x = (a^{-1}a)y \\\\ ex = ey \\implies x = y.',
     authorId: 'Lagrange_Legacy',
     status: 'verified',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 40, blackVotes: 2 }
   },
-  // TEST CASE: Inconsistent / Dead End (Gray)
-  {
-    id: 'thm-bad-logic',
-    type: 'theorem',
-    rootNodeId: 'group',
-    parentId: null,
-    name: '\\text{Fallacy of } 1=0',
-    aliases: [],
-    statementLatex: '1 = 0',
-    proofLatex: '\\text{If we assume } x = 0 \\text{ allows division... (Invalid Step)}',
-    authorId: 'Troll_01',
-    status: 'inconsistent',
-    toBeDeleted: false,
-    createdAt: NOW,
-    stats: { greenVotes: 0, blackVotes: 50 }
-  },
-
-  // --- ABELIAN GROUP THEOREMS ---
   {
     id: 'thm-abelian-exponent',
     type: 'theorem',
@@ -229,6 +238,7 @@ export const initialTheorems: TheoremNode[] = [
     proofLatex: '\\text{Base case } n=1: (ab)^1 = a^1 b^1. \\\\ \\text{Inductive step...}',
     authorId: 'Abel_Official',
     status: 'unverified',
+    rootContextId: 'env-standard-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 9, blackVotes: 0 }

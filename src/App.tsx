@@ -1,6 +1,6 @@
 /* src/App.tsx */
 import React, { useState, useCallback } from 'react';
-import { AlgebraicStructureSpaceEngine } from './components/AlgebraicStructureSpaceEngine.tsx~';
+import { AlgebraicStructureSpaceEngine } from './components/AlgebraicStructureSpaceEngine.tsx';
 import { TheoremSpaceEngine } from './components/TheoremSpaceEngine.tsx';
 import './index.css';
 
