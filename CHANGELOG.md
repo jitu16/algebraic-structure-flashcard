@@ -3,8 +3,18 @@
 All notable changes to the **Algebraic Structure Explorer** will be documented in this file.
 
 ## [Unreleased]
-- **Phase 4c: Theorem Creation** (Adding the `CreateTheoremModal` to the Flashcard)
 - **Phase 5: Persistence** (Connecting to Firebase)
+
+## [2026-01-14] - Phase 4c: Theorem Expansion & UX Polish
+### Added
+- **Theorem Creation Engine:** Implemented `CreateTheoremModal` allowing users to propose new properties directly inside the Flashcard.
+- **Theorem Library Drawer:** Added a slide-out discovery panel to search and template existing theorems.
+- **Flashcard Integration:** Added a "Propose Theorem" button to the Local Scope section.
+- **Design Tool Interaction:** Enabled `panOnScroll` in the Graph Engine. Trackpads now pan with two fingers (Figma-style) instead of zooming.
+
+### Changed
+- **Styling Architecture:** Refactored `Flashcard.tsx` and `AlgebraicStructureExplorer.tsx` to use Modular CSS (`.module.css`), removing inline style clutter.
+- **Animation Polish:** Fixed "Jumping Button" glitch on the "Extend Structure" button by isolating transform contexts.
 
 ## [2026-01-14] - Phase 4b: Creation & Discovery Engine
 ### Added
@@ -31,20 +41,9 @@ All notable changes to the **Algebraic Structure Explorer** will be documented i
 ## [2026-01-12] - Phase 3: Core Architecture & Rendering Hardening
 ### Changed
 - **Strict Typing:** Refactored the entire codebase to use **Discriminated Unions** (`algebraic structure` vs `theorem`).
-- **Graph Adapter 2.0:** Completely rewrote `graphAdapter.ts` to support complex, multi-line LaTeX labels (Structure Name + Axiom Name + Formula) using `matrix` environments.
+- **Graph Adapter 2.0:** Completely rewrote `graphAdapter.ts` to support complex, multi-line LaTeX labels using `matrix` environments.
 - **Component Decoupling:** Refactored `Flashcard.tsx` to handle Theorem rendering internally.
-- **Data Schema:** Updated `initialData.ts` to separate label names from display LaTeX.
 
 ### Fixed
 - **Visual Glitches:** Fixed arrow positioning and CSS sizing issues for React Flow nodes.
 - **Engine Isolation:** Fixed circular dependency errors between engines.
-
-## [2026-01-11] - Phase 2: Visual Polish & Layouts
-### Added
-- **Auto-Layout (Dagre):** Implemented hierarchical layout.
-- **Collapsible Proofs:** Added accordion toggles to Flashcard items.
-
-## [2026-01-10] - Phase 1: Architecture Refactor
-### Changed
-- **Engine Split:** Separated `StructuralEngine` and `DeductiveEngine`.
-- **Rendering Pipeline:** Standardized all text rendering to use KaTeX.

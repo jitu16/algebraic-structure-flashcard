@@ -60,6 +60,9 @@ export const GenericGraphEngine = ({
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         fitView
+	panOnScroll /* Enables two-finger pan / Scroll-to-pan */
+	selectionOnDrag= {false}
+	panOnDrag={true}
       >
         <Background gap={20} color="#333" />
         <Controls />

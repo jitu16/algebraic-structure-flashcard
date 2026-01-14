@@ -7,26 +7,26 @@ import { Flashcard } from './Flashcard';
 import { nodesToGraph } from '../utils/graphAdapter';
 import { initialNodes, initialAxioms, initialTheorems, initialEnvironments } from '../data/initialData';
 import { CreateStructureModal, type StructureFormData } from './modals/CreateStructureModal';
+import { type TheoremFormData } from './modals/CreateTheoremModal';
 import type { StructureNode, Axiom, RootEnvironment, Theorem } from '../types';
+import styles from './AlgebraicStructureExplorer.module.css';
 
 /**
  * The Primary Controller: Manages the "Algebraic Structure Map".
- * This engine visualizes the evolutionary tree of algebraic systems (e.g., Magmas → Groups → Rings).
- * It manages the graph state, selection logic, and data mutations for new structures.
+ * Responsibilities:
+ * 1. Visualizing the evolutionary tree of algebraic systems.
+ * 2. Managing state (Nodes, Axioms, Theorems).
+ * 3. Handling data mutations (Creating Structures, Adding Theorems).
  */
 export const AlgebraicStructureExplorer = () => {
   
   // --- STATE MANAGEMENT ---
-  // In a real app, this would be replaced by a Context or Redux store connected to Firebase.
   const [dataNodes, setDataNodes] = useState<StructureNode[]>(initialNodes as StructureNode[]);
   const [dataAxioms, setDataAxioms] = useState<Axiom[]>(initialAxioms);
   const [dataTheorems, setDataTheorems] = useState<Theorem[]>(initialTheorems);
-  
-  // Root Environments are currently static but kept in state for future scaling.
   const [dataEnvironments] = useState<RootEnvironment[]>(initialEnvironments);
 
   // --- GRAPH LAYOUT CALCULATION ---
-  // Re-runs Dagre layout whenever the structural data changes.
   const { nodes: layoutNodes, edges: layoutEdges } = useMemo(
     () => nodesToGraph(dataNodes, dataAxioms), 
     [dataNodes, dataAxioms]
@@ -46,18 +46,12 @@ export const AlgebraicStructureExplorer = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  // Define custom node types for React Flow
   const nodeTypes = useMemo(() => ({ mathNode: MathNode }), []);
 
-  // Derived state: The currently selected data object
   const selectedNodeData = useMemo(() => 
     dataNodes.find(n => n.id === selectedNodeId), 
   [selectedNodeId, dataNodes]);
 
-  /**
-   * Retrieves the RootEnvironment associated with the currently selected node.
-   * Used to pass notation constraints (sets/operators) to the creation modal.
-   */
   const activeEnvironment = useMemo(() => {
     if (!selectedNodeData) return null;
     return dataEnvironments.find(env => env.id === selectedNodeData.rootContextId) || null;
@@ -74,28 +68,19 @@ export const AlgebraicStructureExplorer = () => {
   }, []);
 
   /**
-   * Handles the creation of a new Structure Node.
-   * * Logic:
-   * 1. Checks if the user selected an existing axiom (Linked Mode) or created a new one (Creation Mode).
-   * 2. If new, creates the Axiom entity and adds it to the global store.
-   * 3. Creates the Structure Node linked to that Axiom ID.
+   * Handler: Create New Structure
+   * Links a new node to the graph and potentially creates a new axiom.
    */
   const handleCreateStructure = (formData: StructureFormData) => {
     if (!selectedNodeId || !selectedNodeData) return;
-
-    // Prevent extension from dead ends or deprecated nodes
-    if (selectedNodeData.status === 'deprecated' || selectedNodeData.status === 'deadend') {
-      return; 
-    }
+    if (selectedNodeData.status === 'deprecated' || selectedNodeData.status === 'deadend') return;
     
     const timestamp = Date.now();
-    const newStructureId = `struct-${timestamp}`;
-    const currentUser = 'temp-user-id'; // Placeholder for Auth
+    const currentUser = 'temp-user-id'; 
 
-    // 1. Determine the Axiom ID (New vs. Existing)
+    // 1. Determine Axiom Source
     let finalAxiomId = formData.existingAxiomId;
 
-    // If no existing ID was provided, we must create a new Axiom entry
     if (!finalAxiomId) {
       finalAxiomId = `ax-${timestamp}`;
       const newAxiom: Axiom = {
@@ -106,11 +91,11 @@ export const AlgebraicStructureExplorer = () => {
         authorId: currentUser, 
         createdAt: timestamp   
       };
-      // Add the new axiom to the global state
       setDataAxioms(prev => [...prev, newAxiom]);
     }
 
-    // 2. Create the new Structure Node
+    // 2. Create Structure Node
+    const newStructureId = `struct-${timestamp}`;
     const newStructure: StructureNode = {
       id: newStructureId,
       type: 'algebraic structure',
@@ -121,51 +106,53 @@ export const AlgebraicStructureExplorer = () => {
       status: 'unverified',
       rootContextId: selectedNodeData.rootContextId, 
       toBeDeleted: false, 
-      stats: {
-        greenVotes: 0,
-        blackVotes: 0
-      },
+      stats: { greenVotes: 0, blackVotes: 0 },
       createdAt: timestamp 
     };
 
-    // 3. Update State (Triggering Re-render/Re-layout)
     setDataNodes(prev => [...prev, newStructure]);
-    setIsCreateModalOpen(false); // Close modal on success
+    setIsCreateModalOpen(false);
+  };
+
+  /**
+   * Handler: Add New Theorem
+   * Adds a new theorem definition to the currently selected node.
+   * * Note: Theorems start as 'unverified' and must be voted on.
+   */
+  const handleAddTheorem = (formData: TheoremFormData) => {
+    if (!selectedNodeId) return;
+
+    const timestamp = Date.now();
+    const newTheorem: Theorem = {
+      id: `th-${timestamp}`,
+      structureNodeId: selectedNodeId,
+      name: formData.name,
+      aliases: [],
+      statementLatex: formData.statementLatex,
+      proofLatex: formData.proofLatex,
+      authorId: 'temp-user-id',
+      createdAt: timestamp,
+      status: 'unverified',
+      stats: { greenVotes: 0, blackVotes: 0 }
+    };
+
+    setDataTheorems(prev => [...prev, newTheorem]);
   };
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+    <div className={styles.explorerRoot}>
       
       {/* --- EXTEND STRUCTURE BUTTON --- */}
       {selectedNodeId
         && selectedNodeData?.status !== 'deprecated'
         && selectedNodeData?.status !== 'deadend'
         && (
-        <div style={{
-          position: 'absolute',
-          top: '20px',
-          left: '50%', 
-          transform: 'translateX(-50%)',
-          zIndex: 100, 
-        }}>
+        <div className={styles.extendBtnContainer}>
           <button 
             onClick={() => setIsCreateModalOpen(true)}
-            style={{
-              padding: '10px 24px',
-              background: '#2e7d32',
-              color: 'white',
-              border: 'none',
-              borderRadius: '24px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '1rem'
-            }}
+            className={styles.extendBtn}
           >
-            <span style={{ fontSize: '1.2rem', lineHeight: '1rem' }}>+</span> Extend Structure
+            <span className={styles.plusIcon}>+</span> Extend Structure
           </button>
         </div>
       )}
@@ -190,6 +177,7 @@ export const AlgebraicStructureExplorer = () => {
           allAxioms={dataAxioms}
           allTheorems={dataTheorems}
           onClose={() => setSelectedNodeId(null)}
+          onAddTheorem={handleAddTheorem} // <--- Connected Handler
         />
       )}
 

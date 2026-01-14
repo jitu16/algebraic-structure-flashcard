@@ -14,6 +14,7 @@ We want to visualize the dramatic power of individual axioms. By studying this t
 
 
 ### Directory Structure
+
 ```text
 ├── designs/                                      # Project documentation and diagrams
 │   └── design-docs                               # MermaidJS source files
@@ -26,11 +27,14 @@ We want to visualize the dramatic power of individual axioms. By studying this t
       ├── components/                             # UI Components & Graph Logic
       │   ├── modals/                             #
       │   │   ├── AxiomLibraryDrawer.tsx          # Axiom Discovery Engine
+      │   │   ├── TheoremLibraryDrawer.tsx        # [NEW] Theorem Discovery Engine
       │   │   ├── CreateStructureModal.tsx        # Hybrid Creation Form (Structure)
-      │   │   ├── CreateTheoremModal.tsx          # [NEW] Hybrid Creation Form (Theorem)
+      │   │   ├── CreateTheoremModal.tsx          # Hybrid Creation Form (Theorem)
       │   │   └── Modal.module.css                # Scoped Styles
+      │   ├── AlgebraicStructureExplorer.module.css # [NEW] Layout & Button styles
       │   ├── AlgebraicStructureExplorer.tsx      # Main View: The Map of Algebraic Systems
       │   ├── GenericGraphEngine.tsx              # Pure Canvas: Handles React Flow rendering
+      │   ├── Flashcard.module.css                # [NEW] Styles for the Detail Panel
       │   ├── Flashcard.tsx                       # Info Panel: Lists Axioms & Properties
       │   ├── MathNode.tsx                        # Custom Graph Node with KaTeX rendering
       │   ├── LatexRenderer.tsx                   # Rendering latex commands.
@@ -86,7 +90,7 @@ As the tree grows, users may inadvertently create duplicate structures. We handl
 * **The Zombie State:** The duplicate branch is flagged `toBeDeleted` and flashes Yellow.
 * **The Migration:** This creates a window for the community to review the structure before the zombie node is auto-deleted.
 
-### Immediate Tasks (Phase 4b: Creation & Discovery)
+### Immediate Tasks (Phase 4c: Creation & Discovery)
 **Status: Implemented**
 
 #### 1. Node Creation UI (Done)
@@ -100,12 +104,15 @@ As the tree grows, users may inadvertently create duplicate structures. We handl
 * **Polymorphic Voting:** Both Nodes and Theorems now support independent Up/Down voting and Status coloring.
 
 ### Immediate Tasks (Phase 4c: Theorem Expansion)
-**Status: In Progress**
+**Status: Implemented**
 
-#### 1. Theorem Creation UI
-* **Theorem Creator:** Design a Hybrid Modal (similar to the Structure Creator) to append new Theorems to the Flashcard.
-* **Library Integration:** Connect to the global theorem registry to allow re-use of common proofs (e.g., "Uniqueness of Identity").
+#### 1. Theorem Creation UI (Done)
+* **Theorem Creator:** Designed the Hybrid Modal to append new Theorems to the Flashcard.
+* **Library Integration:** Connected to the global theorem registry to allow re-use of common proofs (e.g., "Uniqueness of Identity").
 
-#### 2. Persistence Layer (Next)
+### Next Steps (Phase 5: Persistence)
+**Status: Pending**
+
+#### 1. Persistence Layer
 * **Backend Integration:** Connect the current in-memory state to **Firebase**.
 * **Save/Load:** Ensure the tree state persists across page reloads.

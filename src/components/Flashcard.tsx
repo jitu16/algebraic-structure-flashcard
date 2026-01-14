@@ -7,6 +7,7 @@ import { getCumulativeLineage } from '../utils/lineage';
 import { LatexRenderer } from './LatexRenderer';
 import { useVoting } from '../hooks/useVoting';
 import { checkStatus } from '../utils/checkStatus';
+import { CreateTheoremModal, type TheoremFormData } from './modals/CreateTheoremModal';
 
 interface UnifiedFlashcardProps {
   /** The currently selected Structure Node to display */
@@ -18,6 +19,8 @@ interface UnifiedFlashcardProps {
   /** Complete list of theorems for property listing */
   allTheorems: Theorem[];
   onClose: () => void;
+  /** Callback to handle the submission of a new theorem */
+  onAddTheorem: (data: TheoremFormData) => void;
 }
 
 /**
@@ -25,10 +28,13 @@ interface UnifiedFlashcardProps {
  * Displays the node's name, axiom, inherited lineage, and local theorems.
  */
 export const Flashcard = (props: UnifiedFlashcardProps) => {
-  const { node, allNodes, allAxioms, allTheorems, onClose } = props;
+  const { node, allNodes, allAxioms, allTheorems, onClose, onAddTheorem } = props;
 
   // Calculate the full mathematical context (Inherited vs Local)
   const lineage = getCumulativeLineage(node.id, allNodes, allAxioms, allTheorems);
+  
+  // State for the Theorem Creation Modal
+  const [isTheoremModalOpen, setIsTheoremModalOpen] = useState(false);
 
   return (
     <div className={styles.panel}>
@@ -42,8 +48,19 @@ export const Flashcard = (props: UnifiedFlashcardProps) => {
       <LocalScopeSection 
         node={node} 
         axiom={lineage.localAxiom} 
-        theorems={lineage.localTheorems} 
+        theorems={lineage.localTheorems}
+        onOpenAddTheorem={() => setIsTheoremModalOpen(true)}
       />
+
+      {/* --- THEOREM CREATION MODAL --- */}
+      {isTheoremModalOpen && (
+        <CreateTheoremModal 
+          structureName={node.displayLatex}
+          availableTheorems={allTheorems}
+          onClose={() => setIsTheoremModalOpen(false)}
+          onSubmit={onAddTheorem}
+        />
+      )}
     </div>
   );
 };
@@ -55,9 +72,9 @@ interface HeaderProps {
 }
 
 const FlashcardHeader = ({ onClose }: HeaderProps) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-    <h3 style={{ margin: 0, color: '#444' }}>Structure Details</h3>
-    <button onClick={onClose} style={{ cursor: 'pointer', padding: '5px 10px' }}>
+  <div className={styles.headerRow}>
+    <h3 className={styles.headerTitle}>Structure Details</h3>
+    <button onClick={onClose} className={styles.closeBtn}>
       Close ✕
     </button>
   </div>
@@ -74,7 +91,7 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
 
   return (
     <section className={styles.sectionInherited}>
-      <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#333', borderBottom: '1px solid #eee', paddingBottom: '5px' }}>
+      <h4 className={styles.sectionTitle}>
         Heritage (Ancestry)
       </h4>
 
@@ -82,31 +99,18 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
       <div style={{ marginBottom: '10px' }}>
         <button 
           onClick={() => setIsAxiomsOpen(!isAxiomsOpen)}
-          style={{ 
-            width: '100%',
-            textAlign: 'left',
-            background: '#f5f5f5',
-            border: '1px solid #ddd',
-            padding: '8px 12px',
-            cursor: 'pointer',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontWeight: 'bold',
-            color: '#555',
-            borderRadius: '4px'
-          }}
+          className={styles.toggleBtn}
         >
           <span>Inherited Axioms ({axioms.length})</span>
           <span>{isAxiomsOpen ? '▼' : '▶'}</span>
         </button>
 
         {isAxiomsOpen && (
-          <div style={{ padding: '10px', background: '#fafafa', border: '1px solid #eee', borderTop: 'none' }}>
+          <div className={styles.toggleContent}>
             {axioms.length > 0 ? (
-              <ul style={{ paddingLeft: '20px', margin: 0 }}>
+              <ul className={styles.axiomList}>
                 {axioms.map(ax => (
-                  <li key={ax.id} style={{ marginBottom: '8px', fontSize: '0.9rem' }}>
+                  <li key={ax.id} className={styles.axiomItem}>
                     <strong>{ax.canonicalName}: </strong>
                     <span style={{ color: '#444' }}>
                       <LatexRenderer latex={ax.defaultLatex} />
@@ -115,7 +119,7 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
                 ))}
               </ul>
             ) : (
-              <span style={{ color: '#999', fontStyle: 'italic', fontSize: '0.9rem' }}>
+              <span className={styles.emptyState}>
                 None (Genesis Node)
               </span>
             )}
@@ -127,27 +131,14 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
       <div>
         <button 
           onClick={() => setIsTheoremsOpen(!isTheoremsOpen)}
-          style={{ 
-            width: '100%',
-            textAlign: 'left',
-            background: '#f5f5f5',
-            border: '1px solid #ddd',
-            padding: '8px 12px',
-            cursor: 'pointer',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontWeight: 'bold',
-            color: '#555',
-            borderRadius: '4px'
-          }}
+          className={styles.toggleBtn}
         >
           <span>Inherited Theorems ({theorems.length})</span>
           <span>{isTheoremsOpen ? '▼' : '▶'}</span>
         </button>
 
         {isTheoremsOpen && (
-          <div style={{ padding: '10px', background: '#fafafa', border: '1px solid #eee', borderTop: 'none' }}>
+          <div className={styles.toggleContent}>
             {theorems.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {theorems.map(t => (
@@ -155,7 +146,7 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
                 ))}
               </div>
             ) : (
-              <span style={{ color: '#999', fontStyle: 'italic', fontSize: '0.9rem' }}>
+              <span className={styles.emptyState}>
                 None inherited.
               </span>
             )}
@@ -170,9 +161,10 @@ interface LocalScopeProps {
   node: StructureNode;
   axiom?: Axiom;
   theorems: Theorem[];
+  onOpenAddTheorem: () => void;
 }
 
-const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
+const LocalScopeSection = ({ node, axiom, theorems, onOpenAddTheorem }: LocalScopeProps) => {
   return (
     <section className={styles.sectionCurrent}>
       <h3>
@@ -180,8 +172,8 @@ const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
       </h3>
       
       {axiom && (
-        <div style={{ margin: '10px 0', padding: '10px', background: '#fff', border: '1px solid #eee' }}>
-          <div style={{ marginBottom: '5px', color: '#555', fontSize: '0.9rem' }}>
+        <div className={styles.axiomBox}>
+          <div className={styles.axiomLabel}>
              Added Axiom: <strong>{axiom.canonicalName}</strong>
           </div>
           <span style={{ fontWeight: 'bold' }}>
@@ -190,15 +182,25 @@ const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
         </div>
       )}
 
-      <h4 style={{ marginTop: '20px', borderBottom: '1px solid #eee', paddingBottom: '5px' }}>
-        Defined Properties (Local)
-      </h4>
+      {/* --- Header with Propose Theorem Button --- */}
+      <div className={styles.localPropHeader}>
+        <h4 className={styles.localPropTitle}>
+          Defined Properties (Local)
+        </h4>
+        <button 
+          onClick={onOpenAddTheorem}
+          className={styles.proposeBtn}
+        >
+          + Propose Theorem
+        </button>
+      </div>
+
       {theorems.length > 0 ? (
         theorems.map(t => (
           <TheoremItem key={t.id} theorem={t} />
         ))
       ) : (
-        <p style={{ color: '#888', fontStyle: 'italic' }}>
+        <p className={styles.emptyState}>
           No properties defined yet.
         </p>
       )}
@@ -230,6 +232,7 @@ const TheoremItem = ({ theorem }: TheoremItemProps) => {
   });
 
   // 3. Construct CSS Class String
+  // Note: 'theorem-item' and 'status-X' are global classes in index.css
   const containerClass = `theorem-item status-${currentStatus}`;
   const upButtonClass = `vote-btn ${userVote === 'up' ? 'active-up' : ''}`;
   const downButtonClass = `vote-btn ${userVote === 'down' ? 'active-down' : ''}`;
@@ -238,13 +241,13 @@ const TheoremItem = ({ theorem }: TheoremItemProps) => {
     <div className={containerClass}>
       
       {/* Header: Name & Votes */}
-      <div className="theorem-header">
-        <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+      <div className={styles.theoremHeaderRow}>
+        <div className={styles.theoremName}>
           {theorem.name}
         </div>
         
         {/* Reusing the math-node-stats class which behaves differently inside theorem-header */}
-        <div className="math-node-stats">
+        <div className="math-node-stats" style={{ margin: 0, padding: 0, border: 'none' }}>
            <button 
             className={upButtonClass}
             onClick={(e) => { e.stopPropagation(); handleVote('up'); }}
@@ -284,29 +287,14 @@ const CollapsibleTheoremDetails = ({ statement, proof }: CollapsibleProps) => {
     <div style={{ marginTop: '2px' }}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: '#0288d1',
-          cursor: 'pointer',
-          fontSize: '0.8rem',
-          padding: 0,
-          textDecoration: 'underline'
-        }}
+        className={styles.detailsToggle}
       >
         {isOpen ? '▼ Hide Details' : '▶ Show Statement & Proof'}
       </button>
       
       {isOpen && (
-        <div style={{ 
-          marginTop: '8px', 
-          padding: '10px', 
-          background: '#f9f9f9', 
-          borderRadius: '4px',
-          borderLeft: '3px solid #ddd',
-          fontSize: '0.9rem'
-        }}>
-          <div style={{ marginBottom: '10px' }}>
+        <div className={styles.detailsBox}>
+          <div className={styles.detailsRow}>
             <strong style={{ color: '#333' }}>Statement: </strong>
             <div style={{ marginTop: '4px', paddingLeft: '5px' }}>
               <LatexRenderer latex={statement} />
