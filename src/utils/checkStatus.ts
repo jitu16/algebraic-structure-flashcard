@@ -30,7 +30,7 @@ export const checkStatus = (data: AnyGraphNode): NodeStatus => {
   const netScore = green - black;
 
   // 3. Check Vote Thresholds
-  if (netScore >= VERIFICATION_THRESHOLD) {
+  if (netScore >= VERIFICATION_THRESHOLD && data.status == 'unverified') {
     return 'verified';
   }
 
@@ -39,5 +39,5 @@ export const checkStatus = (data: AnyGraphNode): NodeStatus => {
   }
 
   // 4. Default
-  return 'unverified';
+  return data.status;
 };

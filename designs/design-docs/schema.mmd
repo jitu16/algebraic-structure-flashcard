@@ -1,201 +1,108 @@
 classDiagram
+    %% ==========================================
+    %% 1. USER & GOVERNANCE
+    %% ==========================================
     class User {
         +String id PK
         +String email
-        +String role "Values: novice, citizen, admin" 
+        %% Permissions based on Trust Ladder (Visitor -> Novice -> Citizen -> Admin)
+        +String role 
         +Int creationReputation
         +Int contributorReputation
     }
 
-    class RootEnvironment {
-        +String id PK
-        +String name "e.g., 'Magma Structure'"
-        +Array~String~ sets "e.g., ['S']"
-        +Array~String~ operators "e.g., ['*']"
-        %% REMOVED: rootAxiomId. The Environment IS the foundation.
-    }
-
-    class Axiom {
-        +String id PK
-        +String canonicalName "e.g., 'Commutativity'"
-        +Array~String~ aliases "Tags/Synonyms: ['Abelian', 'Symmetric']"
-        +String defaultLatex "e.g., a \cdot b = b \cdot a"
-        +String authorId FK
-        +Timestamp createdAt
-    }
-    
-    note for Axiom "The 'Concept' Library.\nStores unique definitions."
-
-    class Node {
-        +String id PK
-        +String parentId FK
-        +String authorId FK
-        
-        +String axiomId FK "LOGIC: Points to Axiom (Null for Root Definition Node)"
-        +String displayLatex "VISUAL: The Notation Override"
-        
-        +String status "Values: unverified, verified, contested, deadEnd, deprecated"
-        
-        +String duplicateOfId "Pointer to the Survivor Node"
-        +Boolean toBeDeleted "Deprecation Flag"
-        
-        +Int voteCountGreen
-        +Int voteCountBlack
-        +Int flagCountYellow
-    }
-
     class Vote {
         +String id PK
-        +String targetId FK "Polymorphic: Points to Node OR TheoremNode" 
-        +String targetType "Values: node, theorem"
+        +String targetNodeId FK
         +String userId FK
-        +String type "Values: green, black"
+        %% Green = Valid, Black = Invalid
+        +String type 
         +Timestamp timestamp
     }
     
     class Flag {
         +String id PK
-        +String type "Values: issue, duplicate"
-        
-        +String targetId FK "Polymorphic: Points to Node OR TheoremNode"
-        +String targetType "Values: node, theorem"
-        
+        +String targetNodeId FK
         +String reporterId FK
+        
+        %% Issue = General Error, Duplicate = Redundant Branch
+        +String type
         +String reason 
         +String suggestedFixLatex 
         
-        +String duplicateOfId "Points to Survivor"
+        %% If type is Duplicate, this points to the Survivor Node
+        +String duplicateOfId
         +String status
     }
-    
-    class TheoremNode {
-        +String id PK
-        +String nodeId FK "CONTEXT: The Structural Parent (Axiom Node)"
-        +String parentId FK "LOGIC: The Deductive Parent"
-        
-        +String statementLatex
-        +String proofLatex
-        +String authorId FK
-        
-        +String status "Values: unverified, verified, deprecated"
-        +String duplicateOfId "Pointer to Survivor Theorem"
-        +Boolean toBeDeleted "Triggers Yellow Flash"
-        
-        +Int voteCountGreen
-        +Int voteCountBlack
-    }
 
-    %% Relationships
-    User "1" -- "*" Node : creates
-    User "1" -- "*" Axiom : creates
-    User "1" -- "*" TheoremNode : creates
-    User "1" -- "*" Vote : casts
-    User "1" -- "*" Flag : reports
-    
-    Axiom "1" -- "*" Node : defines
-    
-    Node "1" -- "*" Node : branches (Structural Tree)
-    TheoremNode "1" -- "*" TheoremNode : derives (Deductive Tree)
-    
-    Node "1" -- "*" TheoremNode : contains (The Local Deductive Scope)classDiagram
-    class User {
-        +String id PK
-        +String email
-        +String role "Values: novice, citizen, admin" 
-        +Int creationReputation
-        +Int contributorReputation
-    }
-
+    %% ==========================================
+    %% 2. THE FOUNDATION (ROOTS & AXIOMS)
+    %% ==========================================
     class RootEnvironment {
         +String id PK
         +String name
-        +Array~String~ sets "e.g., ['V', 'F']"
-        +Array~String~ operators "e.g., ['+', '·']"
-        +Array~String~ rootAxiomIds "Pointers to the Axiom Registry"
+        %% The fundamental Sets for this branch (e.g., ['S'])
+        +Array~String~ sets
+        %% The fundamental Operators for this branch (e.g., ['*', '+'])
+        +Array~String~ operators
     }
 
     class Axiom {
         +String id PK
-        +String canonicalName "e.g., 'Commutativity'"
-        +Array~String~ aliases "Tags/Synonyms: ['Abelian', 'Symmetric']"
-        +String defaultLatex "e.g., a \cdot b = b \cdot a"
+        %% The canonical name (e.g., 'Commutativity')
+        +String canonicalName
+        %% Search synonyms (e.g., ['Abelian', 'Symmetric'])
+        +Array~String~ aliases
+        %% Default notation (e.g., a \cdot b = b \cdot a)
+        +String defaultLatex
         +String authorId FK
         +Timestamp createdAt
     }
     
-    note for Axiom "The 'Concept' Library.\nStores unique definitions."
+    note for Axiom "The 'Concept' Library.\nStores unique definitions independent of the tree."
 
-    class Node {
+    %% ==========================================
+    %% 3. THE STRUCTURAL TREE
+    %% ==========================================
+    class StructureNode {
         +String id PK
         +String parentId FK
         +String authorId FK
         
-        +String axiomId FK "LOGIC: Links to the Concept"
-        +String displayLatex "VISUAL: The Notation Override"
+        %% Links to the Abstract Concept (Null for Root Definition Nodes)
+        +String axiomId FK
+        %% Context-specific notation override
+        +String displayLatex
         
-        +String status "Values: unverified, verified, contested, deadEnd, deprecated"
+        %% Lifecycle: unverified -> verified -> contested -> deadEnd -> deprecated
+        +String status
         
-        +String duplicateOfId "Pointer to the Survivor Node"
-        +Boolean toBeDeleted "Deprecation Flag (Triggers Yellow Flash)"
+        %% -- ZOMBIE PROTOCOL --
+        %% Points to the Survivor Node if this is a duplicate
+        +String duplicateOfId
+        %% If true, triggers 'Zombie' state (Historical Marker)
+        +Boolean toBeDeleted
         
+        %% -- REPUTATION --
         +Int voteCountGreen
         +Int voteCountBlack
         +Int flagCountYellow
     }
 
-    class Vote {
-        +String id PK
-        +String targetId FK "Polymorphic: Points to Node OR TheoremNode" 
-        +String targetType "Values: node, theorem"
-        +String userId FK
-        +String type "Values: green, black"
-        +Timestamp timestamp
-    }
+    %% ==========================================
+    %% RELATIONSHIPS
+    %% ==========================================
     
-    class Flag {
-        +String id PK
-        +String type "Values: issue, duplicate"
-        
-        +String targetId FK "Polymorphic: Points to Node OR TheoremNode"
-        +String targetType "Values: node, theorem"
-        
-        +String reporterId FK
-        +String reason 
-        +String suggestedFixLatex 
-        
-        +String duplicateOfId "Points to Survivor"
-        +String status
-    }
-    
-    class TheoremNode {
-        +String id PK
-        +String nodeId FK "CONTEXT: The Structural Parent (Axiom Node)"
-        +String parentId FK "LOGIC: The Deductive Parent (Previous Theorem)"
-        
-        +String statementLatex
-        +String proofLatex
-        +String authorId FK
-        
-        +String status "Values: unverified, verified, deprecated"
-        +String duplicateOfId "Pointer to Survivor Theorem (Zombie Logic)"
-        +Boolean toBeDeleted "Triggers Yellow Flash in Theorem Tree"
-        
-        +Int voteCountGreen
-        +Int voteCountBlack
-    }
-
-    %% Relationships
-    User "1" -- "*" Node : creates
+    %% User Actions
+    User "1" -- "*" StructureNode : creates
     User "1" -- "*" Axiom : creates
-    User "1" -- "*" TheoremNode : creates
     User "1" -- "*" Vote : casts
     User "1" -- "*" Flag : reports
     
-    Axiom "1" -- "*" Node : defines
+    %% Structural Logic
+    Axiom "1" -- "*" StructureNode : defines
+    StructureNode "1" -- "*" StructureNode : branches
     
-    %% The Fractal Structure
-    Node "1" -- "*" Node : branches (Structural Tree)
-    TheoremNode "1" -- "*" TheoremNode : derives (Deductive Tree)
-    
-    %% Contextual Linking
-    Node "1" -- "*" TheoremNode : contains (The Local)
+    %% Governance Logic
+    StructureNode "1" -- "*" Vote : receives
+    StructureNode "1" -- "*" Flag : receives

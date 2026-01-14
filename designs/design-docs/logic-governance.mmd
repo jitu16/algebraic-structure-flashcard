@@ -1,3 +1,7 @@
+---
+config:
+  layout: elk
+---
 graph TD
     subgraph Tiers ["The Trust Ladder"]
         Visitor[/"Tier 0: Visitor<br/>(Read Only)"/]
@@ -6,42 +10,21 @@ graph TD
         Admin[/"Tier 3: Librarian/Admin<br/>(Hand-Picked)"/]
     end
 
-    %% EXPLICIT NAMING: Theorem Deductive Domain
-    subgraph Actions_Deductive ["Theorem Deductive Domain"]
-        Act_DraftThm["Draft Theorem"]
-        Act_VerifyThm["Verify Theorem"]
-        Act_FlagThm["Flag Duplicate"]
-    end
-
-    %% EXPLICIT NAMING: Algebraic Structural Domain
     subgraph Actions_Structural ["Algebraic Structural Domain"]
         Act_DraftAx["Draft Axiom Node"]
         Act_VerifyAx["Verify Axiom Node"]
+        Act_FlagAx["Flag Duplicate/Issue"]
         Act_DeleteAx["Zombie Protocol"]
         Act_Lock["Lock Node"]
     end
-
-    %% -- Visitor --
-    Visitor -.->|"Cannot Edit"| Actions_Deductive
-    
-    %% -- Novice --
-    Novice -->|"Can Draft (Ghost Mode)"| Act_DraftThm
+    Visitor -.->|"Cannot Edit"| Actions_Structural
     Novice -->|"Can Draft (Ghost Mode)"| Act_DraftAx
-    
-    %% -- Citizen --
-    Citizen -->|"Instant Publish (Red)"| Act_DraftThm
     Citizen -->|"Instant Publish (Red)"| Act_DraftAx
-    Citizen -->|"Vote (Weight: 5)"| Act_VerifyThm
     Citizen -->|"Vote (Weight: 5)"| Act_VerifyAx
-    Citizen -->|"Flag"| Act_FlagThm
-
-    %% -- Admin --
-    Admin -->|"Instant Verify"| Act_VerifyThm
+    Citizen -->|"Flag"| Act_FlagAx
     Admin -->|"Instant Verify"| Act_VerifyAx
     Admin -->|"Force Merge"| Act_DeleteAx
     Admin -->|"System Lock"| Act_Lock
-    
-    %% Styling
     style Admin fill:#ccffcc,stroke:#006400,stroke-width:2px
     style Citizen fill:#e1f5fe,stroke:#01579b
     style Novice fill:#ffffcc,stroke:#fbc02d

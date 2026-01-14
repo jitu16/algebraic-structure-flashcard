@@ -1,4 +1,4 @@
-/* src/components/AlgebraicStructureSpaceEngine.tsx */
+/* src/components/AlgebraicStructureExplorer.tsx */
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useNodesState, useEdgesState } from '@xyflow/react';
 import { GenericGraphEngine } from './GenericGraphEngine';
@@ -7,59 +7,63 @@ import { Flashcard } from './Flashcard';
 import { nodesToGraph } from '../utils/graphAdapter';
 import { initialNodes, initialAxioms, initialTheorems, initialEnvironments } from '../data/initialData';
 import { CreateStructureModal, type StructureFormData } from './modals/CreateStructureModal';
-import type { StructureNode, Axiom, RootEnvironment } from '../types';
-
-interface AlgebraicStructureSpaceEngineProps {
-  onNavigateToTheoremSpace: (nodeId: string) => void;
-}
+import type { StructureNode, Axiom, RootEnvironment, Theorem } from '../types';
 
 /**
- * The Macro-View Engine: Manages the "Algebraic Structure Space".
- * This engine visualizes the evolutionary map of algebraic structures (e.g., Magmas → Groups → Rings).
- * It handles the "structural" mode of the graph, where nodes represent systems and edges represent axiomatic extensions.
- * * @param onNavigateToTheoremSpace - Callback to transition the view to the Theorem Space (Micro-View) for a selected node.
+ * The Primary Controller: Manages the "Algebraic Structure Map".
+ * This engine visualizes the evolutionary tree of algebraic systems (e.g., Magmas → Groups → Rings).
+ * It manages the graph state, selection logic, and data mutations for new structures.
  */
-export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: AlgebraicStructureSpaceEngineProps) => {
+export const AlgebraicStructureExplorer = () => {
   
+  // --- STATE MANAGEMENT ---
+  // In a real app, this would be replaced by a Context or Redux store connected to Firebase.
   const [dataNodes, setDataNodes] = useState<StructureNode[]>(initialNodes as StructureNode[]);
   const [dataAxioms, setDataAxioms] = useState<Axiom[]>(initialAxioms);
+  const [dataTheorems, setDataTheorems] = useState<Theorem[]>(initialTheorems);
   
-  /**
-   * We maintain the list of Root Environments (Sets/Operators notation).
-   * These are generally static but kept in state for potential future extensibility.
-   */
+  // Root Environments are currently static but kept in state for future scaling.
   const [dataEnvironments] = useState<RootEnvironment[]>(initialEnvironments);
 
+  // --- GRAPH LAYOUT CALCULATION ---
+  // Re-runs Dagre layout whenever the structural data changes.
   const { nodes: layoutNodes, edges: layoutEdges } = useMemo(
     () => nodesToGraph(dataNodes, 'structural', dataAxioms), 
     [dataNodes, dataAxioms]
   );
 
+  // React Flow State Hooks
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(layoutEdges);
   
+  // Sync React Flow state with calculated layout
   useEffect(() => {
     setNodes(layoutNodes);
     setEdges(layoutEdges);
   }, [layoutNodes, layoutEdges, setNodes, setEdges]);
 
+  // --- INTERACTION STATE ---
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Define custom node types for React Flow
   const nodeTypes = useMemo(() => ({ mathNode: MathNode }), []);
 
+  // Derived state: The currently selected data object
   const selectedNodeData = useMemo(() => 
     dataNodes.find(n => n.id === selectedNodeId), 
   [selectedNodeId, dataNodes]);
 
   /**
    * Retrieves the RootEnvironment associated with the currently selected node.
-   * This is used to pass notation constraints (sets/operators) to the creation modal.
+   * Used to pass notation constraints (sets/operators) to the creation modal.
    */
   const activeEnvironment = useMemo(() => {
     if (!selectedNodeData) return null;
     return dataEnvironments.find(env => env.id === selectedNodeData.rootContextId) || null;
   }, [selectedNodeData, dataEnvironments]);
+
+  // --- EVENT HANDLERS ---
 
   const onNodeClick = useCallback((_: React.MouseEvent, node: any) => {
     setSelectedNodeId(node.id);
@@ -69,12 +73,6 @@ export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: Alge
     setSelectedNodeId(null); 
   }, []);
 
-  const handleToggleMode = useCallback(() => {
-    if (selectedNodeId) {
-      onNavigateToTheoremSpace(selectedNodeId);
-    }
-  }, [selectedNodeId, onNavigateToTheoremSpace]);
-
   /**
    * Handles the creation of a new Structure Node.
    * Enforces immutability of the Root Context: The new node automatically inherits
@@ -83,19 +81,17 @@ export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: Alge
   const handleCreateStructure = (formData: StructureFormData) => {
     if (!selectedNodeId || !selectedNodeData) return;
 
-    if (selectedNodeData.status === 'deprecated') {
-      return; 
-    }
-    
-    if (selectedNodeData.status === 'deadend') {
+    // Prevent extension from dead ends or deprecated nodes
+    if (selectedNodeData.status === 'deprecated' || selectedNodeData.status === 'deadend') {
       return; 
     }
     
     const timestamp = Date.now();
     const newAxiomId = `ax-${timestamp}`;
     const newStructureId = `struct-${timestamp}`;
-    const currentUser = 'temp-user-id'; 
+    const currentUser = 'temp-user-id'; // Placeholder for Auth
 
+    // 1. Create the new Axiom Definition
     const newAxiom: Axiom = {
       id: newAxiomId,
       canonicalName: formData.axiomName,
@@ -105,6 +101,7 @@ export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: Alge
       createdAt: timestamp   
     };
 
+    // 2. Create the new Structure Node
     const newStructure: StructureNode = {
       id: newStructureId,
       type: 'algebraic structure',
@@ -122,13 +119,16 @@ export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: Alge
       createdAt: timestamp 
     };
 
+    // 3. Update State (Triggering Re-render/Re-layout)
     setDataAxioms(prev => [...prev, newAxiom]);
     setDataNodes(prev => [...prev, newStructure]);
+    setIsCreateModalOpen(false); // Close modal on success
   };
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       
+      {/* --- EXTEND STRUCTURE BUTTON --- */}
       {selectedNodeId
         && selectedNodeData?.status !== 'deprecated'
         && selectedNodeData?.status !== 'deadend'
@@ -162,6 +162,7 @@ export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: Alge
         </div>
       )}
 
+      {/* --- GRAPH CANVAS --- */}
       <GenericGraphEngine
         nodes={nodes}
         edges={edges}
@@ -173,17 +174,18 @@ export const AlgebraicStructureSpaceEngine = ({ onNavigateToTheoremSpace }: Alge
         title="\text{Algebraic Structure Space}"
       />
 
+      {/* --- DETAIL PANEL (FLASHCARD) --- */}
       {selectedNodeData && (
         <Flashcard 
           node={selectedNodeData}
           allNodes={dataNodes}
           allAxioms={dataAxioms}
-          allTheorems={initialTheorems}
+          allTheorems={dataTheorems}
           onClose={() => setSelectedNodeId(null)}
-          onToggleMode={handleToggleMode}
         />
       )}
 
+      {/* --- CREATE MODAL --- */}
       {isCreateModalOpen && selectedNodeData && activeEnvironment && (
         <CreateStructureModal 
           parentId={selectedNodeData.id}

@@ -2,74 +2,39 @@
 import { useState } from 'react';
 import 'katex/dist/katex.min.css';
 import styles from './Flashcard.module.css';
-import type { AnyGraphNode, StructureNode, TheoremNode, Axiom } from '../types';
+import type { StructureNode, Theorem, Axiom } from '../types';
 import { getCumulativeLineage } from '../utils/lineage';
 import { LatexRenderer } from './LatexRenderer';
 
 interface UnifiedFlashcardProps {
-  node: AnyGraphNode;
-  allNodes?: StructureNode[];
-  allAxioms?: Axiom[];
-  allTheorems?: TheoremNode[];
-  onClose: () => void;
-  onToggleMode?: () => void;
-}
-
-export const Flashcard = (props: UnifiedFlashcardProps) => {
-  const { node } = props;
-
-  if (node.type === 'algebraic structure') {
-    if (!props.allNodes || !props.allAxioms || !props.allTheorems || !props.onToggleMode) {
-      return null;
-    }
-    return (
-      <StructureFlashcard 
-        node={node}
-        allNodes={props.allNodes}
-        allAxioms={props.allAxioms}
-        allTheorems={props.allTheorems}
-        onClose={props.onClose}
-        onToggleMode={props.onToggleMode}
-      />
-    );
-  } 
-  
-  if (node.type === 'theorem') {
-    return (
-      <TheoremFlashcard 
-        node={node} 
-        onClose={props.onClose} 
-      />
-    );
-  }
-
-  return null; 
-};
-
-// --- INTERNAL HELPERS ---
-
-interface StructureFlashcardProps {
+  /** The currently selected Structure Node to display */
   node: StructureNode;
+  /** Complete list of nodes for lineage calculation */
   allNodes: StructureNode[];
+  /** Complete list of axioms for context */
   allAxioms: Axiom[];
-  allTheorems: TheoremNode[];
+  /** Complete list of theorems for property listing */
+  allTheorems: Theorem[];
   onClose: () => void;
-  onToggleMode: () => void;
 }
 
-const StructureFlashcard = ({ 
-  node, 
-  allNodes, 
-  allAxioms, 
-  allTheorems, 
-  onClose,
-  onToggleMode 
-}: StructureFlashcardProps) => {
+/**
+ * The Detail Panel ("Flashcard") for an Algebraic Structure.
+ * * Displays:
+ * 1. The Structure's Name & Notation.
+ * 2. The Axiom defined at this specific level.
+ * 3. The "Heritage": Collapsible lists of all axioms and theorems inherited from parents.
+ * 4. The "Properties": A list of Theorems proven specifically for this structure.
+ */
+export const Flashcard = (props: UnifiedFlashcardProps) => {
+  const { node, allNodes, allAxioms, allTheorems, onClose } = props;
+
+  // Calculate the full mathematical context (Inherited vs Local)
   const lineage = getCumulativeLineage(node.id, allNodes, allAxioms, allTheorems);
 
   return (
     <div className={styles.panel}>
-      <FlashcardHeader onClose={onClose} onToggleMode={onToggleMode} />
+      <FlashcardHeader onClose={onClose} />
       
       <HeritageSection 
         axioms={lineage.inheritedAxioms} 
@@ -85,69 +50,157 @@ const StructureFlashcard = ({
   );
 };
 
-interface TheoremFlashcardProps {
-  node: TheoremNode;
+// --- INTERNAL SECTIONS ---
+
+interface HeaderProps {
   onClose: () => void;
 }
 
-const TheoremFlashcard = ({ node, onClose }: TheoremFlashcardProps) => {
+const FlashcardHeader = ({ onClose }: HeaderProps) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
+    <h3 style={{ margin: 0, color: '#444' }}>Structure Details</h3>
+    <button onClick={onClose} style={{ cursor: 'pointer', padding: '5px 10px' }}>
+      Close ✕
+    </button>
+  </div>
+);
+
+interface HeritageProps {
+  axioms: Axiom[];
+  theorems: Theorem[];
+}
+
+/**
+ * Renders the inherited mathematical context.
+ * Features nested collapsible sections to manage large lists of ancestors.
+ */
+const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
+  // Independent toggles for granular control
+  const [isAxiomsOpen, setIsAxiomsOpen] = useState(false);
+  const [isTheoremsOpen, setIsTheoremsOpen] = useState(false);
+
   return (
-    <div className={styles.panel}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-        <button onClick={onClose} style={{ cursor: 'pointer' }}>Close</button>
-        <span className={styles.badge} style={{ alignSelf: 'center' }}>
-          {node.status}
-        </span>
+    <section className={styles.sectionInherited}>
+      <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#333', borderBottom: '1px solid #eee', paddingBottom: '5px' }}>
+        Heritage (Ancestry)
+      </h4>
+
+      {/* --- INHERITED AXIOMS TOGGLE --- */}
+      <div style={{ marginBottom: '10px' }}>
+        <button 
+          onClick={() => setIsAxiomsOpen(!isAxiomsOpen)}
+          style={{ 
+            width: '100%',
+            textAlign: 'left',
+            background: '#f5f5f5',
+            border: '1px solid #ddd',
+            padding: '8px 12px',
+            cursor: 'pointer',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontWeight: 'bold',
+            color: '#555',
+            borderRadius: '4px'
+          }}
+        >
+          <span>Inherited Axioms ({axioms.length})</span>
+          <span>{isAxiomsOpen ? '▼' : '▶'}</span>
+        </button>
+
+        {isAxiomsOpen && (
+          <div style={{ padding: '10px', background: '#fafafa', border: '1px solid #eee', borderTop: 'none' }}>
+            {axioms.length > 0 ? (
+              <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                {axioms.map(ax => (
+                  <li key={ax.id} style={{ marginBottom: '8px', fontSize: '0.9rem' }}>
+                    {/* Axiom Name is plain text */}
+                    <strong>{ax.canonicalName}: </strong>
+                    <span style={{ color: '#444' }}>
+                      <LatexRenderer latex={ax.defaultLatex} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <span style={{ color: '#999', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                None (Genesis Node)
+              </span>
+            )}
+          </div>
+        )}
       </div>
+      
+      {/* --- INHERITED THEOREMS TOGGLE --- */}
+      <div>
+        <button 
+          onClick={() => setIsTheoremsOpen(!isTheoremsOpen)}
+          style={{ 
+            width: '100%',
+            textAlign: 'left',
+            background: '#f5f5f5',
+            border: '1px solid #ddd',
+            padding: '8px 12px',
+            cursor: 'pointer',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            fontWeight: 'bold',
+            color: '#555',
+            borderRadius: '4px'
+          }}
+        >
+          <span>Inherited Theorems ({theorems.length})</span>
+          <span>{isTheoremsOpen ? '▼' : '▶'}</span>
+        </button>
 
-      <section className={styles.sectionCurrent}>
-        <h3>Theorem Statement</h3>
-        <div style={{ padding: '15px', background: '#fff', border: '1px solid #eee', fontSize: '1.1rem', marginBottom: '20px' }}>
-           <LatexRenderer latex={node.statementLatex} />
-        </div>
-
-        <h3>Formal Proof</h3>
-        <div style={{ padding: '15px', background: '#fafafa', border: '1px solid #eee', minHeight: '150px' }}>
-           <LatexRenderer latex={node.proofLatex} />
-        </div>
-
-        <div style={{ marginTop: '20px', borderTop: '1px solid #eee', paddingTop: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <small style={{ color: '#666' }}>Author: {node.authorId}</small>
-            <div>
-                <span style={{ color: 'green', marginRight: '15px', fontWeight: 'bold' }}>
-                  ▲ {node.stats?.greenVotes || 0}
-                </span>
-                <span style={{ color: 'black', fontWeight: 'bold' }}>
-                  ▼ {node.stats?.blackVotes || 0}
-                </span>
-            </div>
-        </div>
-      </section>
-    </div>
+        {isTheoremsOpen && (
+          <div style={{ padding: '10px', background: '#fafafa', border: '1px solid #eee', borderTop: 'none' }}>
+            {theorems.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {theorems.map(t => (
+                  <div key={t.id} className={styles.theoremItem} style={{ borderLeft: '3px solid #ccc' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+                      {t.name}
+                    </div>
+                    <CollapsibleTheoremDetails 
+                      statement={t.statementLatex}
+                      proof={t.proofLatex}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span style={{ color: '#999', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                None inherited.
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
   );
 };
-
-// --- SUB-COMPONENTS ---
 
 interface LocalScopeProps {
   node: StructureNode;
   axiom?: Axiom;
-  theorems: TheoremNode[];
+  theorems: Theorem[];
 }
 
 const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
   return (
     <section className={styles.sectionCurrent}>
-      {/* 1. The Structure Name (e.g., Magma) */}
+      {/* 1. The Structure Name */}
       <h3>
         Structure: <LatexRenderer latex={node.displayLatex} />
       </h3>
       
-      {/* 2. The Axiom defining this structure (if any) */}
+      {/* 2. The Axiom defining this structure */}
       {axiom && (
         <div style={{ margin: '10px 0', padding: '10px', background: '#fff', border: '1px solid #eee' }}>
           <div style={{ marginBottom: '5px', color: '#555', fontSize: '0.9rem' }}>
-            Added Axiom: <strong><LatexRenderer latex={axiom.canonicalName} /></strong>
+             Added Axiom: <strong>{axiom.canonicalName}</strong>
           </div>
           <span style={{ fontWeight: 'bold' }}>
             <LatexRenderer latex={axiom.defaultLatex} />
@@ -156,12 +209,14 @@ const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
       )}
 
       {/* 3. Local Theorems */}
-      <h4 style={{ marginTop: '20px' }}>Local Theorems</h4>
+      <h4 style={{ marginTop: '20px', borderBottom: '1px solid #eee', paddingBottom: '5px' }}>
+        Defined Properties (Local)
+      </h4>
       {theorems.length > 0 ? (
         theorems.map(t => (
           <div key={t.id} className={styles.theoremItem} style={{ marginBottom: '10px' }}>
               <div style={{ fontWeight: 'bold' }}>
-                <LatexRenderer latex={t.name} />
+                {t.name}
               </div>
               <CollapsibleTheoremDetails 
                 statement={t.statementLatex}
@@ -171,15 +226,13 @@ const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
         ))
       ) : (
         <p style={{ color: '#888', fontStyle: 'italic' }}>
-          No theorems proven in this scope yet.
+          No properties defined yet.
         </p>
       )}
     </section>
   );
 };
 
-// (Rest of the file: FlashcardHeader, HeritageSection, CollapsibleTheoremDetails - Keep exactly as they were)
-// I am omitting them here for brevity, but they should remain in the file.
 interface CollapsibleProps {
   statement: string;
   proof: string;
@@ -230,101 +283,5 @@ const CollapsibleTheoremDetails = ({ statement, proof }: CollapsibleProps) => {
         </div>
       )}
     </div>
-  );
-};
-
-interface HeaderProps {
-  onClose: () => void;
-  onToggleMode: () => void;
-}
-
-const FlashcardHeader = ({ onClose, onToggleMode }: HeaderProps) => (
-  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
-    <button onClick={onClose} style={{ cursor: 'pointer' }}>Close</button>
-    <button 
-      onClick={onToggleMode} 
-      style={{ 
-        background: '#e1f5fe', 
-        border: '1px solid #01579b', 
-        borderRadius: '4px', 
-        padding: '4px 8px', 
-        cursor: 'pointer', 
-        fontWeight: 'bold'
-      }}
-    >
-      View Proof Tree ➔
-    </button>
-  </div>
-);
-
-interface HeritageProps {
-  axioms: Axiom[];
-  theorems: TheoremNode[];
-}
-
-const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <section className={styles.sectionInherited}>
-      <div 
-        onClick={() => setIsOpen(!isOpen)}
-        style={{ 
-          cursor: 'pointer', 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          marginBottom: isOpen ? '15px' : '0'
-        }}
-      >
-        <h4 style={{ margin: 0 }}>Inherited Axioms & Theorems</h4>
-        <span style={{ color: '#666', fontSize: '0.8rem' }}>
-          {isOpen ? '▲ Collapse' : '▼ Expand'}
-        </span>
-      </div>
-
-      {isOpen && (
-        <>
-          <div style={{ marginBottom: '20px' }}>
-            <strong style={{ display: 'block', marginBottom: '8px', color: '#555' }}>Inherited Axioms:</strong>
-            {axioms.length > 0 ? (
-              <ul style={{ paddingLeft: '20px', margin: 0 }}>
-                {axioms.map(ax => (
-                  <li key={ax.id} style={{ marginBottom: '8px', fontSize: '0.9rem' }}>
-                    <strong><LatexRenderer latex={ax.canonicalName} />: </strong>
-                    <span style={{ color: '#444' }}>
-                      <LatexRenderer latex={ax.defaultLatex} />
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <span style={{ color: '#999', fontStyle: 'italic', fontSize: '0.9rem' }}>None (Genesis)</span>
-            )}
-          </div>
-          
-          <div>
-            <strong style={{ display: 'block', marginBottom: '8px', color: '#555' }}>Inherited Theorems:</strong>
-            {theorems.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {theorems.map(t => (
-                  <div key={t.id} className={styles.theoremItem} style={{ borderLeft: '3px solid #ccc' }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
-                      <LatexRenderer latex={t.name} /> 
-                    </div>
-                    <CollapsibleTheoremDetails 
-                      statement={t.statementLatex}
-                      proof={t.proofLatex}
-                    />
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <span style={{ color: '#999', fontStyle: 'italic', fontSize: '0.9rem' }}>None inherited.</span>
-            )}
-          </div>
-        </>
-      )}
-    </section>
   );
 };

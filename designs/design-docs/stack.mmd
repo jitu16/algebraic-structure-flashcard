@@ -4,10 +4,8 @@ graph TD
     subgraph Client ["Client Side (Vite/React)"]
         App["App Controller"]
         
-        subgraph Engines ["Graph Engines (React Flow)"]
-            %% EXPLICIT NAMING
+        subgraph Engines ["Graph Engine (React Flow)"]
             StructuralEngine["Algebraic Structural Engine<br/>(Nodes: Axiom Systems)"]
-            DeductiveEngine["Theorem Deductive Engine<br/>(Nodes: Theorem Proofs)"]
         end
         
         Logic["Lineage Utility<br/>(Fetch Parents)"]
@@ -16,20 +14,13 @@ graph TD
 
     subgraph Data ["Firebase"]
         DB_Axioms[("Collection: StructureNodes")]
-        DB_Theorems[("Collection: TheoremNodes")]
     end
 
     %% Flow
     User --> App
-    %% Explicit Navigation Labels
-    App --"View: Algebraic Structure"--> StructuralEngine
-    App --"View: Theorem Deduction"--> DeductiveEngine
+    App --"View Map"--> StructuralEngine
     
-    StructuralEngine --"Select System"--> DeductiveEngine
-    
-    DeductiveEngine --> Logic
-    DeductiveEngine --> Math
+    StructuralEngine --> Logic
     StructuralEngine --> Math
     
     StructuralEngine <--> DB_Axioms
-    DeductiveEngine <--> DB_Theorems

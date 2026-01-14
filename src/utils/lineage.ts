@@ -1,29 +1,34 @@
 /* src/utils/lineage.ts */
-import type { StructureNode, Axiom, TheoremNode } from '../types';
+import type { StructureNode, Axiom, Theorem } from '../types';
 
 export interface CumulativeLineage {
   inheritedAxioms: Axiom[];
-  inheritedTheorems: TheoremNode[];
+  inheritedTheorems: Theorem[];
   localAxiom?: Axiom;
-  localTheorems: TheoremNode[];
+  localTheorems: Theorem[];
 }
 
+/**
+ * Calculates the full mathematical heritage of a node.
+ * Traverses up the 'parentId' chain to collect all Axioms and Theorems
+ * that are "known" or "true" in this specific context.
+ */
 export const getCumulativeLineage = (
   currentNodeId: string,
   allNodes: StructureNode[],
   allAxioms: Axiom[],
-  allTheorems: TheoremNode[]
+  allTheorems: Theorem[]
 ): CumulativeLineage => {
   
   // 1. Identify the current scope
   const currentNode = allNodes.find(n => n.id === currentNodeId);
   
   // 2. Initialize Result
-  // Note: We filter for theorems where rootNodeId matches the current node
+  // We filter for theorems specifically attached to this structure
   const result: CumulativeLineage = {
     inheritedAxioms: [],
     inheritedTheorems: [],
-    localTheorems: allTheorems.filter(t => t.rootNodeId === currentNodeId),
+    localTheorems: allTheorems.filter(t => t.structureNodeId === currentNodeId),
     localAxiom: undefined
   };
 
@@ -43,8 +48,8 @@ export const getCumulativeLineage = (
     const axiom = allAxioms.find(a => a.id === parentNode.axiomId);
     if (axiom) result.inheritedAxioms.unshift(axiom);
 
-    // Add Parent's Theorems
-    const parentTheorems = allTheorems.filter(t => t.rootNodeId === parentNode.id);
+    // Add Parent's Theorems (Theorems proven in the parent scope are valid here too)
+    const parentTheorems = allTheorems.filter(t => t.structureNodeId === parentNode.id);
     result.inheritedTheorems.unshift(...parentTheorems);
 
     // Move up the tree

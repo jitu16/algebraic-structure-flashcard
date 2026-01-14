@@ -1,51 +1,19 @@
+---
+config:
+  layout: elk
+---
 graph TD
     User((User))
     
-    subgraph StructuralLayer ["Layer 1: Structural Tree (Algebraic Systems)"]
-        SystemExplorer["System Explorer Canvas<br/>(Axiom Nodes)"]
-    end
-    
-    subgraph DeductiveLayer ["Layer 2: Deductive Domain (Theorems)"]
-        direction TB
+    subgraph StructuralLayer ["The Structural Tree"]
+        SystemExplorer["System Explorer Canvas<br/>(Zoomable Map)"]
         
-        %% Entry Point
-        NodeClick{Click Node}
-        
-        %% MODE A: The Flashcard (Default)
-        subgraph FlashcardMode ["Mode A: Flashcard View (Default)"]
-            SectionInherited["Collapsible: Inherited Axioms/Theorems"]
-            SectionLocal["Collapsible: Local Theorems"]
-            ToggleButton["Button: 'View Proof Tree'"]
-        end
-        
-        %% MODE B: The Graph (Optional)
-        subgraph GraphMode ["Mode B: Deductive Graph (Optional)"]
-            ProofCanvas["Theorem Graph Canvas"]
-            
-            %% Permission Logic
-            CheckPerm{Permission Check}
-            EditTools["Creation Toolbar<br/>(Add Theorem)"]
+        subgraph DetailPanel ["Selected Node Details"]
+            Info["Name & Notation"]
+            AxiomList["List: Inherited Axioms"]
+            PropList["List: Known Properties"]
         end
     end
-    
-    %% Navigation Flow
     User --> SystemExplorer
-    SystemExplorer --"Select System"--> NodeClick
-    
-    NodeClick --> FlashcardMode
-    ToggleButton --"Toggle"--> GraphMode
-    GraphMode --"Back to Text"--> FlashcardMode
-    
-    %% Editing Flow
-    GraphMode --> CheckPerm
-    CheckPerm --"Citizen/Admin"--> EditTools
-    EditTools --"Update"--> ProofCanvas
-    
-    %% Logic Flow
-    SectionInherited -.->|"Data Source"| ProofCanvas
-
-    %% Visual States
-    style StructuralLayer fill:#f9f9f9,stroke:#333
-    style DeductiveLayer fill:#e1f5fe,stroke:#01579b
-    style FlashcardMode fill:#fff,stroke:#333,stroke-dasharray: 5 5
-    style EditTools fill:#ccffcc,stroke:#006400
+    SystemExplorer --"Click Node"--> DetailPanel
+    SystemExplorer -.->|"Data Source"| AxiomList
