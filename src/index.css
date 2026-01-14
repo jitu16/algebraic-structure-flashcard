@@ -32,6 +32,192 @@ html, body, #root {
   position: relative;
 }
 
+/* --- Node System (Graph Nodes) --- */
+.math-node-container {
+  padding: 10px;
+  border-radius: 16px;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  background: white;
+  border: 2px solid var(--border-dark);
+  color: black;
+}
+
+.math-display-area {
+  margin: 10px 0;
+  min-height: 1.5em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* --- Shared Status & Animations (Base Rules) --- */
+.status-verified { background-color: var(--verified-bg); border-color: #006400; }
+.status-unverified { background-color: var(--unverified-bg); border-color: #8b0000; }
+.status-trash { background-color: var(--unverified-bg); border-color: #8b0000; }
+.status-deprecated { background-color: var(--deprecated-bg); border-color: #000; }
+.status-deadend { background-color: var(--deadend-bg); border-color: #8b0000; }
+
+/* --- THEOREM ITEM SYSTEM (Detail Panel Cards) --- */
+/* These rules refine the shared status colors for the list view context */
+
+.theorem-item {
+  position: relative;
+  background: #fff;
+  border: 1px solid #eee;
+  border-left-width: 5px; /* The "Card Accent" look */
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.theorem-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+/* Theorem-Specific Status Overrides */
+/* We use specific backgrounds to make text more readable in the list */
+
+.theorem-item.status-verified {
+  border-left-color: #2e7d32; /* Strong Green Border */
+  background-color: #f1f8e9; /* Very Light Green Tint */
+  border-top: 1px solid #dcedc8;
+  border-bottom: 1px solid #dcedc8;
+  border-right: 1px solid #dcedc8;
+}
+
+.theorem-item.status-unverified {
+  border-left-color: #c62828; /* Strong Red Border */
+  background-color: #ffebee; /* Very Light Red Tint */
+  border-top: 1px solid #ffcdd2;
+  border-bottom: 1px solid #ffcdd2;
+  border-right: 1px solid #ffcdd2;
+}
+
+.theorem-item.status-deadend {
+  border-left-color: #757575;
+  background-color: #f5f5f5;
+  color: #666;
+}
+
+/* --- Animations --- */
+@keyframes pulse-yellow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.9); transform: scale(1); }
+  50% { box-shadow: 0 0 20px 10px rgba(255, 150, 0, 0.5); transform: scale(1.02); } /* Reduced scale for cards */
+  100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.3); transform: scale(1); }
+}
+
+.status-deprecated {
+  border: 1px dashed #000 !important;
+  animation: pulse-yellow 4.0s infinite !important;
+  z-index: 1000;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(255, 50, 0, 0.9); transform: scale(1); }
+  50% { box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.5); transform: scale(1.02); } /* Reduced scale for cards */
+  100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); transform: scale(1); }
+}
+
+.status-trash {
+  border: 1px dashed #000 !important;
+  animation: pulse-red 4.0s infinite !important;
+  z-index: 1000;
+}
+
+/* --- Voting System UI --- */
+
+/* The Container for Buttons */
+.math-node-stats {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* Reset border/margin when used inside a theorem header */
+.theorem-header .math-node-stats {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* The Buttons */
+.vote-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  color: #888; /* Default color (gray) */
+}
+
+/* Hover Effects */
+.vote-btn:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  color: #555;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Active State: Upvote (Green) */
+.vote-btn.active-up {
+  color: #2e7d32;
+  background-color: rgba(76, 175, 80, 0.15);
+}
+
+/* Active State: Downvote (Red) */
+.vote-btn.active-down {
+  color: #c62828;
+  background-color: rgba(211, 47, 47, 0.15);
+}/* src/index.css */
+@import 'katex/dist/katex.min.css';
+
+:root {
+  --verified-bg: #ccffcc;
+  --unverified-bg: #ffcccc;
+  --deprecated-bg: #ffff11;
+  --deadend-bg: #eeeeee;
+  --primary-blue: #e1f5fe;
+  --border-dark: #333;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  font-family: sans-serif;
+}
+
+/* --- Layout Containers --- */
+.app-root {
+  width: 100vw;
+  height: 100vh;
+}
+
+.explorer-container {
+  width: 100%;
+  height: 100%;
+  display: block;
+  position: relative;
+}
+
 /* --- Node System --- */
 .math-node-container {
   padding: 10px;

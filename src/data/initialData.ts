@@ -252,8 +252,8 @@ export const initialTheorems: Theorem[] = [
     statementLatex: '\\forall a \\in S, a = e',
     proofLatex: 'a \\cdot a = a \\implies a^{-1} \\cdot (a \\cdot a) = a^{-1} \\cdot a \\implies e \\cdot a = e \\implies a = e.',
     authorId: 'System',
-    status: 'verified',
+    status: 'unverified',
     createdAt: NOW,
-    stats: { greenVotes: 15, blackVotes: 0 }
+    stats: { greenVotes: 18, blackVotes: 9 }
   }
 ];

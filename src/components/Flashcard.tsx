@@ -5,6 +5,8 @@ import styles from './Flashcard.module.css';
 import type { StructureNode, Theorem, Axiom } from '../types';
 import { getCumulativeLineage } from '../utils/lineage';
 import { LatexRenderer } from './LatexRenderer';
+import { useVoting } from '../hooks/useVoting';
+import { checkStatus } from '../utils/checkStatus';
 
 interface UnifiedFlashcardProps {
   /** The currently selected Structure Node to display */
@@ -20,11 +22,7 @@ interface UnifiedFlashcardProps {
 
 /**
  * The Detail Panel ("Flashcard") for an Algebraic Structure.
- * * Displays:
- * 1. The Structure's Name & Notation.
- * 2. The Axiom defined at this specific level.
- * 3. The "Heritage": Collapsible lists of all axioms and theorems inherited from parents.
- * 4. The "Properties": A list of Theorems proven specifically for this structure.
+ * Displays the node's name, axiom, inherited lineage, and local theorems.
  */
 export const Flashcard = (props: UnifiedFlashcardProps) => {
   const { node, allNodes, allAxioms, allTheorems, onClose } = props;
@@ -70,12 +68,7 @@ interface HeritageProps {
   theorems: Theorem[];
 }
 
-/**
- * Renders the inherited mathematical context.
- * Features nested collapsible sections to manage large lists of ancestors.
- */
 const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
-  // Independent toggles for granular control
   const [isAxiomsOpen, setIsAxiomsOpen] = useState(false);
   const [isTheoremsOpen, setIsTheoremsOpen] = useState(false);
 
@@ -114,7 +107,6 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
               <ul style={{ paddingLeft: '20px', margin: 0 }}>
                 {axioms.map(ax => (
                   <li key={ax.id} style={{ marginBottom: '8px', fontSize: '0.9rem' }}>
-                    {/* Axiom Name is plain text */}
                     <strong>{ax.canonicalName}: </strong>
                     <span style={{ color: '#444' }}>
                       <LatexRenderer latex={ax.defaultLatex} />
@@ -159,15 +151,7 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
             {theorems.length > 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {theorems.map(t => (
-                  <div key={t.id} className={styles.theoremItem} style={{ borderLeft: '3px solid #ccc' }}>
-                    <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
-                      {t.name}
-                    </div>
-                    <CollapsibleTheoremDetails 
-                      statement={t.statementLatex}
-                      proof={t.proofLatex}
-                    />
-                  </div>
+                  <TheoremItem key={t.id} theorem={t} />
                 ))}
               </div>
             ) : (
@@ -191,12 +175,10 @@ interface LocalScopeProps {
 const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
   return (
     <section className={styles.sectionCurrent}>
-      {/* 1. The Structure Name */}
       <h3>
         Structure: <LatexRenderer latex={node.displayLatex} />
       </h3>
       
-      {/* 2. The Axiom defining this structure */}
       {axiom && (
         <div style={{ margin: '10px 0', padding: '10px', background: '#fff', border: '1px solid #eee' }}>
           <div style={{ marginBottom: '5px', color: '#555', fontSize: '0.9rem' }}>
@@ -208,21 +190,12 @@ const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
         </div>
       )}
 
-      {/* 3. Local Theorems */}
       <h4 style={{ marginTop: '20px', borderBottom: '1px solid #eee', paddingBottom: '5px' }}>
         Defined Properties (Local)
       </h4>
       {theorems.length > 0 ? (
         theorems.map(t => (
-          <div key={t.id} className={styles.theoremItem} style={{ marginBottom: '10px' }}>
-              <div style={{ fontWeight: 'bold' }}>
-                {t.name}
-              </div>
-              <CollapsibleTheoremDetails 
-                statement={t.statementLatex}
-                proof={t.proofLatex}
-              />
-          </div>
+          <TheoremItem key={t.id} theorem={t} />
         ))
       ) : (
         <p style={{ color: '#888', fontStyle: 'italic' }}>
@@ -230,6 +203,72 @@ const LocalScopeSection = ({ node, axiom, theorems }: LocalScopeProps) => {
         </p>
       )}
     </section>
+  );
+};
+
+// --- THEOREM ITEM COMPONENT ---
+
+interface TheoremItemProps {
+  theorem: Theorem;
+}
+
+/**
+ * Renders a single theorem with voting buttons and status styling.
+ * Uses global classes from index.css for governance styling.
+ */
+const TheoremItem = ({ theorem }: TheoremItemProps) => {
+  // 1. Voting Hook
+  const { stats, userVote, handleVote } = useVoting({
+    greenVotes: theorem.stats.greenVotes,
+    blackVotes: theorem.stats.blackVotes
+  });
+
+  // 2. Polymorphic Status Check
+  const currentStatus = checkStatus({
+    ...theorem,
+    stats: stats
+  });
+
+  // 3. Construct CSS Class String
+  const containerClass = `theorem-item status-${currentStatus}`;
+  const upButtonClass = `vote-btn ${userVote === 'up' ? 'active-up' : ''}`;
+  const downButtonClass = `vote-btn ${userVote === 'down' ? 'active-down' : ''}`;
+
+  return (
+    <div className={containerClass}>
+      
+      {/* Header: Name & Votes */}
+      <div className="theorem-header">
+        <div style={{ fontWeight: 'bold', fontSize: '0.95rem' }}>
+          {theorem.name}
+        </div>
+        
+        {/* Reusing the math-node-stats class which behaves differently inside theorem-header */}
+        <div className="math-node-stats">
+           <button 
+            className={upButtonClass}
+            onClick={(e) => { e.stopPropagation(); handleVote('up'); }}
+            title="Vote Valid (Green)"
+          >
+            ▲ {stats.greenVotes}
+          </button>
+
+          <button 
+            className={downButtonClass}
+            onClick={(e) => { e.stopPropagation(); handleVote('down'); }}
+            title="Vote Invalid (Black)"
+          >
+            ▼ {stats.blackVotes}
+          </button>
+        </div>
+      </div>
+
+      {/* Body: Collapsible Proof */}
+      <CollapsibleTheoremDetails 
+        statement={theorem.statementLatex}
+        proof={theorem.proofLatex}
+      />
+    </div>
   );
 };
 

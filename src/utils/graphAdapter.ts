@@ -1,28 +1,27 @@
 /* src/utils/graphAdapter.ts */
 import dagre from 'dagre';
 import { type Node, type Edge, Position } from '@xyflow/react';
-import type { StructureNode, TheoremNode, Axiom, AnyGraphNode } from '../types'; 
+import type { StructureNode, Axiom } from '../types'; 
 import { createParentEdge, createDuplicateEdge } from './edgeFactory';
 
 const NODE_WIDTH = 300;
 const NODE_HEIGHT = 120;
 
-type GraphMode = 'structural' | 'deductive';
-
 /**
- * Transforms raw logic data into React Flow nodes and edges.
- * Uses Dagre for automatic layout calculations to arrange nodes hierarchically.
- * * @param dataNodes - The list of nodes (Structures or Theorems) to visualize.
- * @param mode - The current visualization mode ('structural' or 'deductive').
- * @param axioms - Optional list of axioms. Required in 'structural' mode to generate detailed labels.
+ * Transforms raw Algebraic Structure data into React Flow nodes and edges.
+ * Uses Dagre for automatic hierarchical layout (Top-to-Bottom).
+ * * This adapter is exclusively for the Structural Map. It does not handle theorems,
+ * as those are now displayed within the Detail Panel (Flashcard).
+ * * @param structures - The list of Algebraic Structure nodes to visualize.
+ * @param axioms - List of axioms used to generate detailed node labels.
  * @returns An object containing the layouted nodes and edges ready for React Flow.
  */
 export const nodesToGraph = (
-  dataNodes: AnyGraphNode[], 
-  mode: GraphMode,
-  axioms?: Axiom[] 
+  structures: StructureNode[], 
+  axioms: Axiom[] 
 ): { nodes: Node[]; edges: Edge[] } => {
   
+  // 1. Initialize Dagre Graph
   const dagreGraph = new dagre.graphlib.Graph();
   dagreGraph.setGraph({ 
     rankdir: 'TB', 
@@ -34,62 +33,57 @@ export const nodesToGraph = (
   const nodes: Node[] = [];
   const edges: Edge[] = [];
 
-  dataNodes.forEach((data) => {
-    let label = "";
-    
-    if (data.type === 'algebraic structure') {
-      const structureName = data.displayLatex;
-      
-      let axiomBlock = "";
-      if (axioms && data.axiomId) {
-        const ax = axioms.find(a => a.id === data.axiomId);
-        if (ax) {
-          axiomBlock = `\\\\ \\text{\\small{Axiom: ${ax.canonicalName}}} \\\\ {\\tiny ${ax.defaultLatex}}`;
-        }
+  // 2. Process Nodes
+  structures.forEach((structure) => {
+    // Generate the rich LaTeX label for the graph node
+    const structureName = structure.displayLatex;
+    let axiomBlock = "";
+
+    // If an axiom is associated, format it for display inside the node
+    if (structure.axiomId) {
+      const ax = axioms.find(a => a.id === structure.axiomId);
+      if (ax) {
+        axiomBlock = `\\\\ \\text{\\small{Axiom: ${ax.canonicalName}}} \\\\ {\\tiny ${ax.defaultLatex}}`;
       }
-
-      label = `\\begin{matrix} \\text{\\textbf{${structureName}}} ${axiomBlock} \\end{matrix}`;
-
-    } else if (data.type === 'theorem') {
-      const name = data.name;
-      const statement = data.statementLatex;
-      label = `\\begin{matrix} \\text{\\textbf{${name}}} \\\\ {\\small ${statement}} \\end{matrix}`;
     }
 
-    dagreGraph.setNode(data.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
+    // Combine name + axiom into a single LaTeX matrix for rendering
+    const label = `\\begin{matrix} \\text{\\textbf{${structureName}}} ${axiomBlock} \\end{matrix}`;
 
+    // Register node dimensions for Dagre layout
+    dagreGraph.setNode(structure.id, { width: NODE_WIDTH, height: NODE_HEIGHT });
+
+    // Prepare visual data object
     const visualData = { 
-      ...data,
-      stats: data.stats || { greenVotes: 0, blackVotes: 0 }
+      ...structure,
+      displayLatex: label, // Override specific display field for the Graph
+      stats: structure.stats || { greenVotes: 0, blackVotes: 0 }
     };
 
-    if (data.type === 'algebraic structure') {
-      (visualData as StructureNode).displayLatex = label;
-    } else if (data.type === 'theorem') {
-      (visualData as TheoremNode).statementLatex = label;
-    }
-
     nodes.push({
-      id: data.id,
+      id: structure.id,
       type: 'mathNode',
-      data: visualData as any, 
-      position: { x: 0, y: 0 }, 
+      data: visualData, 
+      position: { x: 0, y: 0 }, // Placeholder, updated by Dagre below
       targetPosition: Position.Top,
       sourcePosition: Position.Bottom,
     });
 
-    if (data.parentId) {
-      edges.push(createParentEdge(data.parentId, data.id));
-      dagreGraph.setEdge(data.parentId, data.id);
+    // 3. Process Edges
+    if (structure.parentId) {
+      edges.push(createParentEdge(structure.parentId, structure.id));
+      dagreGraph.setEdge(structure.parentId, structure.id);
     }
 
-    if (data.duplicateOfId) {
-      edges.push(createDuplicateEdge(data.id, data.duplicateOfId));
+    if (structure.duplicateOfId) {
+      edges.push(createDuplicateEdge(structure.id, structure.duplicateOfId));
     }
   });
 
+  // 4. Calculate Layout
   dagre.layout(dagreGraph);
 
+  // 5. Apply Calculated Positions
   const layoutedNodes = nodes.map((node) => {
     const nodeWithPosition = dagreGraph.node(node.id);
     return {

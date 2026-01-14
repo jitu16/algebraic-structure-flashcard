@@ -28,7 +28,7 @@ export const AlgebraicStructureExplorer = () => {
   // --- GRAPH LAYOUT CALCULATION ---
   // Re-runs Dagre layout whenever the structural data changes.
   const { nodes: layoutNodes, edges: layoutEdges } = useMemo(
-    () => nodesToGraph(dataNodes, 'structural', dataAxioms), 
+    () => nodesToGraph(dataNodes, dataAxioms), 
     [dataNodes, dataAxioms]
   );
 
@@ -75,8 +75,10 @@ export const AlgebraicStructureExplorer = () => {
 
   /**
    * Handles the creation of a new Structure Node.
-   * Enforces immutability of the Root Context: The new node automatically inherits
-   * the 'rootContextId' from the parent, ensuring notation consistency.
+   * * Logic:
+   * 1. Checks if the user selected an existing axiom (Linked Mode) or created a new one (Creation Mode).
+   * 2. If new, creates the Axiom entity and adds it to the global store.
+   * 3. Creates the Structure Node linked to that Axiom ID.
    */
   const handleCreateStructure = (formData: StructureFormData) => {
     if (!selectedNodeId || !selectedNodeData) return;
@@ -87,26 +89,33 @@ export const AlgebraicStructureExplorer = () => {
     }
     
     const timestamp = Date.now();
-    const newAxiomId = `ax-${timestamp}`;
     const newStructureId = `struct-${timestamp}`;
     const currentUser = 'temp-user-id'; // Placeholder for Auth
 
-    // 1. Create the new Axiom Definition
-    const newAxiom: Axiom = {
-      id: newAxiomId,
-      canonicalName: formData.axiomName,
-      aliases: [], 
-      defaultLatex: formData.axiomLatex,
-      authorId: currentUser, 
-      createdAt: timestamp   
-    };
+    // 1. Determine the Axiom ID (New vs. Existing)
+    let finalAxiomId = formData.existingAxiomId;
+
+    // If no existing ID was provided, we must create a new Axiom entry
+    if (!finalAxiomId) {
+      finalAxiomId = `ax-${timestamp}`;
+      const newAxiom: Axiom = {
+        id: finalAxiomId,
+        canonicalName: formData.axiomName,
+        aliases: [], 
+        defaultLatex: formData.axiomLatex,
+        authorId: currentUser, 
+        createdAt: timestamp   
+      };
+      // Add the new axiom to the global state
+      setDataAxioms(prev => [...prev, newAxiom]);
+    }
 
     // 2. Create the new Structure Node
     const newStructure: StructureNode = {
       id: newStructureId,
       type: 'algebraic structure',
       parentId: selectedNodeId,
-      axiomId: newAxiomId,
+      axiomId: finalAxiomId,
       authorId: currentUser, 
       displayLatex: formData.structureName, 
       status: 'unverified',
@@ -120,7 +129,6 @@ export const AlgebraicStructureExplorer = () => {
     };
 
     // 3. Update State (Triggering Re-render/Re-layout)
-    setDataAxioms(prev => [...prev, newAxiom]);
     setDataNodes(prev => [...prev, newStructure]);
     setIsCreateModalOpen(false); // Close modal on success
   };
@@ -191,6 +199,7 @@ export const AlgebraicStructureExplorer = () => {
           parentId={selectedNodeData.id}
           parentName={selectedNodeData.displayLatex}
           rootEnvironment={activeEnvironment}
+          availableAxioms={dataAxioms} 
           onClose={() => setIsCreateModalOpen(false)}
           onSubmit={handleCreateStructure}
         />

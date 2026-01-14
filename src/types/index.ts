@@ -153,4 +153,4 @@ export interface Flag {
  * Utility type alias.
  * Strictly StructureNode as theorems are now internal data properties.
  */
-export type AnyGraphNode = StructureNode;
+export type AnyGraphNode = StructureNode | Theorem;

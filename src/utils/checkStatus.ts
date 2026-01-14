@@ -6,38 +6,41 @@ export const VERIFICATION_THRESHOLD = 10;
 export const TRASH_THRESHOLD = -10; 
 
 /**
- * Pure Logic Function: Determines the status of a theorem.
- * * Input: The full node data object.
- * * Priority Order:
- * 1. Deprecated (Admin Flag) - Overrides all votes.
- * 2. Verified (Votes >= 10) - Community consensus.
- * 3. Trash (Votes <= -10) - Community rejection (Admin will be notified of the node).
- * 4. Unverified - Default state.
+ * Pure Logic Function: Determines the lifecycle status of a mathematical entity.
+ * Works polymorphically for both Algebraic Structures (Nodes) and Theorems.
+ * * * Priority Order:
+ * 1. Admin Overrides: 'deprecated' (Zombie) or 'deadend' (Gray) are final.
+ * 2. Community Verification: Net Score >= 10 -> 'verified' (Green).
+ * 3. Community Rejection: Net Score <= -10 -> 'trash' (Flashing Red).
+ * 4. Default: 'unverified' (Red).
+ * * @param entity - The StructureNode or Theorem object to evaluate.
+ * @returns The computed NodeStatus.
  */
-export const checkStatus = (data: AnyGraphNode): NodeStatus => {
-  // 1. Check Admin Flag first (The "Deprecated" status)
-  if (data.status == 'deprecated') {
+export const checkStatus = (entity: AnyGraphNode): NodeStatus => {
+  // 1. Check Admin Flags first (Immutable States)
+  if (entity.status === 'deprecated') {
     return 'deprecated';
   }
   
-  if (data.status == 'deadend') {
+  if (entity.status === 'deadend') {
     return 'deadend';
   }
 
-  // 2. Calculate Net Score
-  const green = data.stats?.greenVotes || 0;
-  const black = data.stats?.blackVotes || 0;
+  // 2. Calculate Net Reputation Score
+  const green = entity.stats?.greenVotes || 0;
+  const black = entity.stats?.blackVotes || 0;
   const netScore = green - black;
 
-  // 3. Check Vote Thresholds
-  if (netScore >= VERIFICATION_THRESHOLD && data.status == 'unverified') {
+  // 3. Check Verification Thresholds (Red -> Green)
+  if (netScore >= VERIFICATION_THRESHOLD && entity.status === 'unverified') {
     return 'verified';
   }
 
+  // 4. Check Rejection Thresholds (Red -> Trash)
   if (netScore <= TRASH_THRESHOLD) {
     return 'trash';
   }
 
-  // 4. Default
-  return data.status;
+  // 5. Default Fallback (Preserve existing status if no thresholds met)
+  return entity.status;
 };

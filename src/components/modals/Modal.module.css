@@ -56,6 +56,40 @@
   gap: 15px;
 }
 
+/* --- Content Styling --- */
+
+.description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 15px;
+  margin-top: 0;
+}
+
+.contextBox {
+  background: #f5f5f5;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.contextLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #888;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+
+.separator {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid #eee;
+  margin: 10px 0;
+}
+
+/* --- Form Elements --- */
+
 .group {
   display: flex;
   flex-direction: column;
@@ -117,4 +151,182 @@
 
 .submitBtn:hover {
   background: #0277bd;
+}
+
+/* --- Drawer System --- */
+
+.drawerOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 2000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 400px;
+  max-width: 90vw;
+  height: 100vh;
+  background: white;
+  box-shadow: -5px 0 25px rgba(0,0,0,0.15);
+  z-index: 2001;
+  display: flex;
+  flex-direction: column;
+  animation: slideInRight 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.drawerHeader {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fcfcfc;
+}
+
+.drawerHeader h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.drawerSearch {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  background: #fff;
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  background: #f9f9f9;
+}
+
+/* --- Library Items --- */
+
+.libraryItem {
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.libraryItem:hover {
+  border-color: #0288d1;
+  box-shadow: 0 2px 8px rgba(2, 136, 209, 0.15);
+  transform: translateY(-1px);
+}
+
+.libraryItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.libraryItemTag {
+  font-size: 0.7rem;
+  color: #999;
+  background: #eee;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* --- Animations --- */
+
+@keyframes slideInRight {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.inputGroupRow {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Browse Button (Folder Icon) */
+.browseBtn {
+  flex: 0 0 44px; /* Fixed width square */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #f1f3f4;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.browseBtn:hover {
+  background: #e0e0e0;
+  border-color: #ccc;
+}
+
+/* Locked Input State */
+.inputLocked {
+  padding: 10px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+  background-color: #f9fbe7; /* Pale Green tint */
+  color: #558b2f;
+  cursor: not-allowed;
+}
+
+/* Autocomplete Dropdown */
+.suggestionsDropdown {
+  position: absolute;
+  top: 70px; /* Adjust based on label height + input height */
+  left: 0;
+  width: calc(100% - 52px); /* Width of input minus the button gap */
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.suggestionItem {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.suggestionItem:hover {
+  background-color: #f5f5f5;
+}
+
+.suggestionItem:last-child {
+  border-bottom: none;
+}
+
+.suggestionDetail {
+  font-size: 0.8rem;
+  color: #777;
+  margin-left: 6px;
 }
