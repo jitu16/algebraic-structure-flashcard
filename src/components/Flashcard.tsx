@@ -8,6 +8,7 @@ import { LatexRenderer } from './LatexRenderer';
 import { useVoting } from '../hooks/useVoting';
 import { checkStatus } from '../utils/checkStatus';
 import { CreateTheoremModal, type TheoremFormData } from './modals/CreateTheoremModal';
+import { useAuth } from '../contexts/AuthContext';
 
 interface UnifiedFlashcardProps {
   /** The currently selected Structure Node to display */
@@ -18,9 +19,14 @@ interface UnifiedFlashcardProps {
   allAxioms: Axiom[];
   /** Complete list of theorems for property listing */
   allTheorems: Theorem[];
+  /** Callback to close the flashcard panel */
   onClose: () => void;
   /** Callback to handle the submission of a new theorem */
   onAddTheorem: (data: TheoremFormData) => void;
+  /** Callback to handle admin deletion of a node */
+  onDelete: (id: string) => void;
+  /** Callback to handle admin deletion of a theorem */
+  onDeleteTheorem: (id: string) => void;
 }
 
 /**
@@ -28,7 +34,19 @@ interface UnifiedFlashcardProps {
  * Displays the node's name, axiom, inherited lineage, and local theorems.
  */
 export const Flashcard = (props: UnifiedFlashcardProps) => {
-  const { node, allNodes, allAxioms, allTheorems, onClose, onAddTheorem } = props;
+  const { profile } = useAuth();
+  
+  // Destructure all props, including the delete functions
+  const { 
+    node, 
+    allNodes, 
+    allAxioms, 
+    allTheorems, 
+    onClose, 
+    onAddTheorem, 
+    onDelete, 
+    onDeleteTheorem 
+  } = props;
 
   // Calculate the full mathematical context (Inherited vs Local)
   const lineage = getCumulativeLineage(node.id, allNodes, allAxioms, allTheorems);
@@ -40,16 +58,21 @@ export const Flashcard = (props: UnifiedFlashcardProps) => {
     <div className={styles.panel}>
       <FlashcardHeader onClose={onClose} />
       
+      {/* 1. HERITAGE SECTION */}
+      {/* We DO NOT pass onDeleteTheorem here. Inherited theorems cannot be deleted from a child. */}
       <HeritageSection 
         axioms={lineage.inheritedAxioms} 
         theorems={lineage.inheritedTheorems} 
       />
       
+      {/* 2. LOCAL SECTION */}
+      {/* We PASS onDeleteTheorem here. These properties belong to this node. */}
       <LocalScopeSection 
         node={node} 
         axiom={lineage.localAxiom} 
         theorems={lineage.localTheorems}
         onOpenAddTheorem={() => setIsTheoremModalOpen(true)}
+        onDeleteTheorem={onDeleteTheorem} 
       />
 
       {/* --- THEOREM CREATION MODAL --- */}
@@ -60,6 +83,18 @@ export const Flashcard = (props: UnifiedFlashcardProps) => {
           onClose={() => setIsTheoremModalOpen(false)}
           onSubmit={onAddTheorem}
         />
+      )}
+      
+      {/* --- ADMIN ZONE (Node Deletion) --- */}
+      {profile?.role === 'admin' && (
+        <div className={styles.adminZone}>
+          <button 
+            onClick={() => onDelete(node.id)}
+            className={styles.deleteBtn}
+          >
+             🗑️ ADMIN DELETE STRUCTURE
+          </button>
+        </div>
       )}
     </div>
   );
@@ -95,8 +130,8 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
         Heritage (Ancestry)
       </h4>
 
-      {/* --- INHERITED AXIOMS TOGGLE --- */}
-      <div style={{ marginBottom: '10px' }}>
+      {/* Inherited Axioms */}
+      <div className={styles.toggleContainer}>
         <button 
           onClick={() => setIsAxiomsOpen(!isAxiomsOpen)}
           className={styles.toggleBtn}
@@ -127,7 +162,7 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
         )}
       </div>
       
-      {/* --- INHERITED THEOREMS TOGGLE --- */}
+      {/* Inherited Theorems */}
       <div>
         <button 
           onClick={() => setIsTheoremsOpen(!isTheoremsOpen)}
@@ -140,8 +175,9 @@ const HeritageSection = ({ axioms, theorems }: HeritageProps) => {
         {isTheoremsOpen && (
           <div className={styles.toggleContent}>
             {theorems.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div className={styles.theoremList}>
                 {theorems.map(t => (
+                  // Note: No onDelete passed here!
                   <TheoremItem key={t.id} theorem={t} />
                 ))}
               </div>
@@ -162,9 +198,10 @@ interface LocalScopeProps {
   axiom?: Axiom;
   theorems: Theorem[];
   onOpenAddTheorem: () => void;
+  onDeleteTheorem: (id: string) => void;
 }
 
-const LocalScopeSection = ({ node, axiom, theorems, onOpenAddTheorem }: LocalScopeProps) => {
+const LocalScopeSection = ({ node, axiom, theorems, onOpenAddTheorem, onDeleteTheorem }: LocalScopeProps) => {
   return (
     <section className={styles.sectionCurrent}>
       <h3>
@@ -176,13 +213,13 @@ const LocalScopeSection = ({ node, axiom, theorems, onOpenAddTheorem }: LocalSco
           <div className={styles.axiomLabel}>
              Added Axiom: <strong>{axiom.canonicalName}</strong>
           </div>
-          <span style={{ fontWeight: 'bold' }}>
+          <span className={styles.latexBold}>
             <LatexRenderer latex={axiom.defaultLatex} />
           </span>
         </div>
       )}
 
-      {/* --- Header with Propose Theorem Button --- */}
+      {/* Local Properties */}
       <div className={styles.localPropHeader}>
         <h4 className={styles.localPropTitle}>
           Defined Properties (Local)
@@ -197,7 +234,12 @@ const LocalScopeSection = ({ node, axiom, theorems, onOpenAddTheorem }: LocalSco
 
       {theorems.length > 0 ? (
         theorems.map(t => (
-          <TheoremItem key={t.id} theorem={t} />
+          // We pass onDelete here because these are local
+          <TheoremItem 
+            key={t.id} 
+            theorem={t} 
+            onDelete={onDeleteTheorem} 
+          />
         ))
       ) : (
         <p className={styles.emptyState}>
@@ -212,41 +254,33 @@ const LocalScopeSection = ({ node, axiom, theorems, onOpenAddTheorem }: LocalSco
 
 interface TheoremItemProps {
   theorem: Theorem;
+  onDelete?: (id: string) => void; // Optional: Only provided for local theorems
 }
 
-/**
- * Renders a single theorem with voting buttons and status styling.
- * Uses global classes from index.css for governance styling.
- */
-const TheoremItem = ({ theorem }: TheoremItemProps) => {
-  // 1. Voting Hook
+const TheoremItem = ({ theorem, onDelete }: TheoremItemProps) => {
+  const { profile } = useAuth();
+  
   const { stats, userVote, handleVote } = useVoting({
     greenVotes: theorem.stats.greenVotes,
     blackVotes: theorem.stats.blackVotes
   });
 
-  // 2. Polymorphic Status Check
   const currentStatus = checkStatus({
     ...theorem,
     stats: stats
   });
 
-  // 3. Construct CSS Class String
-  // Note: 'theorem-item' and 'status-X' are global classes in index.css
   const containerClass = `theorem-item status-${currentStatus}`;
   const upButtonClass = `vote-btn ${userVote === 'up' ? 'active-up' : ''}`;
   const downButtonClass = `vote-btn ${userVote === 'down' ? 'active-down' : ''}`;
 
   return (
     <div className={containerClass}>
-      
-      {/* Header: Name & Votes */}
       <div className={styles.theoremHeaderRow}>
         <div className={styles.theoremName}>
           {theorem.name}
         </div>
         
-        {/* Reusing the math-node-stats class which behaves differently inside theorem-header */}
         <div className="math-node-stats" style={{ margin: 0, padding: 0, border: 'none' }}>
            <button 
             className={upButtonClass}
@@ -263,10 +297,23 @@ const TheoremItem = ({ theorem }: TheoremItemProps) => {
           >
             ▼ {stats.blackVotes}
           </button>
+          
+          {/* Admin Delete Button: Only renders if user is Admin AND onDelete is provided */}
+          {profile?.role === 'admin' && onDelete && (
+             <button
+               onClick={(e) => {
+                 e.stopPropagation();
+                 onDelete(theorem.id);
+               }}
+               className={styles.miniDeleteBtn}
+               title="Admin Delete"
+             >
+               🗑️
+             </button>
+          )}
         </div>
       </div>
 
-      {/* Body: Collapsible Proof */}
       <CollapsibleTheoremDetails 
         statement={theorem.statementLatex}
         proof={theorem.proofLatex}
@@ -295,15 +342,15 @@ const CollapsibleTheoremDetails = ({ statement, proof }: CollapsibleProps) => {
       {isOpen && (
         <div className={styles.detailsBox}>
           <div className={styles.detailsRow}>
-            <strong style={{ color: '#333' }}>Statement: </strong>
-            <div style={{ marginTop: '4px', paddingLeft: '5px' }}>
+            <strong className={styles.detailsLabel}>Statement: </strong>
+            <div className={styles.detailsContent}>
               <LatexRenderer latex={statement} />
             </div>
           </div>
 
           <div>
-            <strong style={{ color: '#333' }}>Proof: </strong>
-            <div style={{ marginTop: '4px', paddingLeft: '5px', color: '#555' }}>
+            <strong className={styles.detailsLabel}>Proof: </strong>
+            <div className={styles.proofContent}>
               <LatexRenderer latex={proof} />
             </div>
           </div>

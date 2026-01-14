@@ -8,7 +8,8 @@ import {
   onSnapshot, 
   doc, 
   setDoc, 
-  getDoc 
+  getDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from '../firebase'; // Ensure this connection file exists
 import { GenericGraphEngine } from './GenericGraphEngine';
@@ -20,10 +21,13 @@ import { type TheoremFormData } from './modals/CreateTheoremModal';
 import type { StructureNode, Axiom, RootEnvironment, Theorem } from '../types';
 import styles from './AlgebraicStructureExplorer.module.css';
 
+import { useAuth } from '../contexts/AuthContext';
+
 interface ExplorerProps {
   universeId: string;
   onExit: () => void;
 }
+
 
 /**
  * The Primary Controller: Manages the "Algebraic Structure Map".
@@ -33,6 +37,8 @@ interface ExplorerProps {
  * 3. Handling data mutations (Creating Structures, Adding Theorems).
  */
 export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps) => {
+
+  const { user } = useAuth();
   
   // --- STATE MANAGEMENT (Firebase Driven) ---
   
@@ -132,7 +138,13 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
     if (selectedNodeData.status === 'deprecated' || selectedNodeData.status === 'deadend') return;
     
     const timestamp = Date.now();
-    const currentUser = 'temp-user-id'; // TODO: Replace with Auth UID
+    
+    if (!user){
+      alert("You must be signed in to contribute!");
+      return;
+    }
+
+    const currentUser = user.uid;
 
     // 1. Determine Axiom Source
     let finalAxiomId = formData.existingAxiomId;
@@ -182,11 +194,59 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
   };
 
   /**
+   * Handler: Delete Node (Admin Only)
+   * Permanently removes a node from the database.
+   */
+  const handleDeleteNode = async (nodeId: string) => {
+    // 1. Safety Check: Does it have children?
+    const hasChildren = dataNodes.some(n => n.parentId === nodeId);
+    if (hasChildren) {
+      alert("CRITICAL ERROR: Cannot delete this node because it has children.\n\nPruning a parent would orphan the entire branch. Please delete the children first.");
+      return;
+    }
+
+    // 2. Confirmation
+    if (!confirm("⚠️ ADMIN WARNING ⚠️\n\nAre you sure you want to PERMANENTLY delete this node? This cannot be undone.")) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'nodes', nodeId));
+      setSelectedNodeId(null); // Close the flashcard
+    } catch (e) {
+      console.error("Delete failed:", e);
+      alert("Delete failed. Check console for details.");
+    }
+  };
+
+  /**
+   * Handler: Delete Theorem (Admin Only)
+   */
+  const handleDeleteTheorem = async (theoremId: string) => {
+    if (!confirm("⚠️ ADMIN WARNING ⚠️\n\nAre you sure you want to PERMANENTLY delete this theorem?")) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'theorems', theoremId));
+    } catch (e) {
+      console.error("Theorem delete failed:", e);
+      alert("Delete failed.");
+    }
+  };
+
+  /**
    * Handler: Add New Theorem
    * Writes the new theorem definition to Firestore.
    */
   const handleAddTheorem = async (formData: TheoremFormData) => {
     if (!selectedNodeId) return;
+    
+    if (!user) {
+      alert("You must be signed in to contribute!");
+      return;
+    }
+    const currentUser = user.uid;
 
     const timestamp = Date.now();
     const newTheorem: Theorem = {
@@ -196,7 +256,7 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
       aliases: [],
       statementLatex: formData.statementLatex,
       proofLatex: formData.proofLatex,
-      authorId: 'temp-user-id', // TODO: Replace with Auth UID
+      authorId: currentUser,
       createdAt: timestamp,
       status: 'unverified',
       stats: { greenVotes: 0, blackVotes: 0 }
@@ -219,9 +279,6 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
         </button>
       </div>
 
-      <div className={styles.universeTitle}>
-        Current Universe: <strong>{activeEnvironment?.name || "Loading..."}</strong>
-      </div>
 
       {/* --- EXTEND STRUCTURE BUTTON --- */}
       {selectedNodeId
@@ -259,6 +316,8 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
           allTheorems={dataTheorems}
           onClose={() => setSelectedNodeId(null)}
           onAddTheorem={handleAddTheorem}
+	  onDelete={handleDeleteNode}
+	  onDeleteTheorem={handleDeleteTheorem}
         />
       )}
 

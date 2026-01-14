@@ -39,6 +39,10 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 15px;
+  /* Moved from inline styles */
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 15px;
 }
 
 .headerTitle {
@@ -99,6 +103,33 @@
   background: #b3e5fc;
 }
 
+/* --- Admin Zone --- */
+.adminZone {
+  margin-top: 20px;
+  border-top: 1px solid #eee;
+  padding-top: 10px;
+  padding-left: 20px;
+  padding-right: 20px;
+  margin-bottom: 20px;
+}
+
+.deleteBtn {
+  background: #d32f2f;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.8rem;
+  width: 100%;
+  transition: background 0.2s;
+}
+
+.deleteBtn:hover {
+  background: #b71c1c;
+}
+
 /* --- Toggles & Lists --- */
 .toggleBtn {
   width: 100%;
@@ -113,11 +144,15 @@
   font-weight: bold;
   color: #555;
   border-radius: 4px;
-  margin-bottom: 0; /* Adjusted for connected content */
+  margin-bottom: 0;
 }
 
 .toggleBtn:hover {
   background: #eee;
+}
+
+.toggleContainer {
+  margin-bottom: 10px;
 }
 
 .toggleContent {
@@ -159,7 +194,11 @@
   font-size: 0.9rem;
 }
 
-/* --- Theorem Cards (Specifics) --- */
+.latexBold {
+  font-weight: bold;
+}
+
+/* --- Theorem Cards --- */
 .theoremHeaderRow {
   display: flex;
   justify-content: space-between;
@@ -170,6 +209,12 @@
 .theoremName {
   font-weight: bold;
   font-size: 0.95rem;
+}
+
+.theoremList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .detailsToggle {
@@ -194,4 +239,38 @@
 
 .detailsRow {
   margin-bottom: 10px;
+}
+
+.detailsLabel {
+  color: #333;
+}
+
+.detailsContent {
+  margin-top: 4px; 
+  padding-left: 5px;
+}
+
+.proofContent {
+  margin-top: 4px;
+  padding-left: 5px;
+  color: #555;
+}
+
+
+.miniDeleteBtn {
+  background: transparent;
+  border: 1px solid #ffcdd2; /* Light red border */
+  color: #c62828;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0 6px;
+  font-size: 0.8rem;
+  margin-left: 8px;
+  transition: all 0.2s;
+}
+
+.miniDeleteBtn:hover {
+  background: #c62828;
+  color: white;
+  border-color: #c62828;
 }

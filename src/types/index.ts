@@ -21,7 +21,8 @@ export type NodeStatus =
   | 'verified'
   | 'deadend' 
   | 'trash'   
-  | 'deprecated';
+  | 'deprecated'
+  |'deleteRequested';
 
 export type VoteType = 'green' | 'black';
 
