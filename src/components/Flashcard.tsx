@@ -205,7 +205,7 @@ const LocalScopeSection = ({ node, axiom, theorems, onOpenAddTheorem, onDeleteTh
   return (
     <section className={styles.sectionCurrent}>
       <h3>
-        Structure: <LatexRenderer latex={node.displayLatex} />
+        Structure Name : <LatexRenderer latex={node.displayLatex} />
       </h3>
       
       {axiom && (
@@ -222,7 +222,7 @@ const LocalScopeSection = ({ node, axiom, theorems, onOpenAddTheorem, onDeleteTh
       {/* Local Properties */}
       <div className={styles.localPropHeader}>
         <h4 className={styles.localPropTitle}>
-          Defined Properties (Local)
+		Local Theorems:
         </h4>
         <button 
           onClick={onOpenAddTheorem}
