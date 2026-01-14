@@ -1,11 +1,20 @@
 /* src/components/AlgebraicStructureExplorer.tsx */
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useNodesState, useEdgesState } from '@xyflow/react';
+import { 
+  collection, 
+  query, 
+  where, 
+  onSnapshot, 
+  doc, 
+  setDoc, 
+  getDoc 
+} from 'firebase/firestore';
+import { db } from '../firebase'; // Ensure this connection file exists
 import { GenericGraphEngine } from './GenericGraphEngine';
 import { MathNode } from './MathNode'; 
 import { Flashcard } from './Flashcard';
 import { nodesToGraph } from '../utils/graphAdapter';
-import { initialNodes, initialAxioms, initialTheorems, initialEnvironments } from '../data/initialData';
 import { CreateStructureModal, type StructureFormData } from './modals/CreateStructureModal';
 import { type TheoremFormData } from './modals/CreateTheoremModal';
 import type { StructureNode, Axiom, RootEnvironment, Theorem } from '../types';
@@ -20,27 +29,63 @@ interface ExplorerProps {
  * The Primary Controller: Manages the "Algebraic Structure Map".
  * Responsibilities:
  * 1. Visualizing the evolutionary tree of algebraic systems.
- * 2. Managing state (Nodes, Axioms, Theorems).
+ * 2. Managing state (Nodes, Axioms, Theorems) via Real-Time Database.
  * 3. Handling data mutations (Creating Structures, Adding Theorems).
  */
 export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps) => {
   
-  // --- STATE MANAGEMENT ---
+  // --- STATE MANAGEMENT (Firebase Driven) ---
   
-  // Initialize with FILTERED nodes based on the Universe ID
-  // This ensures we only see nodes relevant to the selected context (e.g. "Ring Theory")
-  const [dataNodes, setDataNodes] = useState<StructureNode[]>(() => 
-    initialNodes.filter(n => n.rootContextId === universeId) as StructureNode[]
-  );
+  // Nodes are filtered by the current Universe ID
+  const [dataNodes, setDataNodes] = useState<StructureNode[]>([]);
   
-  // Axioms and Theorems are GLOBAL (Shared across universes), so we load them all
-  const [dataAxioms, setDataAxioms] = useState<Axiom[]>(initialAxioms);
-  const [dataTheorems, setDataTheorems] = useState<Theorem[]>(initialTheorems);
+  // Axioms and Theorems are GLOBAL (Shared across universes)
+  const [dataAxioms, setDataAxioms] = useState<Axiom[]>([]);
+  const [dataTheorems, setDataTheorems] = useState<Theorem[]>([]);
   
-  // Identify the Active Environment (Universe) from the ID
-  const activeEnvironment = useMemo(() => 
-    initialEnvironments.find(env => env.id === universeId)!, 
-  [universeId]);
+  // The Active Environment metadata (fetched from DB)
+  const [activeEnvironment, setActiveEnvironment] = useState<RootEnvironment | null>(null);
+
+  // --- REAL-TIME DATABASE SUBSCRIPTION ---
+  useEffect(() => {
+    // 1. Fetch Environment Metadata (Single Document)
+    const envRef = doc(db, 'environments', universeId);
+    const unsubscribeEnv = onSnapshot(envRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setActiveEnvironment(docSnap.data() as RootEnvironment);
+      }
+    });
+
+    // 2. Fetch Nodes (Filtered by CURRENT UNIVERSE)
+    const nodesQuery = query(
+      collection(db, 'nodes'), 
+      where('rootContextId', '==', universeId)
+    );
+    const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
+      const nodes = snapshot.docs.map(doc => doc.data() as StructureNode);
+      setDataNodes(nodes);
+    });
+
+    // 3. Fetch Axioms (Global Registry)
+    const unsubscribeAxioms = onSnapshot(collection(db, 'axioms'), (snapshot) => {
+      const axioms = snapshot.docs.map(doc => doc.data() as Axiom);
+      setDataAxioms(axioms);
+    });
+
+    // 4. Fetch Theorems (Global Registry)
+    const unsubscribeTheorems = onSnapshot(collection(db, 'theorems'), (snapshot) => {
+      const theorems = snapshot.docs.map(doc => doc.data() as Theorem);
+      setDataTheorems(theorems);
+    });
+
+    // Cleanup listeners on unmount or universe change
+    return () => {
+      unsubscribeEnv();
+      unsubscribeNodes();
+      unsubscribeAxioms();
+      unsubscribeTheorems();
+    };
+  }, [universeId]);
 
   // --- GRAPH LAYOUT CALCULATION ---
   const { nodes: layoutNodes, edges: layoutEdges } = useMemo(
@@ -80,18 +125,19 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
 
   /**
    * Handler: Create New Structure
-   * Links a new node to the graph and potentially creates a new axiom.
+   * Writes the new structure (and optionally a new axiom) to Firestore.
    */
-  const handleCreateStructure = (formData: StructureFormData) => {
+  const handleCreateStructure = async (formData: StructureFormData) => {
     if (!selectedNodeId || !selectedNodeData) return;
     if (selectedNodeData.status === 'deprecated' || selectedNodeData.status === 'deadend') return;
     
     const timestamp = Date.now();
-    const currentUser = 'temp-user-id'; 
+    const currentUser = 'temp-user-id'; // TODO: Replace with Auth UID
 
     // 1. Determine Axiom Source
     let finalAxiomId = formData.existingAxiomId;
 
+    // If new axiom, write it to the Global Registry first
     if (!finalAxiomId) {
       finalAxiomId = `ax-${timestamp}`;
       const newAxiom: Axiom = {
@@ -102,10 +148,16 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
         authorId: currentUser, 
         createdAt: timestamp   
       };
-      setDataAxioms(prev => [...prev, newAxiom]);
+      
+      try {
+        await setDoc(doc(db, 'axioms', newAxiom.id), newAxiom);
+      } catch (e) {
+        console.error("Error creating axiom:", e);
+        return; 
+      }
     }
 
-    // 2. Create Structure Node
+    // 2. Create Structure Node in Firestore
     const newStructureId = `struct-${timestamp}`;
     const newStructure: StructureNode = {
       id: newStructureId,
@@ -115,21 +167,25 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
       authorId: currentUser, 
       displayLatex: formData.structureName, 
       status: 'unverified',
-      rootContextId: universeId, // <--- Ensure it belongs to the current Universe
+      rootContextId: universeId, 
       toBeDeleted: false, 
       stats: { greenVotes: 0, blackVotes: 0 },
       createdAt: timestamp 
     };
 
-    setDataNodes(prev => [...prev, newStructure]);
-    setIsCreateModalOpen(false);
+    try {
+      await setDoc(doc(db, 'nodes', newStructure.id), newStructure);
+      setIsCreateModalOpen(false);
+    } catch (e) {
+      console.error("Error creating structure:", e);
+    }
   };
 
   /**
    * Handler: Add New Theorem
-   * Adds a new theorem definition to the currently selected node.
+   * Writes the new theorem definition to Firestore.
    */
-  const handleAddTheorem = (formData: TheoremFormData) => {
+  const handleAddTheorem = async (formData: TheoremFormData) => {
     if (!selectedNodeId) return;
 
     const timestamp = Date.now();
@@ -140,13 +196,17 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
       aliases: [],
       statementLatex: formData.statementLatex,
       proofLatex: formData.proofLatex,
-      authorId: 'temp-user-id',
+      authorId: 'temp-user-id', // TODO: Replace with Auth UID
       createdAt: timestamp,
       status: 'unverified',
       stats: { greenVotes: 0, blackVotes: 0 }
     };
 
-    setDataTheorems(prev => [...prev, newTheorem]);
+    try {
+      await setDoc(doc(db, 'theorems', newTheorem.id), newTheorem);
+    } catch (e) {
+      console.error("Error creating theorem:", e);
+    }
   };
 
   return (
