@@ -11,6 +11,11 @@ import { type TheoremFormData } from './modals/CreateTheoremModal';
 import type { StructureNode, Axiom, RootEnvironment, Theorem } from '../types';
 import styles from './AlgebraicStructureExplorer.module.css';
 
+interface ExplorerProps {
+  universeId: string;
+  onExit: () => void;
+}
+
 /**
  * The Primary Controller: Manages the "Algebraic Structure Map".
  * Responsibilities:
@@ -18,13 +23,24 @@ import styles from './AlgebraicStructureExplorer.module.css';
  * 2. Managing state (Nodes, Axioms, Theorems).
  * 3. Handling data mutations (Creating Structures, Adding Theorems).
  */
-export const AlgebraicStructureExplorer = () => {
+export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps) => {
   
   // --- STATE MANAGEMENT ---
-  const [dataNodes, setDataNodes] = useState<StructureNode[]>(initialNodes as StructureNode[]);
+  
+  // Initialize with FILTERED nodes based on the Universe ID
+  // This ensures we only see nodes relevant to the selected context (e.g. "Ring Theory")
+  const [dataNodes, setDataNodes] = useState<StructureNode[]>(() => 
+    initialNodes.filter(n => n.rootContextId === universeId) as StructureNode[]
+  );
+  
+  // Axioms and Theorems are GLOBAL (Shared across universes), so we load them all
   const [dataAxioms, setDataAxioms] = useState<Axiom[]>(initialAxioms);
   const [dataTheorems, setDataTheorems] = useState<Theorem[]>(initialTheorems);
-  const [dataEnvironments] = useState<RootEnvironment[]>(initialEnvironments);
+  
+  // Identify the Active Environment (Universe) from the ID
+  const activeEnvironment = useMemo(() => 
+    initialEnvironments.find(env => env.id === universeId)!, 
+  [universeId]);
 
   // --- GRAPH LAYOUT CALCULATION ---
   const { nodes: layoutNodes, edges: layoutEdges } = useMemo(
@@ -51,11 +67,6 @@ export const AlgebraicStructureExplorer = () => {
   const selectedNodeData = useMemo(() => 
     dataNodes.find(n => n.id === selectedNodeId), 
   [selectedNodeId, dataNodes]);
-
-  const activeEnvironment = useMemo(() => {
-    if (!selectedNodeData) return null;
-    return dataEnvironments.find(env => env.id === selectedNodeData.rootContextId) || null;
-  }, [selectedNodeData, dataEnvironments]);
 
   // --- EVENT HANDLERS ---
 
@@ -104,7 +115,7 @@ export const AlgebraicStructureExplorer = () => {
       authorId: currentUser, 
       displayLatex: formData.structureName, 
       status: 'unverified',
-      rootContextId: selectedNodeData.rootContextId, 
+      rootContextId: universeId, // <--- Ensure it belongs to the current Universe
       toBeDeleted: false, 
       stats: { greenVotes: 0, blackVotes: 0 },
       createdAt: timestamp 
@@ -117,7 +128,6 @@ export const AlgebraicStructureExplorer = () => {
   /**
    * Handler: Add New Theorem
    * Adds a new theorem definition to the currently selected node.
-   * * Note: Theorems start as 'unverified' and must be voted on.
    */
   const handleAddTheorem = (formData: TheoremFormData) => {
     if (!selectedNodeId) return;
@@ -142,6 +152,17 @@ export const AlgebraicStructureExplorer = () => {
   return (
     <div className={styles.explorerRoot}>
       
+      {/* --- NAVIGATION UI --- */}
+      <div className={styles.backBtnContainer}>
+        <button onClick={onExit} className={styles.backBtn}>
+          &larr; Exit to Lobby
+        </button>
+      </div>
+
+      <div className={styles.universeTitle}>
+        Current Universe: <strong>{activeEnvironment?.name || "Loading..."}</strong>
+      </div>
+
       {/* --- EXTEND STRUCTURE BUTTON --- */}
       {selectedNodeId
         && selectedNodeData?.status !== 'deprecated'
@@ -166,7 +187,7 @@ export const AlgebraicStructureExplorer = () => {
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
-        title="\text{Algebraic Structure Space}"
+        title={`\\text{${activeEnvironment?.name || "Universe"}}`}
       />
 
       {/* --- DETAIL PANEL (FLASHCARD) --- */}
@@ -177,7 +198,7 @@ export const AlgebraicStructureExplorer = () => {
           allAxioms={dataAxioms}
           allTheorems={dataTheorems}
           onClose={() => setSelectedNodeId(null)}
-          onAddTheorem={handleAddTheorem} // <--- Connected Handler
+          onAddTheorem={handleAddTheorem}
         />
       )}
 

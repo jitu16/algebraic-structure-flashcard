@@ -4,19 +4,25 @@ import type { StructureNode, Axiom, Theorem, RootEnvironment } from '../types';
 const NOW = Date.now();
 
 /**
- * 1. ROOT ENVIRONMENTS
+ * 1. ROOT ENVIRONMENTS (The Universes)
  */
 export const initialEnvironments: RootEnvironment[] = [
   {
     id: 'env-general-algebra',
-    name: 'General Algebra',
-    sets: ['S'],
+    name: 'Group Theory',
+    sets: ['G'],
     operators: ['\\cdot']
+  },
+  {
+    id: 'env-ring-theory',
+    name: 'Ring Theory',
+    sets: ['R'],
+    operators: ['+', '\\cdot']
   }
 ];
 
 /**
- * 2. AXIOMS
+ * 2. AXIOMS (Shared Global Registry)
  */
 export const initialAxioms: Axiom[] = [
   {
@@ -59,7 +65,6 @@ export const initialAxioms: Axiom[] = [
     authorId: 'System_Genesis',
     createdAt: NOW
   },
-  // NEW AXIOM FOR DEAD END
   {
     id: 'ax-idempotency',
     canonicalName: 'Idempotency',
@@ -67,14 +72,23 @@ export const initialAxioms: Axiom[] = [
     defaultLatex: '\\forall a \\in S, a \\cdot a = a',
     authorId: 'System_Explorer',
     createdAt: NOW
+  },
+  // --- RING AXIOMS ---
+  {
+    id: 'ax-distributivity',
+    canonicalName: 'Distributivity',
+    aliases: [],
+    defaultLatex: 'a \\cdot (b + c) = (a \\cdot b) + (a \\cdot c)',
+    authorId: 'System_Genesis',
+    createdAt: NOW
   }
 ];
 
 /**
- * 3. STRUCTURE NODES
+ * 3. STRUCTURE NODES (Partitioned by rootContextId)
  */
 export const initialNodes: StructureNode[] = [
-  // --- THE MAIN BRANCH (Verified) ---
+  // === UNIVERSE A: GROUP THEORY ===
   {
     id: 'node-magma',
     type: 'algebraic structure',
@@ -140,28 +154,20 @@ export const initialNodes: StructureNode[] = [
     createdAt: NOW,
     stats: { greenVotes: 0, blackVotes: 9 }
   },
-
-  // --- THE DUPLICATE BRANCH (Zombie) ---
-  // A user tries to create "Commutative Group" directly off Group, 
-  // realizing too late it's the same as "Abelian Group".
   {
     id: 'node-commutative-group-dup',
     type: 'algebraic structure',
     parentId: 'node-group',
-    axiomId: 'ax-commutativity', // Same axiom as Abelian Group
+    axiomId: 'ax-commutativity', 
     authorId: 'NewUser_123',
     displayLatex: '\\text{Commutative Group}',
-    status: 'deprecated', // Marked as Zombie
+    status: 'deprecated', 
     rootContextId: 'env-general-algebra',
-    toBeDeleted: true, // Flashing Yellow
-    duplicateOfId: 'node-abelian-group', // Points to Survivor
+    toBeDeleted: true, 
+    duplicateOfId: 'node-abelian-group', 
     createdAt: NOW,
     stats: { greenVotes: 5, blackVotes: 25 }
   },
-
-  // --- THE DEAD END BRANCH (Gray) ---
-  // A user adds "Idempotency" (x*x = x) to a Group.
-  // This forces x = e for all x, making the group trivial.
   {
     id: 'node-idempotent-group',
     type: 'algebraic structure',
@@ -169,11 +175,26 @@ export const initialNodes: StructureNode[] = [
     axiomId: 'ax-idempotency',
     authorId: 'MathExplorer',
     displayLatex: '\\text{Idempotent Group}',
-    status: 'deadend', // Gray Node
+    status: 'deadend', 
     rootContextId: 'env-general-algebra',
     toBeDeleted: false,
     createdAt: NOW,
     stats: { greenVotes: 10, blackVotes: 0 }
+  },
+
+  // === UNIVERSE B: RING THEORY ===
+  {
+    id: 'node-ring-root',
+    type: 'algebraic structure',
+    parentId: null,
+    axiomId: 'ax-closure', // Temporary root axiom
+    authorId: 'System',
+    displayLatex: '\\text{Pseudo-Ring Base}',
+    status: 'verified',
+    rootContextId: 'env-ring-theory', // <--- Distinct Context
+    toBeDeleted: false,
+    createdAt: NOW,
+    stats: { greenVotes: 1, blackVotes: 0 }
   }
 ];
 
@@ -181,7 +202,6 @@ export const initialNodes: StructureNode[] = [
  * 4. THEOREMS
  */
 export const initialTheorems: Theorem[] = [
-  // --- MAIN BRANCH THEOREMS ---
   {
     id: 'thm-generalized-associativity',
     structureNodeId: 'node-semigroup',
@@ -242,8 +262,6 @@ export const initialTheorems: Theorem[] = [
     createdAt: NOW,
     stats: { greenVotes: 25, blackVotes: 0 }
   },
-
-  // --- DEAD END THEOREM (Proving Triviality) ---
   {
     id: 'thm-collapse',
     structureNodeId: 'node-idempotent-group',

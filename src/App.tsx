@@ -1,20 +1,27 @@
-/* src/App.tsx */
-import React from 'react';
+// src/App.tsx
+import { useState } from 'react';
 import { AlgebraicStructureExplorer } from './components/AlgebraicStructureExplorer';
-import './index.css';
+import { Lobby } from './components/Lobby.tsx';
 
-/**
- * The Main Application Controller.
- * In the new Single Tree Architecture, the App component has been simplified.
- * It no longer manages view routing between "Structure" and "Theorem" spaces,
- * as the Explorer now handles all navigation internally via the Detail Panel.
- */
-const App: React.FC = () => {
+function App() {
+  // State: Which Universe is currently active? Null = Lobby.
+  const [currentUniverseId, setCurrentUniverseId] = useState<string | null>(null);
+
   return (
-    <main className="app-root" style={{ width: '100vw', height: '100vh', overflow: 'hidden' }}>
-      <AlgebraicStructureExplorer />
-    </main>
+    <div className="app-container">
+      {currentUniverseId ? (
+        // 1. If Universe is selected, show Explorer
+        <AlgebraicStructureExplorer 
+          universeId={currentUniverseId}
+          onExit={() => setCurrentUniverseId(null)} 
+        />
+      ) : (
+        // 2. Otherwise, show the Lobby
+        <Lobby onSelectUniverse={setCurrentUniverseId} />
+      )}
+    </div>
   );
-};
+}
 
 export default App;
+
