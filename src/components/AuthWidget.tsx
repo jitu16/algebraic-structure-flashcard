@@ -8,7 +8,8 @@ import styles from './AuthWidget.module.css';
  * - If logged in: Shows the user's avatar, display name, and role badge.
  */
 export const AuthWidget = () => {
-  const { user, profile, login, logout } = useAuth();
+  // FIX: Destructure 'signInWithGoogle' (the actual name) and alias it to 'login'
+  const { user, profile, signInWithGoogle: login, logout } = useAuth();
 
   // 1. Render Login Button for unauthenticated users
   if (!user) {

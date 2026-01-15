@@ -2,6 +2,7 @@
 @import 'katex/dist/katex.min.css';
 
 :root {
+  /* Status Colors */
   --verified-bg: #ccffcc;
   --unverified-bg: #ffcccc;
   --deprecated-bg: #ffff11;
@@ -16,7 +17,7 @@ html, body, #root {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  font-family: sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 /* --- Layout Containers --- */
@@ -42,6 +43,8 @@ html, body, #root {
   background: white;
   border: 2px solid var(--border-dark);
   color: black;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
 }
 
 .math-display-area {
@@ -52,21 +55,114 @@ html, body, #root {
   align-items: center;
 }
 
-/* --- Shared Status & Animations (Base Rules) --- */
-.status-verified { background-color: var(--verified-bg); border-color: #006400; }
-.status-unverified { background-color: var(--unverified-bg); border-color: #8b0000; }
-.status-trash { background-color: var(--unverified-bg); border-color: #8b0000; }
-.status-deprecated { background-color: var(--deprecated-bg); border-color: #000; }
-.status-deadend { background-color: var(--deadend-bg); border-color: #8b0000; }
+/* --- Status Styling (Shared by Nodes & Theorems) --- */
 
-/* --- THEOREM ITEM SYSTEM (Detail Panel Cards) --- */
-/* These rules refine the shared status colors for the list view context */
+/* Verified: Green background, dark green border */
+.status-verified { 
+  background-color: var(--verified-bg) !important; 
+  border-color: #006400 !important; 
+}
 
+/* Unverified: Red background, dark red border */
+.status-unverified { 
+  background-color: var(--unverified-bg) !important; 
+  border-color: #8b0000 !important; 
+}
+
+/* Trash: Red background, pulsing red border */
+.status-trash { 
+  background-color: var(--unverified-bg) !important; 
+  border-color: #8b0000 !important; 
+  animation: pulse-red 4.0s infinite !important;
+  z-index: 1000;
+}
+
+/* Deprecated: Yellow background, pulsing black border */
+.status-deprecated { 
+  background-color: var(--deprecated-bg) !important; 
+  border-color: #000 !important; 
+  border-style: dashed !important;
+  animation: pulse-yellow 4.0s infinite !important;
+  z-index: 1000;
+}
+
+/* Deadend: Gray background, dark red border */
+.status-deadend { 
+  background-color: var(--deadend-bg) !important; 
+  border-color: #8b0000 !important; 
+}
+
+/* --- Animations --- */
+@keyframes pulse-yellow {
+  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.9); transform: scale(1); }
+  50% { box-shadow: 0 0 20px 10px rgba(255, 150, 0, 0.5); transform: scale(1.05); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.3); transform: scale(1); }
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(255, 50, 0, 0.9); transform: scale(1); }
+  50% { box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.5); transform: scale(1.05); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); transform: scale(1); }
+}
+
+/* --- Voting System UI (New) --- */
+
+.math-node-stats {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0,0,0,0.1);
+}
+
+.vote-btn {
+  background: white;
+  border: 1px solid #ccc;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+  color: #666;
+}
+
+.vote-btn:hover {
+  background-color: #f5f5f5;
+  color: #333;
+  border-color: #bbb;
+}
+
+/* Active Upvote (Green) */
+.vote-btn.active-up {
+  color: #2e7d32 !important;
+  background-color: #e8f5e9 !important;
+  border-color: #2e7d32 !important;
+}
+
+/* Active Downvote (Red/Black) */
+.vote-btn.active-down {
+  color: #c62828 !important;
+  background-color: #ffebee !important;
+  border-color: #c62828 !important;
+}
+
+.vote-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* --- Theorem Items (Flashcard) --- */
 .theorem-item {
   position: relative;
   background: #fff;
   border: 1px solid #eee;
-  border-left-width: 5px; /* The "Card Accent" look */
+  border-left-width: 5px;
   border-radius: 4px;
   padding: 10px 12px;
   margin-bottom: 12px;
@@ -74,252 +170,6 @@ html, body, #root {
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.theorem-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-/* Theorem-Specific Status Overrides */
-/* We use specific backgrounds to make text more readable in the list */
-
-.theorem-item.status-verified {
-  border-left-color: #2e7d32; /* Strong Green Border */
-  background-color: #f1f8e9; /* Very Light Green Tint */
-  border-top: 1px solid #dcedc8;
-  border-bottom: 1px solid #dcedc8;
-  border-right: 1px solid #dcedc8;
-}
-
-.theorem-item.status-unverified {
-  border-left-color: #c62828; /* Strong Red Border */
-  background-color: #ffebee; /* Very Light Red Tint */
-  border-top: 1px solid #ffcdd2;
-  border-bottom: 1px solid #ffcdd2;
-  border-right: 1px solid #ffcdd2;
-}
-
-.theorem-item.status-deadend {
-  border-left-color: #757575;
-  background-color: #f5f5f5;
-  color: #666;
-}
-
-/* --- Animations --- */
-@keyframes pulse-yellow {
-  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.9); transform: scale(1); }
-  50% { box-shadow: 0 0 20px 10px rgba(255, 150, 0, 0.5); transform: scale(1.02); } /* Reduced scale for cards */
-  100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.3); transform: scale(1); }
-}
-
-.status-deprecated {
-  border: 1px dashed #000 !important;
-  animation: pulse-yellow 4.0s infinite !important;
-  z-index: 1000;
-}
-
-@keyframes pulse-red {
-  0% { box-shadow: 0 0 0 0 rgba(255, 50, 0, 0.9); transform: scale(1); }
-  50% { box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.5); transform: scale(1.02); } /* Reduced scale for cards */
-  100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); transform: scale(1); }
-}
-
-.status-trash {
-  border: 1px dashed #000 !important;
-  animation: pulse-red 4.0s infinite !important;
-  z-index: 1000;
-}
-
-/* --- Voting System UI --- */
-
-/* The Container for Buttons */
-.math-node-stats {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* Reset border/margin when used inside a theorem header */
-.theorem-header .math-node-stats {
-  border-top: none;
-  margin-top: 0;
-  padding-top: 0;
-}
-
-/* The Buttons */
-.vote-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.2s ease;
-  color: #888; /* Default color (gray) */
-}
-
-/* Hover Effects */
-.vote-btn:hover {
-  background-color: rgba(255, 255, 255, 0.8);
-  color: #555;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-/* Active State: Upvote (Green) */
-.vote-btn.active-up {
-  color: #2e7d32;
-  background-color: rgba(76, 175, 80, 0.15);
-}
-
-/* Active State: Downvote (Red) */
-.vote-btn.active-down {
-  color: #c62828;
-  background-color: rgba(211, 47, 47, 0.15);
-}/* src/index.css */
-@import 'katex/dist/katex.min.css';
-
-:root {
-  --verified-bg: #ccffcc;
-  --unverified-bg: #ffcccc;
-  --deprecated-bg: #ffff11;
-  --deadend-bg: #eeeeee;
-  --primary-blue: #e1f5fe;
-  --border-dark: #333;
-}
-
-html, body, #root {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  width: 100%;
-  overflow: hidden;
-  font-family: sans-serif;
-}
-
-/* --- Layout Containers --- */
-.app-root {
-  width: 100vw;
-  height: 100vh;
-}
-
-.explorer-container {
-  width: 100%;
-  height: 100%;
-  display: block;
-  position: relative;
-}
-
-/* --- Node System --- */
-.math-node-container {
-  padding: 10px;
-  border-radius: 16px;
-  width: 100%;
-  height: 100%;
-  text-align: center;
-  background: white;
-  border: 2px solid var(--border-dark);
-  color: black;
-}
-
-.math-display-area {
-  margin: 10px 0;
-  min-height: 1.5em;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.math-node-stats {
-  font-size: 0.7rem;
-  margin-top: 8px;
-  padding-top: 5px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  display: flex;
-  justify-content: space-around;
-}
-
-/* --- Status & Animations --- */
-.status-verified { background-color: var(--verified-bg) !important; border-color: #006400; }
-.status-unverified { background-color: var(--unverified-bg) !important; border-color: #8b0000; }
-.status-trash { background-color: var(--unverified-bg) !important; border-color: #8b0000; }
-.status-deprecated { background-color: var(--deprecated-bg) !important; border-color: #000; }
-.status-deadend { background-color: var(--deadend-bg) !important; border-color: #8b0000; }
-
-@keyframes pulse-yellow {
-  0% { box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.9); transform: scale(1); }
-  50% { box-shadow: 0 0 20px 10px rgba(255, 150, 0, 0.5); transform: scale(1.1); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.3); transform: scale(1); }
-}
-
-.status-deprecated {
-  border: 1px dashed #000 !important;
-  animation: pulse-yellow 4.0s infinite !important;
-  z-index: 1000;
-}
-
-@keyframes pulse-red {
-  0% { box-shadow: 0 0 0 0 rgba(255, 50, 0, 0.9); transform: scale(1); }
-  50% { box-shadow: 0 0 20px 10px rgba(255, 0, 0, 0.5); transform: scale(1.1); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 0, 0, 0.7); transform: scale(1); }
-}
-
-.status-trash {
-  border: 1px dashed #000 !important;
-  animation: pulse-red 4.0s infinite !important;
-  z-index: 1000;
-}
-
-
-/* Voting Buttons Container */
-.math-node-stats {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* The Buttons */
-.vote-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 600;
-  padding: 4px 8px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.2s ease;
-  color: #888; /* Default color (gray) */
-}
-
-/* Hover Effects */
-.vote-btn:hover {
-  background-color: rgba(255, 255, 255, 1);
-  color: #555;
-}
-
-/* Active State: Upvote (Green) */
-.vote-btn.active-up {
-  color: #4caf50;
-  background-color: rgba(76, 175, 80, 0.1); /* Light green background */
-}
-
-/* Active State: Downvote (Red) */
-.vote-btn.active-down {
-  color: #d32f2f;
-  background-color: rgba(211, 47, 47, 0.1); /* Light red background */
-}
+.theorem-item.status-verified { border-left-color: #2e7d32; background-color: #f1f8e9; }
+.theorem-item.status-unverified { border-left-color: #c62828; background-color: #ffebee; }
+.theorem-item.status-deadend { border-left-color: #757575; background-color: #f5f5f5; }

@@ -6,124 +6,162 @@ import {
   signOut, 
   type User 
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { auth, db, googleProvider } from '../firebase';
-import type { UserProfile } from '../types';
+import { 
+  doc, 
+  getDoc, 
+  setDoc, 
+  serverTimestamp 
+} from 'firebase/firestore';
+import { auth, googleProvider, db } from '../firebase';
 
 /**
- * Interface defining the shape of the Authentication Context.
+ * Represents the persistent user data stored in the 'users' Firestore collection.
+ * This separates the Auth/Login data (Google) from the App data (Role, Reputation).
+ */
+interface UserProfile {
+  /** The unique Firebase Auth ID (matches user.uid) */
+  uid: string;
+  /** The user's email address */
+  email: string | null;
+  /** The user's public display name */
+  displayName: string | null;
+  /** URL to the user's avatar image */
+  photoURL: string | null;
+  /** * The user's permission level.
+   * - 'citizen': Standard user, can vote and create proposals.
+   * - 'admin': Can manage system-wide settings and moderation.
+   */
+  role: 'admin' | 'citizen';
+  /** The user's accumulated reputation score */
+  reputation: number;
+  /** Timestamp of when the profile was first created */
+  createdAt: any;
+}
+
+/**
+ * The shape of the data provided by the AuthContext.
  */
 interface AuthContextType {
-  /** The raw Firebase Auth user object (contains UID, email, photoURL). */
+  /** The current Firebase Auth user object, or null if logged out */
   user: User | null;
-  
-  /** The custom application profile (contains Role, Reputation, permissions). */
+  /** The additional Firestore profile data, or null if logged out/loading */
   profile: UserProfile | null;
-  
-  /** Boolean flag indicating if the auth state is currently being determined. */
+  /** True if the initial auth check is still running */
   loading: boolean;
-  
-  /** Helper flag: returns true if the current user has the 'admin' role. */
-  isAdmin: boolean;
-  
-  /** Triggers the Google Sign-In popup flow. */
-  login: () => Promise<void>;
-  
-  /** Signs the user out of the application and clears state. */
+  /** Triggers the Google Sign-In popup flow */
+  signInWithGoogle: () => Promise<void>;
+  /** Signs the user out of the application */
   logout: () => Promise<void>;
 }
 
+// Create the context with undefined initial value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
- * Global Authentication Provider.
- * Wraps the application to provide user state and profile data to all components.
- * Automatically handles profile creation for new users in Firestore.
+ * Custom hook to access the authentication context.
+ * Must be used within an AuthProvider.
+ * * @throws {Error} If used outside of an AuthProvider.
+ * @returns {AuthContextType} The current auth context values.
  */
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+interface AuthProviderProps {
+  children: React.ReactNode;
+}
+
+/**
+ * Provider component that encapsulates authentication logic and state management.
+ * It handles:
+ * 1. Monitoring Firebase Auth state changes.
+ * 2. Syncing the Auth user with the Firestore User Profile.
+ * 3. Automatically creating a profile for new users.
+ */
+export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // --- Synchronization Logic ---
   useEffect(() => {
-    // Subscribe to Firebase Auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
 
       if (currentUser) {
+        // 1. Check if User Profile exists in Firestore
+        const userRef = doc(db, 'users', currentUser.uid);
+        
         try {
-          const userRef = doc(db, 'users', currentUser.uid);
           const userSnap = await getDoc(userRef);
 
           if (userSnap.exists()) {
-            // Case A: Returning User - Load existing profile
+            // A. Profile exists? Load it.
             setProfile(userSnap.data() as UserProfile);
           } else {
-            // Case B: New User - Initialize default profile
+            // B. No Profile? Create it automatically.
             const newProfile: UserProfile = {
               uid: currentUser.uid,
               email: currentUser.email,
               displayName: currentUser.displayName,
-              role: 'novice',
-              reputation: { creation: 0, contributor: 0 },
-              createdAt: Date.now()
+              photoURL: currentUser.photoURL,
+              role: 'citizen',     // Default role for new users
+              reputation: 1,       // Start with 1 reputation
+              createdAt: serverTimestamp()
             };
-            
-            // Write the new profile to Firestore
+
             await setDoc(userRef, newProfile);
             setProfile(newProfile);
+            console.log("New User Profile Created in Firestore via AuthProvider.");
           }
         } catch (error) {
-          console.error("Error fetching user profile:", error);
-          setProfile(null);
+          console.error("Error fetching/creating user profile:", error);
         }
       } else {
-        // User logged out
+        // User is logged out, clear profile
         setProfile(null);
       }
-      
+
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    // Cleanup subscription on unmount
+    return unsubscribe;
   }, []);
 
   /**
-   * Initiates the login flow using Google Provider.
+   * Initiates the Google Sign-In process via popup.
+   * The actual state update is handled by the onAuthStateChanged listener above.
    */
-  const login = async () => {
+  const signInWithGoogle = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
-      console.error("Login failed", error);
+      console.error("Login Failed:", error);
+      throw error;
     }
   };
 
   /**
-   * Signs the user out and resets profile state.
+   * Logs the current user out.
    */
-  const logout = async () => {
-    await signOut(auth);
-    setProfile(null);
+  const logout = () => signOut(auth);
+
+  const value = {
+    user,
+    profile,
+    loading,
+    signInWithGoogle,
+    logout
   };
 
-  // Derived state helper
-  const isAdmin = profile?.role === 'admin';
-
   return (
-    <AuthContext.Provider value={{ user, profile, loading, login, logout, isAdmin }}>
+    <AuthContext.Provider value={value}>
       {!loading && children}
     </AuthContext.Provider>
   );
-};
-
-/**
- * Custom hook to access the AuthContext.
- * @throws {Error} If used outside of an AuthProvider.
- * @returns {AuthContextType} The current auth context.
- */
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error("useAuth must be used within an AuthProvider");
-  return context;
 };

@@ -1,5 +1,4 @@
 /* src/components/Lobby.tsx */
-import React from 'react';
 import styles from './Lobby.module.css';
 import { initialEnvironments } from '../data/initialData';
 import { LatexRenderer } from './LatexRenderer';

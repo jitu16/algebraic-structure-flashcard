@@ -8,7 +8,6 @@ import {
   onSnapshot, 
   doc, 
   setDoc, 
-  getDoc,
   deleteDoc
 } from 'firebase/firestore';
 import { db } from '../firebase'; // Ensure this connection file exists

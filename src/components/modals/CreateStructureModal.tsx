@@ -1,5 +1,5 @@
 /* src/components/modals/CreateStructureModal.tsx */
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import styles from './Modal.module.css';
 import { LatexRenderer } from '../LatexRenderer';
 import { AxiomLibraryDrawer } from './AxiomLibraryDrawer';
@@ -30,7 +30,6 @@ export interface StructureFormData {
 }
 
 export const CreateStructureModal = ({ 
-  parentId, 
   parentName, 
   rootEnvironment, 
   availableAxioms,

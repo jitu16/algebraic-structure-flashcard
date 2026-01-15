@@ -1,5 +1,5 @@
 /* src/components/modals/TheoremLibraryDrawer.tsx */
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import styles from './Modal.module.css'; 
 import { LatexRenderer } from '../LatexRenderer';
 import type { Theorem } from '../../types';
