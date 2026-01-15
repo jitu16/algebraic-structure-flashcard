@@ -2,8 +2,23 @@
 
 All notable changes to the **Algebraic Structure Explorer** will be documented in this file.
 
-## [Unreleased]
-- **Phase 5: Persistence** (Connecting to Firebase)
+## [2026-01-14] - Phase 5: Persistence, Admin Tools & Gamification
+### Added
+- **Firebase Integration:** Full migration to Firestore. The database is now online, ensuring all Universes, Nodes, and Votes persist across sessions.
+- **Universe Creation:** Users can now define completely new Root Environments (Universes) directly from the Lobby.
+- **Admin Powers:** Implemented comprehensive renaming tools. Admins can now edit the names of:
+    - Universes
+    - Axioms
+    - Structure Nodes
+    - Theorems
+- **Dual-Score System:** Implemented the split reputation system (Creation vs. Contributor) to reward distinct types of engagement.
+- **Profile Hub:** Created `ProfileModal` to display personal stats and a global leaderboard sorted by Contributor Score.
+- **Lobby Overhaul:** Added a responsive, fixed header and scrollable content area (`100dvh`), ensuring zero overlap on mobile devices.
+
+### Changed
+- **Data Sync:** "Like" (Green) and "Unlike" (Black) votes are now fully synchronized to the server in real-time.
+- **Auth Architecture:** Updated `AuthContext` to support the `UserProfile` schema and initialize users with the dual-score structure.
+- **Type Hardening:** Updated `index.ts` to strictly handle `Timestamp | number | FieldValue` unions, resolving Firestore serialization issues.
 
 ## [2026-01-14] - Phase 4c: Theorem Expansion & UX Polish
 ### Added

@@ -12,60 +12,46 @@ We want to visualize the dramatic power of individual axioms. By studying this t
 * **Insight:** Watching the map grow reveals the true significance of the axioms that birth new systems.
 * **Rigor:** Every branch is anchored by its environment (Sets and Operators). The systematic classification of these growing structures creates a living, rigorous encyclopedia of mathematical reality.
 
-
 ### Directory Structure
 
 ```text
 .
-├── App.tsx
-├── app.tsx.ignorethisfile
-├── assets
-│   └── react.svg
-├── components
-│   ├── AlgebraicStructureExplorer.module.css
-│   ├── AlgebraicStructureExplorer.tsx
-│   ├── AuthWidget.module.css
-│   ├── AuthWidget.tsx
-│   ├── Flashcard.module.css
-│   ├── Flashcard.tsx
-│   ├── GenericGraphEngine.tsx
-│   ├── LatexRenderer.tsx
-│   ├── Lobby.module.css
-│   ├── Lobby.tsx
-│   ├── MathNode.tsx
-│   ├── modals
-│   │   ├── AdminLibraryModal.module.css
-│   │   ├── AdminLibraryModal.tsx
-│   │   ├── AxiomLibraryDrawer.tsx
-│   │   ├── CreateStructureModal.tsx
-│   │   ├── CreateTheoremModal.tsx
-│   │   ├── CreateUniverseModal.module.css
-│   │   ├── CreateUniverseModal.tsx
-│   │   ├── Modal.module.css
-│   │   ├── ProfileModal.module.css
-│   │   ├── ProfileModal.tsx
-│   │   └── TheoremLibraryDrawer.tsx
-│   ├── Overlay.module.css
-│   ├── Overlay.tsx
-│   └── SeedDatabase.tsx.ignorethisfile
-├── contexts
-│   └── AuthContext.tsx
-├── data
-│   └── initialData.ts
-├── firebase.ts
-├── hooks
-│   └── useVoting.ts
-├── index.css
-├── main.tsx
-├── styles
-│   └── theme.ts
-├── types
-│   └── index.ts
-└── utils
-    ├── checkStatus.ts
-    ├── edgeFactory.ts
-    ├── graphAdapter.ts
-    └── lineage.ts
+├── App.tsx                                       # Main Router: Switches between Lobby and Explorer
+├── assets/                                       # Static Assets (Images, SVGs)
+├── components/                                   # UI Components & Graph Logic
+│   ├── AlgebraicStructureExplorer.module.css     # Scoped Styles for the Explorer
+│   ├── AlgebraicStructureExplorer.tsx            # Main Controller: Manages State (Nodes, Axioms) & Graph View
+│   ├── AuthWidget.tsx                            # [Legacy] Standalone Auth Component (now integrated into Lobby)
+│   ├── Flashcard.module.css                      # Styles for the Detail Panel
+│   ├── Flashcard.tsx                             # Detail Panel: Displays Theorems, Properties, and Voting UI
+│   ├── GenericGraphEngine.tsx                    # Pure Canvas: Wraps React Flow for rendering nodes/edges
+│   ├── LatexRenderer.tsx                         # Utility: Renders MathJax/KaTeX strings
+│   ├── Lobby.module.css                          # Styles for the Universe Selector
+│   ├── Lobby.tsx                                 # Landing Page: Universe Selection, Auth Header, & Admin Tools
+│   ├── MathNode.tsx                              # Custom Graph Node: Displays LaTeX label & Vote Buttons
+│   ├── Overlay.tsx                               # UI Overlay: Legends and floating controls
+│   └── modals/                                   # Popups & Dialogs
+│       ├── AdminLibraryModal.tsx                 # Admin Tool: Global Axiom/Theorem Registry Management
+│       ├── AxiomLibraryDrawer.tsx                # Discovery: Slide-out panel to browse existing axioms
+│       ├── CreateStructureModal.tsx              # Hybrid Form: Add Nodes via Search or Creation
+│       ├── CreateTheoremModal.tsx                # Hybrid Form: Propose Theorems inside Flashcards
+│       ├── CreateUniverseModal.tsx               # [NEW] Admin Tool: Genesis of new Algebraic Universes
+│       ├── ProfileModal.tsx                      # [NEW] User Hub: Stats, Leaderboard & Avatar
+│       └── TheoremLibraryDrawer.tsx              # Discovery: Slide-out panel for theorem templates
+├── contexts/
+│   └── AuthContext.tsx                           # Global State: Syncs Firebase Auth with Firestore User Profiles
+├── data/
+│   └── initialData.ts                            # Seed Data: Initial sets of Axioms and Universes
+├── firebase.ts                                   # Infrastructure: Firestore & Auth Configuration
+├── hooks/
+│   └── useVoting.ts                              # Logic Hook: Handles Local vs Server voting state
+├── types/
+│   └── index.ts                                  # Type Definitions: Discriminated Unions & Interfaces
+└── utils/
+    ├── checkStatus.ts                            # Logic: Determines if a node moves Red -> Green
+    ├── edgeFactory.ts                            # Logic: Calculates connections based on ancestry
+    ├── graphAdapter.ts                           # Adapter: Transforms Firestore Documents -> React Flow Graph
+    └── lineage.ts                                # Logic: Traces parent-child relationships
 ```
 
 ### System Architecture: The Logic Engine
@@ -102,29 +88,24 @@ As the tree grows, users may inadvertently create duplicate structures. We handl
 * **The Zombie State:** The duplicate branch is flagged `toBeDeleted` and flashes Yellow.
 * **The Migration:** This creates a window for the community to review the structure before the zombie node is auto-deleted.
 
-### Immediate Tasks (Phase 4c: Creation & Discovery)
+### Immediate Tasks (Phase 5: Persistence & User System)
 **Status: Implemented**
 
-#### 1. Node Creation UI (Done)
-* **Structure Creator:** A Hybrid Modal that allows "Smart Searching" existing axioms or defining new ones.
-* **Notation Locking:** Enforces consistency by displaying immutable Root Environments.
+#### 1. Persistence Layer (Done)
+* **Firebase Integration:** The application is now fully online. All data (Nodes, Axioms, Theorems) persists in Firestore.
+* **Real-Time Sync:** Voting (Likes/Unlikes) and Node creation events broadcast immediately to all connected users.
 
-#### 2. Discovery Engine (Done)
-* **Axiom Library:** Implemented a side-drawer to browse the global registry of axioms, preventing duplication.
+#### 2. User System (Done)
+* **Dual-Scoring:** Implemented a split reputation system (Creation vs. Contributor) to distinguish between builders and reviewers.
+* **Profile Hub:** Added a modal to view personal stats and the global leaderboard.
 
-#### 3. Governance (Done)
-* **Polymorphic Voting:** Both Nodes and Theorems now support independent Up/Down voting and Status coloring.
+#### 3. Admin Tools (Done)
+* **Content Management:** Admins now have full edit access to rename Universes, Nodes, Axioms, and Theorems to correct typos or refine nomenclature.
+* **Universe Genesis:** Enabled the creation of new algebraic Universes directly from the Lobby.
 
-### Immediate Tasks (Phase 4c: Theorem Expansion)
-**Status: Implemented**
-
-#### 1. Theorem Creation UI (Done)
-* **Theorem Creator:** Designed the Hybrid Modal to append new Theorems to the Flashcard.
-* **Library Integration:** Connected to the global theorem registry to allow re-use of common proofs (e.g., "Uniqueness of Identity").
-
-### Next Steps (Phase 5: Persistence)
+### Next Steps (Phase 6: Polish & Expansion)
 **Status: Pending**
 
-#### 1. Persistence Layer
-* **Backend Integration:** Connect the current in-memory state to **Firebase**.
-* **Save/Load:** Ensure the tree state persists across page reloads.
+#### 1. Advanced Moderation
+* **Flagging System:** Implement the logic to handle "Node Issue" and "Duplicate" flags in the UI.
+* **Zombie Protocol:** Automate the deprecation flow for duplicate branches.
