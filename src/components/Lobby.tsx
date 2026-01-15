@@ -12,6 +12,7 @@ import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { LatexRenderer } from './LatexRenderer';
 import { CreateUniverseModal, type UniverseFormData } from './modals/CreateUniverseModal';
+import { ProfileModal } from './modals/ProfileModal';
 import type { RootEnvironment, StructureNode, Axiom } from '../types';
 import styles from './Lobby.module.css';
 
@@ -23,14 +24,18 @@ interface LobbyProps {
 /**
  * The Lobby Component.
  * Displays all Universes and allows Admins to create, delete, and rename them.
+ * * Updates:
+ * - Header Bar now displays the Dual-Score (Creation | Contributor).
+ * - Fixed avatar display to rely on Auth 'user' object instead of Firestore profile.
  */
 export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
-  const { profile } = useAuth();
+  const { user, profile, signInWithGoogle } = useAuth();
   const isAdmin = profile?.role === 'admin';
 
   // --- STATE ---
   const [environments, setEnvironments] = useState<RootEnvironment[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Edit State
@@ -51,39 +56,25 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
   }, []);
 
   // --- HANDLERS: EDITING ---
-
-  /**
-   * Enters edit mode for a specific universe.
-   * Stops propagation to prevent the card click event.
-   */
   const startEditing = (e: React.MouseEvent, env: RootEnvironment) => {
     e.stopPropagation();
     setEditingId(env.id);
     setEditValue(env.name);
   };
 
-  /**
-   * Cancels edit mode without saving.
-   */
   const cancelEditing = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     setEditingId(null);
     setEditValue('');
   };
 
-  /**
-   * Saves the new name to Firestore.
-   */
   const saveName = async (e: React.MouseEvent | React.FormEvent) => {
     e.stopPropagation();
     e.preventDefault();
-
     if (!editingId || !editValue.trim()) return;
 
     try {
-      await updateDoc(doc(db, 'environments', editingId), {
-        name: editValue.trim()
-      });
+      await updateDoc(doc(db, 'environments', editingId), { name: editValue.trim() });
       setEditingId(null);
     } catch (error) {
       console.error("Failed to update name:", error);
@@ -92,7 +83,6 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
   };
 
   // --- HANDLERS: CREATE / DELETE ---
-
   const handleCreate = async (data: UniverseFormData) => {
     const timestamp = Date.now();
     const envId = `env-${timestamp}`;
@@ -155,8 +145,51 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
 
   return (
     <div className={styles.container}>
+      
+      {/* --- HEADER BAR --- */}
+      <header className={styles.headerBar}>
+        <div className={styles.logo}>BuildMath</div>
+        <div className={styles.authControls}>
+          {user ? (
+            <button 
+              className={styles.profileBtn}
+              onClick={() => setIsProfileModalOpen(true)}
+              title="View Profile & Leaderboard"
+            >
+              {/* DUAL SCORE BADGE */}
+              <div className={styles.repBadge}>
+                <div className={styles.repRow}>
+                  <span className={styles.repIcon}>🏗️</span>
+                  <span className={styles.repValue}>{profile?.reputation?.creation || 0}</span>
+                </div>
+                <div className={styles.repRow}>
+                  <span className={styles.repIcon}>🤝</span>
+                  <span className={styles.repValue}>{profile?.reputation?.contributor || 0}</span>
+                </div>
+              </div>
+              
+              <div className={styles.avatarSmall}>
+                {/* Use Firebase Auth 'user' for photo, fallback to initials from profile */}
+                {user?.photoURL ? (
+                  <img src={user.photoURL} alt="User" />
+                ) : (
+                  <span>{profile?.displayName?.charAt(0) || 'U'}</span>
+                )}
+              </div>
+            </button>
+          ) : (
+            <button onClick={signInWithGoogle} className={styles.signInBtn}>
+              Sign In with Google
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* --- MAIN CONTENT --- */}
       <h1 className={styles.title}>Algebraic Structures</h1>
-      <p className={styles.subtitle}>Select a context to explore.</p>
+      <p className={styles.subtitle}>
+        Select an algebraic context to explore. Each algebraic structure defines its own sets and operators, anchoring the evolution of its structures.
+      </p>
 
       <div className={styles.grid}>
         {/* Admin Create Button */}
@@ -181,7 +214,7 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
           >
             <div className={styles.cardHeader}>
               
-              {/* EDIT MODE: Input Field */}
+              {/* EDIT MODE */}
               {editingId === env.id ? (
                 <div className={styles.editContainer} onClick={(e) => e.stopPropagation()}>
                   <input 
@@ -197,7 +230,7 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
                   </div>
                 </div>
               ) : (
-                /* VIEW MODE: Title + Icons */
+                /* VIEW MODE */
                 <div className={styles.titleRow}>
                   <h2 className={styles.cardTitle}>{env.name}</h2>
                   
@@ -222,7 +255,6 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
                 </div>
               )}
 
-              {/* Tags (Sets/Ops) */}
               <div className={styles.tagContainer}>
                 <span className={styles.tag}>
                   Sets: <LatexRenderer latex={`\\{ ${env.sets.join(', ')} \\}`} />
@@ -242,11 +274,16 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
         ))}
       </div>
 
+      {/* --- MODALS --- */}
       {isCreateModalOpen && (
         <CreateUniverseModal 
           onClose={() => setIsCreateModalOpen(false)} 
           onSubmit={handleCreate} 
         />
+      )}
+      
+      {isProfileModalOpen && (
+        <ProfileModal onClose={() => setIsProfileModalOpen(false)} />
       )}
     </div>
   );

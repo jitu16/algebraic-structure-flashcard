@@ -1,5 +1,5 @@
 /* src/types/index.ts */
-
+import { Timestamp } from 'firebase/firestore';
 export type UserRole = 'novice' | 'citizen' | 'admin';
 
 export type NodeStatus = 
@@ -31,7 +31,7 @@ export interface Theorem {
   statementLatex: string;
   proofLatex: string;
   authorId: string;
-  createdAt: number;
+  createdAt: number | Timestamp;
   status: NodeStatus;
   stats: {
     greenVotes: number;
@@ -54,7 +54,7 @@ export interface StructureNode {
     greenVotes: number;
     blackVotes: number;
   };
-  createdAt: number;
+  createdAt: number | Timestamp;
 }
 
 export interface Axiom {
@@ -63,7 +63,7 @@ export interface Axiom {
   aliases: string[];
   defaultLatex: string;
   authorId: string;
-  createdAt: number;
+  createdAt: number | Timestamp;
 }
 
 export interface UserProfile {
@@ -75,7 +75,7 @@ export interface UserProfile {
     creation: number;
     contributor: number;
   };
-  createdAt: number;
+  createdAt: number | Timestamp;
 }
 
 /**
@@ -84,7 +84,7 @@ export interface UserProfile {
  */
 export interface Vote {
   choice: VoteType;
-  timestamp: number;
+  timestamp: number | Timestamp;
 }
 
 export interface Flag {
@@ -97,7 +97,7 @@ export interface Flag {
   suggestedFixLatex?: string;
   duplicateOfId?: string;
   status: FlagStatus;
-  timestamp: number;
+  timestamp: number | Timestamp;
 }
 
 export type AnyGraphNode = StructureNode | Theorem;

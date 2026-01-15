@@ -13,30 +13,7 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../firebase';
-
-/**
- * Represents the persistent user data stored in the 'users' Firestore collection.
- * This separates the Auth/Login data (Google) from the App data (Role, Reputation).
- */
-interface UserProfile {
-  /** The unique Firebase Auth ID (matches user.uid) */
-  uid: string;
-  /** The user's email address */
-  email: string | null;
-  /** The user's public display name */
-  displayName: string | null;
-  /** URL to the user's avatar image */
-  photoURL: string | null;
-  /** * The user's permission level.
-   * - 'citizen': Standard user, can vote and create proposals.
-   * - 'admin': Can manage system-wide settings and moderation.
-   */
-  role: 'admin' | 'citizen';
-  /** The user's accumulated reputation score */
-  reputation: number;
-  /** Timestamp of when the profile was first created */
-  createdAt: any;
-}
+import type { UserProfile } from '../types'; 
 
 /**
  * The shape of the data provided by the AuthContext.
@@ -60,7 +37,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 /**
  * Custom hook to access the authentication context.
  * Must be used within an AuthProvider.
- * * @throws {Error} If used outside of an AuthProvider.
+ * @throws {Error} If used outside of an AuthProvider.
  * @returns {AuthContextType} The current auth context values.
  */
 export const useAuth = (): AuthContextType => {
@@ -80,7 +57,7 @@ interface AuthProviderProps {
  * It handles:
  * 1. Monitoring Firebase Auth state changes.
  * 2. Syncing the Auth user with the Firestore User Profile.
- * 3. Automatically creating a profile for new users.
+ * 3. Automatically creating a profile for new users using the Dual-Score Schema.
  */
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
@@ -103,20 +80,23 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             // A. Profile exists? Load it.
             setProfile(userSnap.data() as UserProfile);
           } else {
-            // B. No Profile? Create it automatically.
+            // B. No Profile? Create it automatically with Dual-Score Schema.
+            // Note: photoURL is excluded as it is not part of the UserProfile schema.
             const newProfile: UserProfile = {
               uid: currentUser.uid,
               email: currentUser.email,
               displayName: currentUser.displayName,
-              photoURL: currentUser.photoURL,
               role: 'citizen',     // Default role for new users
-              reputation: 1,       // Start with 1 reputation
+              reputation: {
+                creation: 0,       // Points for verified nodes/structures
+                contributor: 1     // Points for voting/flagging (Start with 1)
+              },
               createdAt: serverTimestamp()
             };
 
             await setDoc(userRef, newProfile);
             setProfile(newProfile);
-            console.log("New User Profile Created in Firestore via AuthProvider.");
+            console.log("New User Profile Created (Dual-Score Schema).");
           }
         } catch (error) {
           console.error("Error fetching/creating user profile:", error);
@@ -135,7 +115,6 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   /**
    * Initiates the Google Sign-In process via popup.
-   * The actual state update is handled by the onAuthStateChanged listener above.
    */
   const signInWithGoogle = async () => {
     try {

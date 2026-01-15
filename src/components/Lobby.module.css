@@ -6,14 +6,134 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 40px;
+  /* Reduced top padding because header takes space */
+  padding: 0 40px 40px 40px; 
 }
 
+/* --- HEADER BAR --- */
+.headerBar {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 40px 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #f0f0f0;
+  /* Ensure header stays on top of page content */
+  position: relative;
+  z-index: 10; 
+}
+
+.logo {
+  font-weight: 900;
+  font-size: 1.2rem;
+  color: #333;
+  letter-spacing: -0.5px;
+}
+
+.authControls {
+  display: flex;
+  align-items: center;
+  /* FORCE MOVE DOWN: Uses relative positioning to push the button down 10px */
+  position: relative;
+  top: 10px; 
+}
+
+.signInBtn {
+  background: #333;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.signInBtn:hover {
+  background: #000;
+}
+
+/* --- Profile Button Widget --- */
+.profileBtn {
+  background: white;
+  border: 1px solid #eee;
+  padding: 6px 14px; /* Increased padding for better spacing */
+  border-radius: 50px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+  /* Ensure button content is always visible and on top */
+  position: relative;
+  z-index: 51;
+  overflow: visible; 
+}
+
+.profileBtn:hover {
+  border-color: #ddd;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  transform: translateY(-10px);
+}
+
+/* --- Dual Score Badge Styles (Fixed) --- */
+.repBadge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end; /* Aligns numbers to the right, next to avatar */
+  gap: 2px;
+  /* Prevent text from wrapping or being hidden */
+  white-space: nowrap; 
+}
+
+.repRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.repIcon {
+  font-size: 0.85rem;
+}
+
+.repValue {
+  font-weight: 800;
+  color: #0288d1;
+  font-size: 0.9rem;
+}
+
+.avatarSmall {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #555;
+  border: 1px solid #fff; /* Adds a clean ring around avatar */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex-shrink: 0; /* Prevent avatar from being squished */
+}
+
+.avatarSmall img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- Existing Styles --- */
 .loading {
   font-size: 1.5rem;
   color: #666;
   margin-top: 50px;
+  text-align: center;
 }
 
 .title {
@@ -22,6 +142,7 @@
   margin-bottom: 10px;
   font-weight: 800;
   text-align: center;
+  margin-top: 20px;
 }
 
 .subtitle {
@@ -86,7 +207,6 @@
 .adminControls {
   display: flex;
   gap: 8px;
-  /* Prevent buttons from shrinking */
   flex-shrink: 0; 
   margin-left: 10px;
 }
@@ -108,7 +228,7 @@
   border: 2px solid #0288d1;
   border-radius: 4px;
   outline: none;
-  min-width: 0; /* allows flex shrink */
+  min-width: 0; 
 }
 
 .editActions {
