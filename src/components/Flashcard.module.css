@@ -39,7 +39,6 @@
   display: flex;
   justify-content: space-between;
   margin-bottom: 15px;
-  /* Moved from inline styles */
   padding-left: 15px;
   padding-right: 15px;
   padding-top: 15px;
@@ -82,9 +81,77 @@
   padding-bottom: 5px;
 }
 
-.localPropTitle {
-  margin: 0;
+/* --- Inline Editing Styles (NEW) --- */
+.inlineDisplay {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
+
+.editIconBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.85rem;
+  opacity: 0.3;
+  padding: 2px 4px;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.inlineDisplay:hover .editIconBtn {
+  opacity: 1;
+}
+
+.editIconBtn:hover {
+  transform: scale(1.2);
+}
+
+.inlineEditContainer {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.inlineInput {
+  padding: 4px 6px;
+  font-size: inherit; /* Inherit size from parent (h3, strong, etc) */
+  font-family: inherit;
+  font-weight: inherit;
+  border: 1px solid #0288d1;
+  border-radius: 4px;
+  outline: none;
+  background: white;
+  min-width: 150px;
+  color: #333;
+}
+
+.saveBtn, .cancelBtn {
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.saveBtn {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+.saveBtn:hover { background: #c8e6c9; }
+
+.cancelBtn {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+.cancelBtn:hover { background: #ffcdd2; }
 
 /* --- Buttons --- */
 .proposeBtn {
@@ -131,26 +198,6 @@
 }
 
 /* --- Toggles & Lists --- */
-.toggleBtn {
-  width: 100%;
-  text-align: left;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  padding: 8px 12px;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: bold;
-  color: #555;
-  border-radius: 4px;
-  margin-bottom: 0;
-}
-
-.toggleBtn:hover {
-  background: #eee;
-}
-
 .toggleContainer {
   margin-bottom: 10px;
 }
@@ -192,6 +239,9 @@
   margin-bottom: 5px;
   color: #555;
   font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .latexBold {
@@ -209,12 +259,7 @@
 .theoremName {
   font-weight: bold;
   font-size: 0.95rem;
-}
-
-.theoremList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+  flex: 1; /* Allow name to take available space for input */
 }
 
 .detailsToggle {
@@ -256,10 +301,9 @@
   color: #555;
 }
 
-
 .miniDeleteBtn {
   background: transparent;
-  border: 1px solid #ffcdd2; /* Light red border */
+  border: 1px solid #ffcdd2;
   color: #c62828;
   border-radius: 4px;
   cursor: pointer;

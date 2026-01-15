@@ -5,7 +5,8 @@ import {
   onSnapshot, 
   doc, 
   setDoc, 
-  deleteDoc 
+  deleteDoc,
+  updateDoc 
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,22 +16,28 @@ import type { RootEnvironment, StructureNode, Axiom } from '../types';
 import styles from './Lobby.module.css';
 
 interface LobbyProps {
+  /** Callback to notify the parent app which universe was selected */
   onSelectUniverse: (universeId: string) => void;
 }
 
 /**
  * The Lobby Component.
- * Displays all Universes and allows Admins to create new ones with a Root Node.
+ * Displays all Universes and allows Admins to create, delete, and rename them.
  */
 export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
   const { profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
 
+  // --- STATE ---
   const [environments, setEnvironments] = useState<RootEnvironment[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // --- Real-Time Fetching ---
+  // Edit State
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState('');
+
+  // --- REAL-TIME FETCHING ---
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'environments'), (snapshot) => {
       const envs = snapshot.docs.map(doc => ({
@@ -43,7 +50,49 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
     return () => unsubscribe();
   }, []);
 
-  // --- Create Universe Logic ---
+  // --- HANDLERS: EDITING ---
+
+  /**
+   * Enters edit mode for a specific universe.
+   * Stops propagation to prevent the card click event.
+   */
+  const startEditing = (e: React.MouseEvent, env: RootEnvironment) => {
+    e.stopPropagation();
+    setEditingId(env.id);
+    setEditValue(env.name);
+  };
+
+  /**
+   * Cancels edit mode without saving.
+   */
+  const cancelEditing = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingId(null);
+    setEditValue('');
+  };
+
+  /**
+   * Saves the new name to Firestore.
+   */
+  const saveName = async (e: React.MouseEvent | React.FormEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (!editingId || !editValue.trim()) return;
+
+    try {
+      await updateDoc(doc(db, 'environments', editingId), {
+        name: editValue.trim()
+      });
+      setEditingId(null);
+    } catch (error) {
+      console.error("Failed to update name:", error);
+      alert("Failed to update name.");
+    }
+  };
+
+  // --- HANDLERS: CREATE / DELETE ---
+
   const handleCreate = async (data: UniverseFormData) => {
     const timestamp = Date.now();
     const envId = `env-${timestamp}`;
@@ -51,7 +100,6 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
     const nodeId = `node-${timestamp}`;
     const authorId = profile?.uid || 'system';
 
-    // 1. Prepare Environment
     const newEnv: RootEnvironment = {
       id: envId,
       name: data.envName,
@@ -59,7 +107,6 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
       operators: data.operators
     };
 
-    // 2. Prepare Genesis Axiom
     const newAxiom: Axiom = {
       id: axiomId,
       canonicalName: data.rootAxiomName,
@@ -69,12 +116,11 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
       createdAt: timestamp
     };
 
-    // 3. Prepare Root Node
     const newRootNode: StructureNode = {
       id: nodeId,
       type: 'algebraic structure',
       parentId: null,
-      axiomId: axiomId, // Link to the new axiom
+      axiomId: axiomId,
       authorId: authorId,
       displayLatex: `\\text{${data.rootNodeName}}`,
       status: 'verified',
@@ -85,23 +131,19 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
     };
 
     try {
-      // Write all three documents
       await setDoc(doc(db, 'environments', envId), newEnv);
       await setDoc(doc(db, 'axioms', axiomId), newAxiom);
       await setDoc(doc(db, 'nodes', nodeId), newRootNode);
-      
-      console.log(`Created Universe: ${envId}, Node: ${nodeId}`);
       setIsCreateModalOpen(false);
     } catch (error) {
       console.error("Failed to create universe:", error);
-      alert("Error creating universe. See console.");
+      alert("Error creating universe.");
     }
   };
 
-  // --- Delete Logic ---
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (!confirm("⚠️ ADMIN WARNING ⚠️\nDelete this Universe? This does not delete the nodes inside it yet.")) return;
+    if (!confirm("⚠️ ADMIN WARNING ⚠️\nDelete this Universe?")) return;
     try {
       await deleteDoc(doc(db, 'environments', id));
     } catch (error) {
@@ -119,7 +161,10 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
       <div className={styles.grid}>
         {/* Admin Create Button */}
         {isAdmin && (
-          <div className={`${styles.card} ${styles.createCard}`} onClick={() => setIsCreateModalOpen(true)}>
+          <div 
+            className={`${styles.card} ${styles.createCard}`} 
+            onClick={() => setIsCreateModalOpen(true)}
+          >
             <div className={styles.createContent}>
               <div className={styles.plusIcon}>+</div>
               <h3>Create Universe</h3>
@@ -129,27 +174,79 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
 
         {/* Existing Universes */}
         {environments.map((env) => (
-          <div key={env.id} className={styles.card} onClick={() => onSelectUniverse(env.id)}>
+          <div 
+            key={env.id} 
+            className={styles.card} 
+            onClick={() => onSelectUniverse(env.id)}
+          >
             <div className={styles.cardHeader}>
-              <h2 className={styles.cardTitle}>{env.name}</h2>
-              {isAdmin && (
-                <button className={styles.deleteBtn} onClick={(e) => handleDelete(e, env.id)}>🗑️</button>
+              
+              {/* EDIT MODE: Input Field */}
+              {editingId === env.id ? (
+                <div className={styles.editContainer} onClick={(e) => e.stopPropagation()}>
+                  <input 
+                    type="text" 
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    className={styles.editInput}
+                    autoFocus
+                  />
+                  <div className={styles.editActions}>
+                    <button onClick={saveName} className={styles.saveBtn} title="Save">✓</button>
+                    <button onClick={cancelEditing} className={styles.cancelBtn} title="Cancel">✕</button>
+                  </div>
+                </div>
+              ) : (
+                /* VIEW MODE: Title + Icons */
+                <div className={styles.titleRow}>
+                  <h2 className={styles.cardTitle}>{env.name}</h2>
+                  
+                  {isAdmin && (
+                    <div className={styles.adminControls}>
+                      <button 
+                        className={styles.editIconBtn}
+                        onClick={(e) => startEditing(e, env)}
+                        title="Rename Universe"
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        className={styles.deleteBtn} 
+                        onClick={(e) => handleDelete(e, env.id)}
+                        title="Delete Universe"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
+
+              {/* Tags (Sets/Ops) */}
               <div className={styles.tagContainer}>
-                <span className={styles.tag}>Sets: <LatexRenderer latex={`\\{ ${env.sets.join(', ')} \\}`} /></span>
-                <span className={styles.tag}>Ops: <LatexRenderer latex={`\\{ ${env.operators.join(', ')} \\}`} /></span>
+                <span className={styles.tag}>
+                  Sets: <LatexRenderer latex={`\\{ ${env.sets.join(', ')} \\}`} />
+                </span>
+                <span className={styles.tag}>
+                  Ops: <LatexRenderer latex={`\\{ ${env.operators.join(', ')} \\}`} />
+                </span>
               </div>
             </div>
+
             <div className={styles.description}>
               Contains <strong>{env.sets.length} Sets</strong> and <strong>{env.operators.length} Operators</strong>.
             </div>
+            
             <button className={styles.enterBtn}>Enter &rarr;</button>
           </div>
         ))}
       </div>
 
       {isCreateModalOpen && (
-        <CreateUniverseModal onClose={() => setIsCreateModalOpen(false)} onSubmit={handleCreate} />
+        <CreateUniverseModal 
+          onClose={() => setIsCreateModalOpen(false)} 
+          onSubmit={handleCreate} 
+        />
       )}
     </div>
   );
