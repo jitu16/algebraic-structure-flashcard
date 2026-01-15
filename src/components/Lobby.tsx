@@ -25,8 +25,8 @@ interface LobbyProps {
  * The Lobby Component.
  * Displays all Universes and allows Admins to create, delete, and rename them.
  * * Updates:
- * - Header Bar now displays the Dual-Score (Creation | Contributor).
- * - Fixed avatar display to rely on Auth 'user' object instead of Firestore profile.
+ * - Layout restructured: Header is now separate from the scrollable Main Content.
+ * - This fixes mobile scrolling issues and overlapping elements.
  */
 export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
   const { user, profile, signInWithGoogle } = useAuth();
@@ -146,7 +146,7 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
   return (
     <div className={styles.container}>
       
-      {/* --- HEADER BAR --- */}
+      {/* --- HEADER (Fixed / Static) --- */}
       <header className={styles.headerBar}>
         <div className={styles.logo}>BuildMath</div>
         <div className={styles.authControls}>
@@ -169,7 +169,6 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
               </div>
               
               <div className={styles.avatarSmall}>
-                {/* Use Firebase Auth 'user' for photo, fallback to initials from profile */}
                 {user?.photoURL ? (
                   <img src={user.photoURL} alt="User" />
                 ) : (
@@ -185,94 +184,94 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
         </div>
       </header>
 
-      {/* --- MAIN CONTENT --- */}
-      <h1 className={styles.title}>Algebraic Structures</h1>
-      <p className={styles.subtitle}>
-        Select an algebraic context to explore. Each algebraic structure defines its own sets and operators, anchoring the evolution of its structures.
-      </p>
+      {/* --- MAIN SCROLLABLE CONTENT --- */}
+      <main className={styles.mainContent}>
+        <h1 className={styles.title}>Algebraic Structures</h1>
+        <p className={styles.subtitle}>
+          Select an algebraic context to explore. Each algebraic structure defines its own sets and operators, anchoring the evolution of its structures.
+        </p>
 
-      <div className={styles.grid}>
-        {/* Admin Create Button */}
-        {isAdmin && (
-          <div 
-            className={`${styles.card} ${styles.createCard}`} 
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <div className={styles.createContent}>
-              <div className={styles.plusIcon}>+</div>
-              <h3>Create Universe</h3>
-            </div>
-          </div>
-        )}
-
-        {/* Existing Universes */}
-        {environments.map((env) => (
-          <div 
-            key={env.id} 
-            className={styles.card} 
-            onClick={() => onSelectUniverse(env.id)}
-          >
-            <div className={styles.cardHeader}>
-              
-              {/* EDIT MODE */}
-              {editingId === env.id ? (
-                <div className={styles.editContainer} onClick={(e) => e.stopPropagation()}>
-                  <input 
-                    type="text" 
-                    value={editValue}
-                    onChange={(e) => setEditValue(e.target.value)}
-                    className={styles.editInput}
-                    autoFocus
-                  />
-                  <div className={styles.editActions}>
-                    <button onClick={saveName} className={styles.saveBtn} title="Save">✓</button>
-                    <button onClick={cancelEditing} className={styles.cancelBtn} title="Cancel">✕</button>
-                  </div>
-                </div>
-              ) : (
-                /* VIEW MODE */
-                <div className={styles.titleRow}>
-                  <h2 className={styles.cardTitle}>{env.name}</h2>
-                  
-                  {isAdmin && (
-                    <div className={styles.adminControls}>
-                      <button 
-                        className={styles.editIconBtn}
-                        onClick={(e) => startEditing(e, env)}
-                        title="Rename Universe"
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        className={styles.deleteBtn} 
-                        onClick={(e) => handleDelete(e, env.id)}
-                        title="Delete Universe"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className={styles.tagContainer}>
-                <span className={styles.tag}>
-                  Sets: <LatexRenderer latex={`\\{ ${env.sets.join(', ')} \\}`} />
-                </span>
-                <span className={styles.tag}>
-                  Ops: <LatexRenderer latex={`\\{ ${env.operators.join(', ')} \\}`} />
-                </span>
+        <div className={styles.grid}>
+          {/* Admin Create Button */}
+          {isAdmin && (
+            <div 
+              className={`${styles.card} ${styles.createCard}`} 
+              onClick={() => setIsCreateModalOpen(true)}
+            >
+              <div className={styles.createContent}>
+                <div className={styles.plusIcon}>+</div>
+                <h3>Create Universe</h3>
               </div>
             </div>
+          )}
 
-            <div className={styles.description}>
-              Contains <strong>{env.sets.length} Sets</strong> and <strong>{env.operators.length} Operators</strong>.
+          {/* Existing Universes */}
+          {environments.map((env) => (
+            <div 
+              key={env.id} 
+              className={styles.card} 
+              onClick={() => onSelectUniverse(env.id)}
+            >
+              <div className={styles.cardHeader}>
+                {/* EDIT MODE */}
+                {editingId === env.id ? (
+                  <div className={styles.editContainer} onClick={(e) => e.stopPropagation()}>
+                    <input 
+                      type="text" 
+                      value={editValue}
+                      onChange={(e) => setEditValue(e.target.value)}
+                      className={styles.editInput}
+                      autoFocus
+                    />
+                    <div className={styles.editActions}>
+                      <button onClick={saveName} className={styles.saveBtn} title="Save">✓</button>
+                      <button onClick={cancelEditing} className={styles.cancelBtn} title="Cancel">✕</button>
+                    </div>
+                  </div>
+                ) : (
+                  /* VIEW MODE */
+                  <div className={styles.titleRow}>
+                    <h2 className={styles.cardTitle}>{env.name}</h2>
+                    {isAdmin && (
+                      <div className={styles.adminControls}>
+                        <button 
+                          className={styles.editIconBtn}
+                          onClick={(e) => startEditing(e, env)}
+                          title="Rename Universe"
+                        >
+                          ✏️
+                        </button>
+                        <button 
+                          className={styles.deleteBtn} 
+                          onClick={(e) => handleDelete(e, env.id)}
+                          title="Delete Universe"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className={styles.tagContainer}>
+                  <span className={styles.tag}>
+                    Sets: <LatexRenderer latex={`\\{ ${env.sets.join(', ')} \\}`} />
+                  </span>
+                  <span className={styles.tag}>
+                    Ops: <LatexRenderer latex={`\\{ ${env.operators.join(', ')} \\}`} />
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.description}>
+                Contains <strong>{env.sets.length} Sets</strong> and <strong>{env.operators.length} Operators</strong>.
+              </div>
+              
+              <button className={styles.enterBtn}>Enter &rarr;</button>
             </div>
-            
-            <button className={styles.enterBtn}>Enter &rarr;</button>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </main>
 
       {/* --- MODALS --- */}
       {isCreateModalOpen && (

@@ -16,44 +16,56 @@ We want to visualize the dramatic power of individual axioms. By studying this t
 ### Directory Structure
 
 ```text
-├── designs/                                      # Project documentation and diagrams
-│   └── design-docs                               # MermaidJS source files
-│       ├── logic-governance.mmd                  # Permissions: Trust Ladder & Domain separation
-│       ├── logic-node-delete.mmd                 # Deprecation: Zombie Protocol & Survivor Links
-│       ├── logic-score.mmd                       # Reputation: Voting logic & scoring rules
-│       ├── logic.mmd                             # Lifecycle: Node validation flow (Red->Green->Gray)
-│       └── schema.mmd                            # Data Models: RootEnvironment, StructureNode
-└── src/                                          # Source code root
-      ├── components/                             # UI Components & Graph Logic
-      │   ├── modals/                             #
-      │   │   ├── AxiomLibraryDrawer.tsx          # Axiom Discovery Engine
-      │   │   ├── TheoremLibraryDrawer.tsx        # [NEW] Theorem Discovery Engine
-      │   │   ├── CreateStructureModal.tsx        # Hybrid Creation Form (Structure)
-      │   │   ├── CreateTheoremModal.tsx          # Hybrid Creation Form (Theorem)
-      │   │   └── Modal.module.css                # Scoped Styles
-      │   ├── AlgebraicStructureExplorer.module.css # [NEW] Layout & Button styles
-      │   ├── AlgebraicStructureExplorer.tsx      # Main View: The Map of Algebraic Systems
-      │   ├── GenericGraphEngine.tsx              # Pure Canvas: Handles React Flow rendering
-      │   ├── Flashcard.module.css                # [NEW] Styles for the Detail Panel
-      │   ├── Flashcard.tsx                       # Info Panel: Lists Axioms & Properties
-      │   ├── MathNode.tsx                        # Custom Graph Node with KaTeX rendering
-      │   ├── LatexRenderer.tsx                   # Rendering latex commands.
-      │   └── Overlay.tsx                         # Legend, Navigation & Metadata display
-      ├── data/                                   # Static content storage
-      │   └── initialData.ts                      # Seed data for Alpha
-      ├── hooks/                                  # React Hooks
-      │   └── useVoting.ts                        # Manages local/remote voting state
-      ├── styles/                                 # Design tokens
-      │   └── theme.ts                            # Color palette & Status constants
-      ├── types/                                  # TypeScript definitions
-      │   └── index.ts                            # Core Interfaces (Nodes, Roles, Governance)
-      ├── utils/                                  # Business logic & Helpers
-      │   ├── checkStatus.ts                      # Governance logic (Red -> Green threshold)
-      │   ├── graphAdapter.ts                     # Transformer: App Data -> React Flow Nodes
-      │   └── lineage.ts                          # Recursion: Fetches inherited axioms
-      ├── App.tsx                                 # Main Controller
-      ├── index.css                               # Global styles & KaTeX imports
-      └── main.tsx                                # React DOM Entry Point
+.
+├── App.tsx
+├── app.tsx.ignorethisfile
+├── assets
+│   └── react.svg
+├── components
+│   ├── AlgebraicStructureExplorer.module.css
+│   ├── AlgebraicStructureExplorer.tsx
+│   ├── AuthWidget.module.css
+│   ├── AuthWidget.tsx
+│   ├── Flashcard.module.css
+│   ├── Flashcard.tsx
+│   ├── GenericGraphEngine.tsx
+│   ├── LatexRenderer.tsx
+│   ├── Lobby.module.css
+│   ├── Lobby.tsx
+│   ├── MathNode.tsx
+│   ├── modals
+│   │   ├── AdminLibraryModal.module.css
+│   │   ├── AdminLibraryModal.tsx
+│   │   ├── AxiomLibraryDrawer.tsx
+│   │   ├── CreateStructureModal.tsx
+│   │   ├── CreateTheoremModal.tsx
+│   │   ├── CreateUniverseModal.module.css
+│   │   ├── CreateUniverseModal.tsx
+│   │   ├── Modal.module.css
+│   │   ├── ProfileModal.module.css
+│   │   ├── ProfileModal.tsx
+│   │   └── TheoremLibraryDrawer.tsx
+│   ├── Overlay.module.css
+│   ├── Overlay.tsx
+│   └── SeedDatabase.tsx.ignorethisfile
+├── contexts
+│   └── AuthContext.tsx
+├── data
+│   └── initialData.ts
+├── firebase.ts
+├── hooks
+│   └── useVoting.ts
+├── index.css
+├── main.tsx
+├── styles
+│   └── theme.ts
+├── types
+│   └── index.ts
+└── utils
+    ├── checkStatus.ts
+    ├── edgeFactory.ts
+    ├── graphAdapter.ts
+    └── lineage.ts
 ```
 
 ### System Architecture: The Logic Engine
