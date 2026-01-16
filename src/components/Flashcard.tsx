@@ -404,7 +404,7 @@ export const Flashcard = (props: UnifiedFlashcardProps) => {
         {lineage.localAxiom && (
           <div className={styles.localItemWrapper}>
              <InheritedItem 
-               label="New Axiom"
+               label="Local Axiom"
                name={lineage.localAxiom.canonicalName}
                latex={lineage.localAxiom.defaultLatex}
                isAdmin={isAdmin}
