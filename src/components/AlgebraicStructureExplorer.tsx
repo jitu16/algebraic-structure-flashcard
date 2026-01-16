@@ -1,16 +1,7 @@
 /* src/components/AlgebraicStructureExplorer.tsx */
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import { useNodesState, useEdgesState } from '@xyflow/react';
-import { 
-  collection, 
-  query, 
-  where, 
-  onSnapshot, 
-  doc, 
-  setDoc, 
-  deleteDoc
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import { toast } from 'react-hot-toast'; // NEW IMPORT
 import { GenericGraphEngine } from './GenericGraphEngine';
 import { MathNode } from './MathNode'; 
 import { Flashcard } from './Flashcard';
@@ -18,10 +9,12 @@ import { nodesToGraph } from '../utils/graphAdapter';
 import { CreateStructureModal, type StructureFormData } from './modals/CreateStructureModal';
 import { type TheoremFormData } from './modals/CreateTheoremModal';
 import { AdminLibraryModal } from './modals/AdminLibraryModal';
-import type { StructureNode, Axiom, RootEnvironment, Theorem } from '../types';
 import styles from './AlgebraicStructureExplorer.module.css';
-
 import { useAuth } from '../contexts/AuthContext';
+import { useUniverseData } from '../hooks/useUniverseData';
+import { StructureService } from '../services/structureService';
+import { TheoremService } from '../services/theoremService';
+import { AxiomService } from '../services/axiomService';
 
 interface ExplorerProps {
   universeId: string;
@@ -33,63 +26,21 @@ interface ExplorerProps {
  * Responsibilities:
  * 1. Visualizing the evolutionary tree of algebraic systems.
  * 2. Managing state (Nodes, Axioms, Theorems) via Real-Time Database.
- * 3. Handling data mutations (Creating Structures, Adding Theorems).
+ * 3. Handling data mutations via Service Layer.
  */
 export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps) => {
 
   const { user, profile } = useAuth();
   const isAdmin = profile?.role === 'admin';
   
-  // --- STATE MANAGEMENT ---
-  
-  // Nodes are filtered by the current Universe ID
-  const [dataNodes, setDataNodes] = useState<StructureNode[]>([]);
-  
-  // Axioms and Theorems are GLOBAL (Shared across universes)
-  const [dataAxioms, setDataAxioms] = useState<Axiom[]>([]);
-  const [dataTheorems, setDataTheorems] = useState<Theorem[]>([]);
-  
-  const [activeEnvironment, setActiveEnvironment] = useState<RootEnvironment | null>(null);
-
-  // --- REAL-TIME DATABASE SUBSCRIPTION ---
-  useEffect(() => {
-    // 1. Fetch Environment Metadata
-    const envRef = doc(db, 'environments', universeId);
-    const unsubscribeEnv = onSnapshot(envRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setActiveEnvironment(docSnap.data() as RootEnvironment);
-      }
-    });
-
-    // 2. Fetch Nodes (Filtered by CURRENT UNIVERSE)
-    const nodesQuery = query(
-      collection(db, 'nodes'), 
-      where('rootContextId', '==', universeId)
-    );
-    const unsubscribeNodes = onSnapshot(nodesQuery, (snapshot) => {
-      const nodes = snapshot.docs.map(doc => doc.data() as StructureNode);
-      setDataNodes(nodes);
-    });
-
-    // 3. Fetch Axioms (Global Registry)
-    const unsubscribeAxioms = onSnapshot(collection(db, 'axioms'), (snapshot) => {
-      const axioms = snapshot.docs.map(doc => doc.data() as Axiom);
-      setDataAxioms(axioms);
-    });
-
-    // 4. Fetch Theorems (Global Registry)
-    const unsubscribeTheorems = onSnapshot(collection(db, 'theorems'), (snapshot) => {
-      const theorems = snapshot.docs.map(doc => doc.data() as Theorem);
-      setDataTheorems(theorems);
-    });
-
-    return () => {
-      unsubscribeEnv();
-      unsubscribeNodes();
-      unsubscribeAxioms();
-      unsubscribeTheorems();
-    };
-  }, [universeId]);
+  // --- DATA FETCHING (VIA HOOK) ---
+  const {
+    nodes: dataNodes,
+    axioms: dataAxioms,
+    theorems: dataTheorems,
+    activeEnvironment,
+    isLoading
+  } = useUniverseData(universeId);
 
   // --- GRAPH LAYOUT CALCULATION ---
   const { nodes: layoutNodes, edges: layoutEdges } = useMemo(
@@ -100,6 +51,7 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(layoutEdges);
   
+  // Sync local graph state when layout recalculates
   useEffect(() => {
     setNodes(layoutNodes);
     setEdges(layoutEdges);
@@ -125,93 +77,115 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null); 
   }, []);
-
-  // ... (Create & Delete Handlers remain the same, hidden for brevity) ...
-  // [Keeping existing handler logic for createStructure, deleteNode, deleteTheorem, deleteAxiom]
   
+  /**
+   * Handles the extension of the graph.
+   * Delegates the creation of Axioms (if new) and Structure Nodes to the StructureService.
+   * @param formData - The data from the creation modal.
+   */
   const handleCreateStructure = async (formData: StructureFormData) => {
-    if (!selectedNodeId || !selectedNodeData) return;
+    if (!selectedNodeId || !selectedNodeData || !user) return;
     if (selectedNodeData.status === 'deprecated' || selectedNodeData.status === 'deadend') return;
     
-    const timestamp = Date.now();
-    if (!user) { alert("Sign in required."); return; }
-    const currentUser = user.uid;
-
-    let finalAxiomId = formData.existingAxiomId;
-
-    if (!finalAxiomId) {
-      finalAxiomId = `ax-${timestamp}`;
-      const newAxiom: Axiom = {
-        id: finalAxiomId,
-        canonicalName: formData.axiomName,
-        aliases: [], 
-        defaultLatex: formData.axiomLatex,
-        authorId: currentUser, 
-        createdAt: timestamp   
-      };
-      try { await setDoc(doc(db, 'axioms', newAxiom.id), newAxiom); } catch (e) { console.error(e); return; }
-    }
-
-    const newStructureId = `struct-${timestamp}`;
-    const newStructure: StructureNode = {
-      id: newStructureId,
-      type: 'algebraic structure',
-      parentId: selectedNodeId,
-      axiomId: finalAxiomId,
-      authorId: currentUser, 
-      displayLatex: formData.structureName, 
-      status: 'unverified',
-      rootContextId: universeId, 
-      toBeDeleted: false, 
-      stats: { greenVotes: 0, blackVotes: 0 },
-      createdAt: timestamp 
-    };
-
     try {
-      await setDoc(doc(db, 'nodes', newStructure.id), newStructure);
+      await StructureService.createStructure({
+        parentId: selectedNodeId,
+        rootContextId: universeId,
+        structureName: formData.structureName,
+        existingAxiomId: formData.existingAxiomId,
+        axiomName: formData.axiomName,
+        axiomLatex: formData.axiomLatex
+      }, user.uid);
+
+      toast.success("Structure created successfully");
       setIsCreateModalOpen(false);
-    } catch (e) { console.error(e); }
+    } catch (error) {
+      console.error("Failed to create structure:", error);
+      toast.error("Error creating structure");
+    }
   };
 
+  /**
+   * Deletes a node after validating that it is a leaf (has no children).
+   * @param nodeId - The ID of the node to delete.
+   */
   const handleDeleteNode = async (nodeId: string) => {
+    // 1. UI Validation: Check if the node has children in the current view
     const hasChildren = dataNodes.some(n => n.parentId === nodeId);
     if (hasChildren) {
-      alert("CRITICAL ERROR: Cannot delete this node because it has children.");
+      toast.error("Cannot delete node: It has children");
       return;
     }
+
     if (!confirm("⚠️ ADMIN WARNING ⚠️\n\nPermanently delete this node?")) return;
+    
+    // 2. Service Call
     try {
-      await deleteDoc(doc(db, 'nodes', nodeId));
+      await StructureService.deleteStructure(nodeId);
+      toast.success("Node deleted");
       setSelectedNodeId(null);
-    } catch (e) { console.error(e); }
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Failed to delete node");
+    }
   };
 
+  /**
+   * Deletes a theorem using the TheoremService.
+   * @param theoremId - The ID of the theorem to delete.
+   */
   const handleDeleteTheorem = async (theoremId: string) => {
     if (!confirm("⚠️ ADMIN WARNING ⚠️\n\nPermanently delete this theorem?")) return;
-    try { await deleteDoc(doc(db, 'theorems', theoremId)); } catch (e) { console.error(e); }
+    try { 
+      await TheoremService.deleteTheorem(theoremId);
+      toast.success("Theorem deleted");
+    } catch (e) { 
+      console.error(e); 
+      toast.error("Failed to delete theorem");
+    }
   };
 
+  /**
+   * Deletes an axiom using the AxiomService.
+   * @param axiomId - The ID of the axiom to delete.
+   */
   const handleDeleteAxiom = async (axiomId: string) => {
-    try { await deleteDoc(doc(db, 'axioms', axiomId)); } catch (e) { console.error(e); }
+    try { 
+      await AxiomService.deleteAxiom(axiomId);
+      toast.success("Axiom deleted");
+    } catch (e) { 
+      console.error(e); 
+      toast.error("Failed to delete axiom"); 
+    }
   };
 
+  /**
+   * Adds a new theorem to the selected structure using the TheoremService.
+   * @param formData - The data from the creation modal.
+   */
   const handleAddTheorem = async (formData: TheoremFormData) => {
     if (!selectedNodeId || !user) return;
-    const timestamp = Date.now();
-    const newTheorem: Theorem = {
-      id: `th-${timestamp}`,
-      structureNodeId: selectedNodeId,
-      name: formData.name,
-      aliases: [],
-      statementLatex: formData.statementLatex,
-      proofLatex: formData.proofLatex,
-      authorId: user.uid,
-      createdAt: timestamp,
-      status: 'unverified',
-      stats: { greenVotes: 0, blackVotes: 0 }
-    };
-    try { await setDoc(doc(db, 'theorems', newTheorem.id), newTheorem); } catch (e) { console.error(e); }
+    
+    try { 
+      await TheoremService.createTheorem(
+        selectedNodeId,
+        {
+          name: formData.name,
+          statementLatex: formData.statementLatex,
+          proofLatex: formData.proofLatex
+        },
+        user.uid
+      );
+      toast.success("Theorem proposed successfully");
+    } catch (e) { 
+      console.error(e); 
+      toast.error("Failed to create theorem");
+    }
   };
+
+  if (isLoading) {
+    return <div className={styles.explorerRoot}>Loading Universe...</div>;
+  }
 
   return (
     <div className={styles.explorerRoot}>
@@ -225,7 +199,6 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
           <button 
             onClick={() => setIsAdminLibraryOpen(true)} 
             className={styles.backBtn}
-            style={{ marginLeft: '10px' }}
           >
             📚 Library
           </button>
@@ -285,7 +258,7 @@ export const AlgebraicStructureExplorer = ({ universeId, onExit }: ExplorerProps
         />
       )}
 
-      {/* --- ADMIN LIBRARY MODAL (UPDATED) --- */}
+      {/* --- ADMIN LIBRARY MODAL --- */}
       {isAdminLibraryOpen && (
         <AdminLibraryModal
           axioms={dataAxioms}

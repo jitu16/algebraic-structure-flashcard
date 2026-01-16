@@ -2,6 +2,18 @@
 
 All notable changes to the **Algebraic Structure Explorer** will be documented in this file.
 
+## [2026-01-15] - Phase 5b: Governance Engine & User Administration
+### Added
+- **User Management System:** `AdminUserModal` for promoting roles (Novice -> Citizen -> Admin) and adjusting reputation manually. It includes an "Auto-Promote" batch tool.
+- **Service Layer Architecture:** Migrated business logic to a dedicated `services/` directory (`userService.ts`, `governanceService.ts`), separating data mutation from UI components.
+- **Governance Protocol:** Formalized the "Trust-But-Verify" economy, including "Slash" protocols, weighted voting logic, and flagging rewards (See `GOVERNANCE.md`).
+- **Action Bar Layout:** Redesigned the `Lobby` header. It now features a clean, integrated Admin Action button (`👥`) and a unified "Profile Pill" for stats and avatar.
+
+### Changed
+- **UI Cleanup:** Removed the floating `AuthWidget` component. Authentication and User Status are now natively handled within the Lobby header to reduce visual clutter.
+- **Security Hardening:** Updated `firestore.rules` (conceptual) to prevent Admin-on-Admin demotions and enforce the dual-score economy.
+- **Directory Structure:** Refactored the project layout to include the new `services` folder and cleaner modal organization.
+
 ## [2026-01-14] - Phase 5: Persistence, Admin Tools & Gamification
 ### Added
 - **Firebase Integration:** Full migration to Firestore. The database is now online, ensuring all Universes, Nodes, and Votes persist across sessions.

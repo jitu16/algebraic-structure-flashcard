@@ -1,10 +1,10 @@
-// src/App.tsx
+/* src/App.tsx */
 import { useState } from 'react';
+import { Toaster } from 'react-hot-toast'; 
 import { AlgebraicStructureExplorer } from './components/AlgebraicStructureExplorer';
-import { Lobby } from './components/Lobby.tsx';
+import { Lobby } from './components/Lobby';
 import { AuthProvider } from './contexts/AuthContext';
-import { AuthWidget } from './components/AuthWidget';
-
+// REMOVED: import { AuthWidget } from './components/AuthWidget'; (No longer needed)
 
 function App() {
   // State: Which Universe is currently active? Null = Lobby.
@@ -12,24 +12,43 @@ function App() {
 
   return (
     <AuthProvider>
-      <div style={{ position: 'fixed', top: 20, right: 20, zIndex: 1000 }}>
-          <AuthWidget />
-        </div>
+      <Toaster 
+        position="top-center" 
+        reverseOrder={false}
+        toastOptions={{
+          className: 'dark-toast',
+          duration: 4000,
+          success: {
+            iconTheme: {
+              primary: '#4ade80',
+              secondary: 'black',
+            },
+          },
+          error: {
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: 'white',
+            },
+          },
+        }}
+      />
+
+      {/* REMOVED: The floating AuthWidget div was here. 
+          The Lobby component now handles its own header and auth controls. 
+      */}
+
       <div className="app-container">
-	{currentUniverseId ? (
-          // 1. If Universe is selected, show Explorer
+        {currentUniverseId ? (
           <AlgebraicStructureExplorer 
             universeId={currentUniverseId}
             onExit={() => setCurrentUniverseId(null)} 
           />
-	) : (
-          // 2. Otherwise, show the Lobby
+        ) : (
           <Lobby onSelectUniverse={setCurrentUniverseId} />
-	)}
+        )}
       </div>
     </AuthProvider>
   );
 }
 
 export default App;
-

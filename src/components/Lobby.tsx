@@ -1,147 +1,125 @@
 /* src/components/Lobby.tsx */
-import { useState, useEffect } from 'react';
-import { 
-  collection, 
-  onSnapshot, 
-  doc, 
-  setDoc, 
-  deleteDoc,
-  updateDoc 
-} from 'firebase/firestore';
-import { db } from '../firebase';
+import React, { useState } from 'react';
+import { toast } from 'react-hot-toast'; 
 import { useAuth } from '../contexts/AuthContext';
+import { useEnvironments } from '../hooks/useEnvironments';
+import { UniverseService } from '../services/universeService'; 
 import { LatexRenderer } from './LatexRenderer';
 import { CreateUniverseModal, type UniverseFormData } from './modals/CreateUniverseModal';
 import { ProfileModal } from './modals/ProfileModal';
-import type { RootEnvironment, StructureNode, Axiom } from '../types';
+import { AdminUserModal } from './modals/AdminUserModal'; 
+import type { RootEnvironment } from '../types';
 import styles from './Lobby.module.css';
 
 interface LobbyProps {
-  /** Callback to notify the parent app which universe was selected */
+  /** Callback to notify the parent app which universe was selected. */
   onSelectUniverse: (universeId: string) => void;
 }
 
 /**
  * The Lobby Component.
- * Displays all Universes and allows Admins to create, delete, and rename them.
- * * Updates:
- * - Layout restructured: Header is now separate from the scrollable Main Content.
- * - This fixes mobile scrolling issues and overlapping elements.
+ * Displays the list of available Algebraic Universes (Root Environments).
+ * Allows Admins to create, rename, and delete universes.
+ * * Data Source: Uses `useEnvironments` hook for real-time updates.
+ * * Data Mutation: Uses `UniverseService` for all write operations.
  */
 export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
   const { user, profile, signInWithGoogle } = useAuth();
   const isAdmin = profile?.role === 'admin';
 
-  // --- STATE ---
-  const [environments, setEnvironments] = useState<RootEnvironment[]>([]);
+  // --- DATA FETCHING ---
+  const { environments, isLoading } = useEnvironments();
+
+  // --- UI STATE ---
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isAdminUserModalOpen, setIsAdminUserModalOpen] = useState(false); 
 
-  // Edit State
+  // --- EDIT STATE ---
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
 
-  // --- REAL-TIME FETCHING ---
-  useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'environments'), (snapshot) => {
-      const envs = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as RootEnvironment[];
-      setEnvironments(envs);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
-
   // --- HANDLERS: EDITING ---
+
+  /**
+   * Enters edit mode for a specific environment card.
+   * @param e - The click event (preventing card selection).
+   * @param env - The environment object to edit.
+   */
   const startEditing = (e: React.MouseEvent, env: RootEnvironment) => {
     e.stopPropagation();
     setEditingId(env.id);
     setEditValue(env.name);
   };
 
+  /**
+   * Exits edit mode without saving.
+   * @param e - Optional click event.
+   */
   const cancelEditing = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     setEditingId(null);
     setEditValue('');
   };
 
+  /**
+   * Commits the new name via the UniverseService.
+   * @param e - The form or button event.
+   */
   const saveName = async (e: React.MouseEvent | React.FormEvent) => {
     e.stopPropagation();
     e.preventDefault();
     if (!editingId || !editValue.trim()) return;
 
     try {
-      await updateDoc(doc(db, 'environments', editingId), { name: editValue.trim() });
+      await UniverseService.renameUniverse(editingId, editValue);
+      toast.success("Universe renamed successfully");
       setEditingId(null);
     } catch (error) {
       console.error("Failed to update name:", error);
-      alert("Failed to update name.");
+      toast.error("Failed to update name");
     }
   };
 
   // --- HANDLERS: CREATE / DELETE ---
+
+  /**
+   * Creates a new Universe (Root Environment) along with its Root Node and Axiom.
+   * Delegates all business logic to the UniverseService.
+   * @param data - The form data containing name, sets, and operators.
+   */
   const handleCreate = async (data: UniverseFormData) => {
-    const timestamp = Date.now();
-    const envId = `env-${timestamp}`;
-    const axiomId = `ax-${timestamp}`;
-    const nodeId = `node-${timestamp}`;
     const authorId = profile?.uid || 'system';
 
-    const newEnv: RootEnvironment = {
-      id: envId,
-      name: data.envName,
-      sets: data.sets,
-      operators: data.operators
-    };
-
-    const newAxiom: Axiom = {
-      id: axiomId,
-      canonicalName: data.rootAxiomName,
-      aliases: [],
-      defaultLatex: data.rootAxiomLatex,
-      authorId: authorId,
-      createdAt: timestamp
-    };
-
-    const newRootNode: StructureNode = {
-      id: nodeId,
-      type: 'algebraic structure',
-      parentId: null,
-      axiomId: axiomId,
-      authorId: authorId,
-      displayLatex: `\\text{${data.rootNodeName}}`,
-      status: 'verified',
-      rootContextId: envId,
-      toBeDeleted: false,
-      stats: { greenVotes: 0, blackVotes: 0 },
-      createdAt: timestamp
-    };
-
     try {
-      await setDoc(doc(db, 'environments', envId), newEnv);
-      await setDoc(doc(db, 'axioms', axiomId), newAxiom);
-      await setDoc(doc(db, 'nodes', nodeId), newRootNode);
+      await UniverseService.createUniverse(data, authorId);
+      toast.success("Universe created successfully");
       setIsCreateModalOpen(false);
     } catch (error) {
       console.error("Failed to create universe:", error);
-      alert("Error creating universe.");
+      toast.error("Error creating universe");
     }
   };
 
+  /**
+   * Deletes a Universe and its reference.
+   * Note: This does not currently cascade delete all child nodes (future admin task).
+   * @param e - The click event.
+   * @param id - The ID of the environment to delete.
+   */
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (!confirm("⚠️ ADMIN WARNING ⚠️\nDelete this Universe?")) return;
+    if (!confirm("⚠️ ADMIN WARNING ⚠️\nDelete this Universe? This cannot be undone.")) return;
     try {
-      await deleteDoc(doc(db, 'environments', id));
+      await UniverseService.deleteUniverse(id);
+      toast.success("Universe deleted");
     } catch (error) {
       console.error("Delete failed:", error);
+      toast.error("Failed to delete universe");
     }
   };
 
-  if (loading) return <div className={styles.loading}>Loading...</div>;
+  if (isLoading) return <div className={styles.loading}>Loading Universes...</div>;
 
   return (
     <div className={styles.container}>
@@ -150,6 +128,19 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
       <header className={styles.headerBar}>
         <div className={styles.logo}>BuildMath</div>
         <div className={styles.authControls}>
+          
+          {/* 1. ADMIN BUTTON (Icon Only) */}
+          {isAdmin && (
+            <button 
+              className={styles.adminIconBtn}
+              onClick={() => setIsAdminUserModalOpen(true)}
+              title="Manage Users"
+            >
+              👥
+            </button>
+          )}
+
+          {/* 2. AUTH STATUS (Profile Pill or Sign In) */}
           {user ? (
             <button 
               className={styles.profileBtn}
@@ -283,6 +274,10 @@ export const Lobby = ({ onSelectUniverse }: LobbyProps) => {
       
       {isProfileModalOpen && (
         <ProfileModal onClose={() => setIsProfileModalOpen(false)} />
+      )}
+
+      {isAdminUserModalOpen && (
+        <AdminUserModal onClose={() => setIsAdminUserModalOpen(false)} />
       )}
     </div>
   );

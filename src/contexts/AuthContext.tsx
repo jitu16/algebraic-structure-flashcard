@@ -6,13 +6,8 @@ import {
   signOut, 
   type User 
 } from 'firebase/auth';
-import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  serverTimestamp 
-} from 'firebase/firestore';
-import { auth, googleProvider, db } from '../firebase';
+import { auth, googleProvider } from '../firebase';
+import { UserService } from '../services/userService'; // NEW SERVICE
 import type { UserProfile } from '../types'; 
 
 /**
@@ -54,10 +49,10 @@ interface AuthProviderProps {
 
 /**
  * Provider component that encapsulates authentication logic and state management.
- * It handles:
- * 1. Monitoring Firebase Auth state changes.
- * 2. Syncing the Auth user with the Firestore User Profile.
- * 3. Automatically creating a profile for new users using the Dual-Score Schema.
+ * * Responsibilities:
+ * 1. Monitors Firebase Auth state changes (Login/Logout).
+ * 2. Delegates User Profile synchronization to the UserService.
+ * 3. Exposes auth methods to the rest of the application.
  */
 export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
@@ -70,39 +65,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       setUser(currentUser);
 
       if (currentUser) {
-        // 1. Check if User Profile exists in Firestore
-        const userRef = doc(db, 'users', currentUser.uid);
-        
         try {
-          const userSnap = await getDoc(userRef);
-
-          if (userSnap.exists()) {
-            // A. Profile exists? Load it.
-            setProfile(userSnap.data() as UserProfile);
-          } else {
-            // B. No Profile? Create it automatically with Dual-Score Schema.
-            // Note: photoURL is excluded as it is not part of the UserProfile schema.
-            const newProfile: UserProfile = {
-              uid: currentUser.uid,
-              email: currentUser.email,
-              displayName: currentUser.displayName,
-              role: 'citizen',     // Default role for new users
-              reputation: {
-                creation: 0,       // Points for verified nodes/structures
-                contributor: 1     // Points for voting/flagging (Start with 1)
-              },
-              createdAt: serverTimestamp()
-            };
-
-            await setDoc(userRef, newProfile);
-            setProfile(newProfile);
-            console.log("New User Profile Created (Dual-Score Schema).");
-          }
+          // Delegate profile fetching/creation to the Service Layer
+          const userProfile = await UserService.syncUser(currentUser);
+          setProfile(userProfile);
         } catch (error) {
-          console.error("Error fetching/creating user profile:", error);
+          console.error("AuthContext: Failed to sync user profile", error);
+          // Optional: handle specific error states (e.g., set error flag)
         }
       } else {
-        // User is logged out, clear profile
+        // User is logged out, clear profile state
         setProfile(null);
       }
 

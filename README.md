@@ -1,6 +1,7 @@
 # Algebraic Structure Explorer
 
 > *Drafted by Gemini based on the Owner's blueprint. Proofread and authorized by the Owner.*
+
 ### The Vision
 We are building the first **crowdsourced map of algebraic structures**. 
 
@@ -14,45 +15,60 @@ We want to visualize the dramatic power of individual axioms. By studying this t
 
 ### Directory Structure
 
-```text
-.
-├── App.tsx                                       # Main Router: Switches between Lobby and Explorer
-├── assets/                                       # Static Assets (Images, SVGs)
-├── components/                                   # UI Components & Graph Logic
-│   ├── AlgebraicStructureExplorer.module.css     # Scoped Styles for the Explorer
-│   ├── AlgebraicStructureExplorer.tsx            # Main Controller: Manages State (Nodes, Axioms) & Graph View
-│   ├── AuthWidget.tsx                            # [Legacy] Standalone Auth Component (now integrated into Lobby)
-│   ├── Flashcard.module.css                      # Styles for the Detail Panel
-│   ├── Flashcard.tsx                             # Detail Panel: Displays Theorems, Properties, and Voting UI
-│   ├── GenericGraphEngine.tsx                    # Pure Canvas: Wraps React Flow for rendering nodes/edges
-│   ├── LatexRenderer.tsx                         # Utility: Renders MathJax/KaTeX strings
-│   ├── Lobby.module.css                          # Styles for the Universe Selector
-│   ├── Lobby.tsx                                 # Landing Page: Universe Selection, Auth Header, & Admin Tools
-│   ├── MathNode.tsx                              # Custom Graph Node: Displays LaTeX label & Vote Buttons
-│   ├── Overlay.tsx                               # UI Overlay: Legends and floating controls
-│   └── modals/                                   # Popups & Dialogs
-│       ├── AdminLibraryModal.tsx                 # Admin Tool: Global Axiom/Theorem Registry Management
-│       ├── AxiomLibraryDrawer.tsx                # Discovery: Slide-out panel to browse existing axioms
-│       ├── CreateStructureModal.tsx              # Hybrid Form: Add Nodes via Search or Creation
-│       ├── CreateTheoremModal.tsx                # Hybrid Form: Propose Theorems inside Flashcards
-│       ├── CreateUniverseModal.tsx               # [NEW] Admin Tool: Genesis of new Algebraic Universes
-│       ├── ProfileModal.tsx                      # [NEW] User Hub: Stats, Leaderboard & Avatar
-│       └── TheoremLibraryDrawer.tsx              # Discovery: Slide-out panel for theorem templates
-├── contexts/
-│   └── AuthContext.tsx                           # Global State: Syncs Firebase Auth with Firestore User Profiles
-├── data/
-│   └── initialData.ts                            # Seed Data: Initial sets of Axioms and Universes
-├── firebase.ts                                   # Infrastructure: Firestore & Auth Configuration
-├── hooks/
-│   └── useVoting.ts                              # Logic Hook: Handles Local vs Server voting state
-├── types/
-│   └── index.ts                                  # Type Definitions: Discriminated Unions & Interfaces
-└── utils/
-    ├── checkStatus.ts                            # Logic: Determines if a node moves Red -> Green
-    ├── edgeFactory.ts                            # Logic: Calculates connections based on ancestry
-    ├── graphAdapter.ts                           # Adapter: Transforms Firestore Documents -> React Flow Graph
-    └── lineage.ts                                # Logic: Traces parent-child relationships
-```
+    .
+    ├── App.tsx                                       # Main Router: Switches between Lobby and Explorer
+    ├── assets/                                       # Static Assets (Images, SVGs)
+    ├── components/                                   # UI Components & Graph Logic
+    │   ├── AlgebraicStructureExplorer.module.css     # Scoped Styles for the Explorer
+    │   ├── AlgebraicStructureExplorer.tsx            # Main Controller: Manages State & Graph View
+    │   ├── Flashcard.module.css                      # Styles for the Detail Panel
+    │   ├── Flashcard.tsx                             # Detail Panel: Displays Theorems, Properties, and Voting UI
+    │   ├── GenericGraphEngine.tsx                    # Pure Canvas: Wraps React Flow for rendering nodes/edges
+    │   ├── LatexRenderer.tsx                         # Utility: Renders MathJax/KaTeX strings
+    │   ├── Lobby.module.css                          # Styles for the Universe Selector
+    │   ├── Lobby.tsx                                 # Landing Page: Action Bar, Universe Selection, & Admin Tools
+    │   ├── MathNode.tsx                              # Custom Graph Node: Displays LaTeX label & Vote Buttons
+    │   ├── Overlay.module.css                        # Styles for the Overlay
+    │   ├── Overlay.tsx                               # UI Overlay: Legends and floating controls
+    │   └── modals/                                   # Popups & Dialogs
+    │       ├── AdminLibraryModal.module.css          # Styles for Admin Library
+    │       ├── AdminLibraryModal.tsx                 # Admin Tool: Global Axiom/Theorem Registry Management
+    │       ├── AdminUserModal.module.css             # Styles for User Management
+    │       ├── AdminUserModal.tsx                    # [NEW] Admin Tool: User Roles & Reputation Management
+    │       ├── AxiomLibraryDrawer.tsx                # Discovery: Slide-out panel to browse existing axioms
+    │       ├── CreateStructureModal.tsx              # Hybrid Form: Add Nodes via Search or Creation
+    │       ├── CreateTheoremModal.tsx                # Hybrid Form: Propose Theorems inside Flashcards
+    │       ├── CreateUniverseModal.module.css        # Styles for Universe Creation
+    │       ├── CreateUniverseModal.tsx               # Admin Tool: Genesis of new Algebraic Universes
+    │       ├── Modal.module.css                      # Shared Modal Styles
+    │       ├── ProfileModal.module.css               # Styles for Profile
+    │       ├── ProfileModal.tsx                      # User Hub: Stats, Leaderboard & Avatar
+    │       └── TheoremLibraryDrawer.tsx              # Discovery: Slide-out panel for theorem templates
+    ├── contexts/
+    │   └── AuthContext.tsx                           # Global State: Syncs Firebase Auth with Firestore User Profiles
+    ├── data/
+    │   └── initialData.ts                            # Seed Data: Initial sets of Axioms and Universes
+    ├── firebase.ts                                   # Infrastructure: Firestore & Auth Configuration
+    ├── hooks/
+    │   ├── useEnvironments.ts                        # Data Hook: Fetches Universe list
+    │   ├── useUniverseData.ts                        # Data Hook: Fetches Graph Data (Nodes/Edges)
+    │   └── useVoting.ts                              # Logic Hook: Handles Local vs Server voting state
+    ├── services/                                     # [NEW] Service Layer: Business Logic & DB Interactions
+    │   ├── axiomService.ts
+    │   ├── governanceService.ts                      # The Judge: Handles Verification, Scoring, and Penalties
+    │   ├── structureService.ts
+    │   ├── theoremService.ts
+    │   ├── universeService.ts
+    │   └── userService.ts                            # The Clerk: Handles Profiles, Roles, and Auth Sync
+    ├── styles/
+    │   └── theme.ts                                  # Global Theme Variables
+    ├── types/
+    │   └── index.ts                                  # Type Definitions: Discriminated Unions & Interfaces
+    └── utils/
+        ├── checkStatus.ts                            # Logic: Determines if a node moves Red -> Green
+        ├── edgeFactory.ts                            # Logic: Calculates connections based on ancestry
+        ├── graphAdapter.ts                           # Adapter: Transforms Firestore Documents -> React Flow Graph
+        └── lineage.ts                                # Logic: Traces parent-child relationships
 
 ### System Architecture: The Logic Engine
 
@@ -74,19 +90,13 @@ Structure Nodes follow this lifecycle:
 * **Green (Verified):** Final canonical status granted by **Admin Approval** or **Community Consensus**. Both carry the same visual weight, emphasizing the crowdsourced nature of the map.
 * **Gray (Dead End):** Marks a "Trivial Structure" where the system collapses or no further axioms can be meaningfully added.
 
-#### 4. Governance: The Trust Ladder
-To protect the tree from "Axiomatic Pollution" while solving the "Cold Start" problem, we use a tiered permission system based on reputation.
-
-* **Tier 0 (Visitor):** Read-only access.
-* **Tier 1 (Novice):** Can **Propose** nodes. Proposals remain "Ghost Nodes" (visible only to the author) until upvoted by a Citizen.
-* **Tier 2 (Citizen):** Verified Email + Reputation Threshold. Contributions appear immediately as **Unverified (Red)** on the public map. Can cast weighted votes and flag duplicates.
-* **Tier 3 (Librarian/Admin):** Can trigger the **Zombie Protocol** (force-merge), lock controversial nodes, and blacklist bad actors.
-
-#### 5. The "Zombie" Protocol
-As the tree grows, users may inadvertently create duplicate structures. We handle this through the **Deprecation Protocol**:
-* **Duplication Triggers:** This occurs due to **Notation Divergence** (naming the same operator differently) or **Permutation Divergence** (adding the same axioms in a different order).
-* **The Zombie State:** The duplicate branch is flagged `toBeDeleted` and flashes Yellow.
-* **The Migration:** This creates a window for the community to review the structure before the zombie node is auto-deleted.
+### Governance & Economy
+This project uses a rigorous **"Trust-But-Verify"** protocol to manage quality control and reputation.
+Please refer to [GOVERNANCE.md](./GOVERNANCE.md) for the detailed specification of:
+* **The Trust Ladder:** Role definitions (Visitor, Novice, Citizen, Admin).
+* **The Economy:** How Creation and Contributor points are awarded.
+* **The Slash Protocol:** Penalties for spam and malicious behavior.
+* **Voting Thresholds:** The mathematical rules for verifying a node.
 
 ### Immediate Tasks (Phase 5: Persistence & User System)
 **Status: Implemented**

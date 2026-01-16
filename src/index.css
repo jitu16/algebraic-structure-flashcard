@@ -173,3 +173,17 @@ html, body, #root {
 .theorem-item.status-verified { border-left-color: #2e7d32; background-color: #f1f8e9; }
 .theorem-item.status-unverified { border-left-color: #c62828; background-color: #ffebee; }
 .theorem-item.status-deadend { border-left-color: #757575; background-color: #f5f5f5; }
+
+/* --- Toast Notifications (react-hot-toast) --- */
+.dark-toast {
+  background-color: #333 !important;
+  color: #fff !important;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-weight: 500;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}

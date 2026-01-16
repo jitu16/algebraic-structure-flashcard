@@ -1,8 +1,10 @@
 /* src/hooks/useVoting.ts */
 import { useState, useEffect, useCallback } from 'react';
-import { doc, runTransaction, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { toast } from 'react-hot-toast'; // NEW IMPORT
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
+import { GovernanceService } from '../services/governanceService';
 import type { VoteType } from '../types';
 
 interface VotingStats {
@@ -11,14 +13,16 @@ interface VotingStats {
 }
 
 /**
- * A custom hook that manages secure, transactional voting for any collection.
- * Uses atomic transactions to ensure "One Person, One Vote" integrity.
- *
- * @param itemId - The unique ID of the document (Node or Theorem).
+ * A custom hook that manages the interactive voting state for a specific entity.
+ * * Responsibilities:
+ * 1. Listening: Subscribes to the specific User's vote slip (Real-time).
+ * 2. Display: Manages local stats state for immediate rendering.
+ * 3. Action: Delegates the actual vote mutation to the GovernanceService.
+ * * @param itemId - The unique ID of the document (Node or Theorem).
  * @param collectionName - The Firestore collection name ('nodes' or 'theorems').
  * @param initialGreen - The initial number of green (valid) votes.
  * @param initialBlack - The initial number of black (invalid) votes.
- * @returns An object containing the current stats, the user's active vote, and the vote handler.
+ * @returns An object containing current stats, the user's active vote, and the vote handler.
  */
 export const useVoting = (
   itemId: string, 
@@ -28,8 +32,8 @@ export const useVoting = (
 ) => {
   const { user } = useAuth();
   
-  // Local state for immediate UI feedback.
-  // We initialize this only once to prevent render loops.
+  // Local state for UI display. 
+  // Initially synced with props, then potentially updated by parent re-renders.
   const [stats, setStats] = useState<VotingStats>({ 
     greenVotes: initialGreen, 
     blackVotes: initialBlack 
@@ -38,12 +42,12 @@ export const useVoting = (
   const [userVote, setUserVote] = useState<'up' | 'down' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // 1. Sync local stats ONLY when the actual numbers change in the database.
+  // 1. Sync local stats when parent data changes
   useEffect(() => {
     setStats({ greenVotes: initialGreen, blackVotes: initialBlack });
   }, [initialGreen, initialBlack]);
 
-  // 2. Real-time Listener: Check if the current user has an existing vote slip.
+  // 2. Real-time Listener: Subscribe to the current user's vote status
   useEffect(() => {
     if (!user || !itemId) {
       setUserVote(null);
@@ -56,6 +60,7 @@ export const useVoting = (
     const unsubscribe = onSnapshot(voteRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data();
+        // Map Database types to UI types
         if (data.choice === 'green') setUserVote('up');
         else if (data.choice === 'black') setUserVote('down');
       } else {
@@ -66,65 +71,30 @@ export const useVoting = (
     return () => unsubscribe();
   }, [user, itemId, collectionName]);
 
-  // 3. Transaction Handler: Executes the vote safely in the database.
+  // 3. Action Handler: Delegate logic to GovernanceService
   const handleVote = useCallback(async (newVoteType: 'up' | 'down') => {
     if (!user) {
-      alert("Please sign in to vote!");
+      toast.error("Please sign in to vote");
       return;
     }
     
     setIsLoading(true);
-    const itemRef = doc(db, collectionName, itemId);
-    const voteRef = doc(db, collectionName, itemId, 'votes', user.uid);
+
+    // Map UI intent ('up'/'down') to Domain Language ('green'/'black')
+    const targetDomainVote: VoteType = newVoteType === 'up' ? 'green' : 'black';
 
     try {
-      await runTransaction(db, async (transaction) => {
-        // Read Phase
-        const voteDoc = await transaction.get(voteRef);
-        const itemDoc = await transaction.get(itemRef);
-
-        if (!itemDoc.exists()) throw new Error("Document does not exist!");
-
-        const currentStats = itemDoc.data().stats || { greenVotes: 0, blackVotes: 0 };
-        const existingChoice = voteDoc.exists() ? voteDoc.data().choice : null;
-        const targetChoice: VoteType = newVoteType === 'up' ? 'green' : 'black';
-
-        let newGreen = currentStats.greenVotes;
-        let newBlack = currentStats.blackVotes;
-
-        // Logic: Toggle or Swap Vote
-        if (existingChoice === targetChoice) {
-          // Case A: Remove vote (Toggle Off)
-          transaction.delete(voteRef);
-          if (targetChoice === 'green') newGreen--;
-          else newBlack--;
-        } else {
-          // Case B: Add or Change vote
-          transaction.set(voteRef, { 
-            choice: targetChoice,
-            timestamp: Date.now()
-          });
-          
-          // Remove old vote count if switching sides
-          if (existingChoice === 'green') newGreen--;
-          if (existingChoice === 'black') newBlack--;
-
-          // Add new vote count
-          if (targetChoice === 'green') newGreen++;
-          else newBlack++;
-        }
-
-        // Write Phase: Commit new totals to parent document
-        transaction.update(itemRef, {
-          stats: {
-            greenVotes: Math.max(0, newGreen),
-            blackVotes: Math.max(0, newBlack)
-          }
-        });
-      });
+      await GovernanceService.castVote(
+        collectionName,
+        itemId,
+        user.uid,
+        targetDomainVote
+      );
+      // Note: We don't toast on success here to avoid spamming the user on every click.
+      // The button state change is sufficient feedback.
     } catch (error) {
-      console.error("Voting Transaction Failed:", error);
-      alert("Vote failed. Please check your connection.");
+      console.error("Voting Failed:", error);
+      toast.error("Vote failed. Please check your connection.");
     } finally {
       setIsLoading(false);
     }
