@@ -5,6 +5,7 @@ import { Lobby } from './components/Lobby.tsx';
 import { AuthProvider } from './contexts/AuthContext';
 import { AuthWidget } from './components/AuthWidget';
 
+
 function App() {
   // State: Which Universe is currently active? Null = Lobby.
   const [currentUniverseId, setCurrentUniverseId] = useState<string | null>(null);

@@ -25,6 +25,7 @@ export const initialEnvironments: RootEnvironment[] = [
  * 2. AXIOMS (Shared Global Registry)
  */
 export const initialAxioms: Axiom[] = [
+  // --- GENERAL / GROUP AXIOMS ---
   {
     id: 'ax-closure',
     canonicalName: 'Closure',
@@ -73,22 +74,34 @@ export const initialAxioms: Axiom[] = [
     authorId: 'System_Explorer',
     createdAt: NOW
   },
-  // --- RING AXIOMS ---
+  
+  // --- RING / FIELD AXIOMS ---
   {
     id: 'ax-distributivity',
     canonicalName: 'Distributivity',
     aliases: [],
-    defaultLatex: 'a \\cdot (b + c) = (a \\cdot b) + (a \\cdot c)',
+    defaultLatex: '\\forall a,b,c \\in R, a \\cdot (b + c) = (a \\cdot b) + (a \\cdot c)',
+    authorId: 'System_Genesis',
+    createdAt: NOW
+  },
+  {
+    id: 'ax-field-inverse',
+    canonicalName: 'Multiplicative Inverse (Non-Zero)',
+    aliases: ['Field Inverse'],
+    defaultLatex: '\\forall a \\in R \\setminus \\{0\\}, \\exists a^{-1} \\text{ s.t. } a \\cdot a^{-1} = 1',
     authorId: 'System_Genesis',
     createdAt: NOW
   }
 ];
 
 /**
- * 3. STRUCTURE NODES (Partitioned by rootContextId)
+ * 3. STRUCTURE NODES (The Evolutionary Tree)
  */
 export const initialNodes: StructureNode[] = [
-  // === UNIVERSE A: GROUP THEORY ===
+  // ===================================
+  // UNIVERSE A: GROUP THEORY
+  // Path: Magma -> Semigroup -> Monoid -> Group -> Abelian Group
+  // ===================================
   {
     id: 'node-magma',
     type: 'algebraic structure',
@@ -152,22 +165,9 @@ export const initialNodes: StructureNode[] = [
     rootContextId: 'env-general-algebra',
     toBeDeleted: false,
     createdAt: NOW,
-    stats: { greenVotes: 0, blackVotes: 9 }
+    stats: { greenVotes: 55, blackVotes: 1 }
   },
-  {
-    id: 'node-commutative-group-dup',
-    type: 'algebraic structure',
-    parentId: 'node-group',
-    axiomId: 'ax-commutativity', 
-    authorId: 'NewUser_123',
-    displayLatex: '\\text{Commutative Group}',
-    status: 'deprecated', 
-    rootContextId: 'env-general-algebra',
-    toBeDeleted: true, 
-    duplicateOfId: 'node-abelian-group', 
-    createdAt: NOW,
-    stats: { greenVotes: 5, blackVotes: 25 }
-  },
+  // Example of a Dead End
   {
     id: 'node-idempotent-group',
     type: 'algebraic structure',
@@ -182,19 +182,79 @@ export const initialNodes: StructureNode[] = [
     stats: { greenVotes: 10, blackVotes: 0 }
   },
 
-  // === UNIVERSE B: RING THEORY ===
+  // ===================================
+  // UNIVERSE B: RING THEORY
+  // Path: Abelian Group (+) -> Rng -> Ring -> Commutative Ring -> Field
+  // ===================================
   {
-    id: 'node-ring-root',
+    id: 'node-ring-base',
     type: 'algebraic structure',
     parentId: null,
-    axiomId: 'ax-closure', // Temporary root axiom
+    // We assume the starting point is an Abelian Group under (+)
+    axiomId: 'ax-commutativity', 
     authorId: 'System',
-    displayLatex: '\\text{Pseudo-Ring Base}',
+    displayLatex: '\\text{Abelian Group } (R, +)',
     status: 'verified',
-    rootContextId: 'env-ring-theory', // <--- Distinct Context
+    rootContextId: 'env-ring-theory', 
     toBeDeleted: false,
     createdAt: NOW,
-    stats: { greenVotes: 1, blackVotes: 0 }
+    stats: { greenVotes: 20, blackVotes: 0 }
+  },
+  {
+    id: 'node-rng',
+    type: 'algebraic structure',
+    parentId: 'node-ring-base',
+    // Adding Distributivity connects + and *
+    axiomId: 'ax-distributivity',
+    authorId: 'System',
+    displayLatex: '\\text{Rng}',
+    status: 'verified',
+    rootContextId: 'env-ring-theory',
+    toBeDeleted: false,
+    createdAt: NOW,
+    stats: { greenVotes: 15, blackVotes: 0 }
+  },
+  {
+    id: 'node-ring',
+    type: 'algebraic structure',
+    parentId: 'node-rng',
+    // Adding Multiplicative Identity makes it a Ring (unital)
+    axiomId: 'ax-identity',
+    authorId: 'System',
+    displayLatex: '\\text{Ring}',
+    status: 'verified',
+    rootContextId: 'env-ring-theory',
+    toBeDeleted: false,
+    createdAt: NOW,
+    stats: { greenVotes: 18, blackVotes: 1 }
+  },
+  {
+    id: 'node-commutative-ring',
+    type: 'algebraic structure',
+    parentId: 'node-ring',
+    // Adding Multiplicative Commutativity
+    axiomId: 'ax-commutativity',
+    authorId: 'System',
+    displayLatex: '\\text{Commutative Ring}',
+    status: 'verified',
+    rootContextId: 'env-ring-theory',
+    toBeDeleted: false,
+    createdAt: NOW,
+    stats: { greenVotes: 22, blackVotes: 0 }
+  },
+  {
+    id: 'node-field',
+    type: 'algebraic structure',
+    parentId: 'node-commutative-ring',
+    // Adding Multiplicative Inverse (for non-zero elements)
+    axiomId: 'ax-field-inverse',
+    authorId: 'System',
+    displayLatex: '\\text{Field}',
+    status: 'verified',
+    rootContextId: 'env-ring-theory',
+    toBeDeleted: false,
+    createdAt: NOW,
+    stats: { greenVotes: 30, blackVotes: 0 }
   }
 ];
 
@@ -202,6 +262,7 @@ export const initialNodes: StructureNode[] = [
  * 4. THEOREMS
  */
 export const initialTheorems: Theorem[] = [
+  // --- GROUP THEORY THEOREMS ---
   {
     id: 'thm-generalized-associativity',
     structureNodeId: 'node-semigroup',
@@ -239,12 +300,12 @@ export const initialTheorems: Theorem[] = [
     stats: { greenVotes: 50, blackVotes: 0 }
   },
   {
-    id: 'thm-inverse-order',
+    id: 'thm-socks-shoes',
     structureNodeId: 'node-group',
-    name: 'Inverse Order Property',
-    aliases: [],
+    name: 'Socks-Shoes Property',
+    aliases: ['Inverse of Product'],
     statementLatex: '(a \\cdot b)^{-1} = b^{-1} \\cdot a^{-1}',
-    proofLatex: '(ab)(b^{-1}a^{-1}) = a(bb^{-1})a^{-1} = e.',
+    proofLatex: '(ab)(b^{-1}a^{-1}) = a(bb^{-1})a^{-1} = ae a^{-1} = aa^{-1} = e.',
     authorId: 'System',
     status: 'verified',
     createdAt: NOW,
@@ -256,22 +317,36 @@ export const initialTheorems: Theorem[] = [
     name: 'Power of a Product',
     aliases: [],
     statementLatex: '(a \\cdot b)^n = a^n \\cdot b^n',
-    proofLatex: '(ab)^2 = abab = a(ba)b = a^2b^2.',
+    proofLatex: '(ab)^2 = abab = a(ba)b = a(ab)b = a^2b^2.',
     authorId: 'Abel',
     status: 'verified',
     createdAt: NOW,
     stats: { greenVotes: 25, blackVotes: 0 }
   },
+  
+  // --- RING THEORY THEOREMS ---
   {
-    id: 'thm-collapse',
-    structureNodeId: 'node-idempotent-group',
-    name: 'Collapse to Triviality',
-    aliases: ['Trivial Group Theorem'],
-    statementLatex: '\\forall a \\in S, a = e',
-    proofLatex: 'a \\cdot a = a \\implies a^{-1} \\cdot (a \\cdot a) = a^{-1} \\cdot a \\implies e \\cdot a = e \\implies a = e.',
+    id: 'thm-zero-product',
+    structureNodeId: 'node-rng',
+    name: 'Multiplication by Zero',
+    aliases: ['Annihilation'],
+    statementLatex: '\\forall a \\in R, a \\cdot 0 = 0 \\cdot a = 0',
+    proofLatex: 'a \\cdot 0 = a \\cdot (0+0) = a \\cdot 0 + a \\cdot 0 \\implies 0 = a \\cdot 0.',
     authorId: 'System',
-    status: 'unverified',
+    status: 'verified',
     createdAt: NOW,
-    stats: { greenVotes: 18, blackVotes: 9 }
+    stats: { greenVotes: 15, blackVotes: 0 }
+  },
+  {
+    id: 'thm-field-no-divisors',
+    structureNodeId: 'node-field',
+    name: 'No Zero Divisors',
+    aliases: [],
+    statementLatex: 'a \\cdot b = 0 \\implies a = 0 \\lor b = 0',
+    proofLatex: '\\text{If } a \\neq 0, a^{-1}(ab) = a^{-1}(0) \\implies b = 0.',
+    authorId: 'System',
+    status: 'verified',
+    createdAt: NOW,
+    stats: { greenVotes: 20, blackVotes: 0 }
   }
 ];
